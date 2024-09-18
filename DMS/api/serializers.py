@@ -7,35 +7,37 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 # File serializer
 class FileSerializer(serializers.ModelSerializer):
+    # file_name = serializers.CharField(required=False)
+
     class Meta:
         model = File
-        fields = ['file']
+        fields = ['client','files']
 
 
 # Client Serializer
 class ClientSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Client
-        fields = ['id','client_name','entity_type','date_of_incorporation','contact_person','designation','contact_no_1','contact_no_2','email','business_detail']
-
-# File Serializer
-class FileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = File
-        fields = '__all__'
-
-# Attachment Serializer
-class AttachmentSerializer(serializers.ModelSerializer):
     files = serializers.SerializerMethodField()
 
     class Meta:
-        model = Attachment
-        fields = ['id', 'client', 'file_name', 'status', 'files']
+        model = Client
+        fields = ['id','client_name','entity_type','date_of_incorporation','contact_person','designation','contact_no_1','contact_no_2','email','business_detail', 'file_name','status','files']
+
 
     def get_files(self, obj):
-        files = File.objects.filter(attachment=obj)
+        files = File.objects.filter(client=obj)
         return FileSerializer(files, many=True).data
+
+# # Attachment Serializer
+# class AttachmentSerializer(serializers.ModelSerializer):
+#     files = serializers.SerializerMethodField()
+
+#     class Meta:
+#         model = Attachment
+#         fields = ['id', 'client', 'file_name', 'status', 'files']
+
+#     def get_files(self, obj):
+#         files = File.objects.filter(attachment=obj)
+#         return FileSerializer(files, many=True).data
 
 # Bank Serializer
 class BankSerializer(serializers.ModelSerializer):

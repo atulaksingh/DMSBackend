@@ -17,6 +17,11 @@ class Client(models.Model):
        ('trust', 'Trust')
     ]
 
+    status = [
+        ('active', 'Active'),
+        ('inactive', 'Inactive')
+    ]
+
     client_name = models.CharField(max_length=100, null=True, blank=True)
     entity_type = models.CharField(max_length=100, choices=entites, null=True, blank=True)
     date_of_incorporation = models.DateField(null=True, blank=True)
@@ -26,26 +31,28 @@ class Client(models.Model):
     contact_no_2 = models.IntegerField(null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
     business_detail = models.TextField(null=True, blank=True)
+    file_name = models.CharField(max_length=50, null=True, blank=True)
+    status = models.CharField(max_length=100, choices=status, null=True, blank=True)
     def __str__(self):
         return self.client_name  if self.client_name else 'No name provided'
 
-# Attachment Model
-class Attachment(models.Model):
+# # Attachment Model
+# class Attachment(models.Model):
 
-    choices = [
-        ('active', 'ACTIVE'),
-        ('inactive', 'INACTIVE')
-    ]
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
-    file_name = models.CharField(max_length=100, null=True, blank=True)
-    status = models.CharField(max_length=100, null=True, blank=True, choices=choices)
+#     choices = [
+#         ('active', 'ACTIVE'),
+#         ('inactive', 'INACTIVE')
+#     ]
+#     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+#     file_name = models.CharField(max_length=100, null=True, blank=True)
+#     status = models.CharField(max_length=100, null=True, blank=True, choices=choices)
 
-    def __str__(self):
-        return self.file_name  if self.file_name else 'No name provided'
+#     def __str__(self):
+#         return self.file_name  if self.file_name else 'No name provided'
 
 #File Model
 class File(models.Model):
-    attachment = models.ForeignKey(Attachment, on_delete=models.CASCADE)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE)
     files = models.FileField(upload_to='attachment/')
 
 # Bank Model

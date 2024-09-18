@@ -24,16 +24,40 @@ from rest_framework.mixins import CreateModelMixin
 # from django.views.decorators.csrf import csrf_exempt
 
 
-#  *******************************************Client View's***********************************************
+# *******************************************Client View's***********************************************
 
 @api_view(['POST'])
 def create_client(request):
-    if request.method == 'POST':
-        serializer = ClientSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'Message':'Client created', 'Data': serializer.data}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    instance_data = request.data
+    data = {key: value for key, value in instance_data.items()}
+
+    client_serializer = ClientSerializer(data=data)
+    if client_serializer.is_valid(raise_exception=True):
+        client_instance = client_serializer.save()
+        print(client_serializer.data)
+
+        # Handle file uploads
+        if request.FILES:
+            files = dict((request.FILES).lists()).get('files', None)
+            # files = request.FILES.getlist('files')
+            # files = request.FILES.getlist('files')
+            if files:
+                for file in files:
+                    file_data = {
+                        "client": client_instance.pk,
+                        "files": file
+                    }
+                    file_serializer = FileSerializer(data=file_data)
+                    if file_serializer.is_valid(raise_exception=True):
+                        file_serializer.save()
+                        print(file_serializer.data)
+
+        # Return the response with the client data
+        return Response(ClientSerializer(client_instance).data, status=status.HTTP_201_CREATED)
+
+    return Response(client_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 @api_view(['GET'])
 def list_client(request):
@@ -65,69 +89,70 @@ def delete_client(request,pk):
 
 # **********************************************Attachment**************************************************
 
-@api_view(['POST'])
-@parser_classes([MultiPartParser, FormParser])
-def create_attachment(request, pk):
-    client = Client.objects.get(id=pk)
-    instance_data = request.data
-    data = {key: value for key, value in instance_data.items()}
-    data['client'] = client.pk
+# @api_view(['POST'])
+# @parser_classes([MultiPartParser, FormParser])
+# def create_attachment(request, pk):
+#     client = Client.objects.get(id=pk)
+#     instance_data = request.data
+#     data = {key: value for key, value in instance_data.items()}
+#     data['client'] = client.pk
 
-    attch_serializer = AttachmentSerializer(data=data)
-    if attch_serializer.is_valid(raise_exception=True):
-        attachment_instance = attch_serializer.save(client=client)
-        print(attch_serializer.data)
+#     attch_serializer = AttachmentSerializer(data=data)
+#     if attch_serializer.is_valid(raise_exception=True):
+#         attachment_instance = attch_serializer.save(client=client)
+#         print(attch_serializer.data)
 
-        # Handle file uploads
-        if request.FILES:
-            files = dict((request.FILES).lists()).get('files', None)
-            # files = request.FILES.getlist('files')
-            if files:
-                for file in files:
-                    file_data = {
-                        "attachment": attachment_instance.pk,
-                        "files": file
-                    }
-                    file_serializer = FileSerializer(data=file_data)
-                    if file_serializer.is_valid(raise_exception=True):
-                        file_serializer.save()
+#         # Handle file uploads
+#         if request.FILES:
+#             # files = dict((request.FILES).lists()).get('files', None)
+#             files = request.FILES.getlist('files')
+#             # files = request.FILES.getlist('files')
+#             if files:
+#                 for file in files:
+#                     file_data = {
+#                         "attachment": attachment_instance.pk,
+#                         "files": file
+#                     }
+#                     file_serializer = FileSerializer(data=file_data)
+#                     if file_serializer.is_valid(raise_exception=True):
+#                         file_serializer.save()
 
-        # Return the response with the client data
-        return Response(AttachmentSerializer(attachment_instance).data, status=status.HTTP_201_CREATED)
+#         # Return the response with the client data
+#         return Response(AttachmentSerializer(attachment_instance).data, status=status.HTTP_201_CREATED)
 
-    return Response(attch_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#     return Response(attch_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['POST', 'GET'])
-def edit_attach(request, pk, attach_pk):
-    client = Client.objects.get(id=pk)
-    attach = Attachment.objects.get(id=attach_pk)
-    attach_serializer = AttachmentSerializer(instance=attach, data= request.data)
-    if request.method == 'POST':
-        if attach_serializer.is_valid():
-            attach_serializer.save(client=client)
-            return Response({'Message':'Attachment Updated'})
-        return Response({'Error':'Fail to update attachment'}, status=status.HTTP_400_BAD_REQUEST)
-    elif request.method == 'GET':
-        attach_ser = AttachmentSerializer(attach)
-        return Response(attach_ser.data)
+# @api_view(['POST', 'GET'])
+# def edit_attach(request, pk, attach_pk):
+#     client = Client.objects.get(id=pk)
+#     attach = Attachment.objects.get(id=attach_pk)
+#     attach_serializer = AttachmentSerializer(instance=attach, data= request.data)
+#     if request.method == 'POST':
+#         if attach_serializer.is_valid():
+#             attach_serializer.save(client=client)
+#             return Response({'Message':'Attachment Updated'})
+#         return Response({'Error':'Fail to update attachment'}, status=status.HTTP_400_BAD_REQUEST)
+#     elif request.method == 'GET':
+#         attach_ser = AttachmentSerializer(attach)
+#         return Response(attach_ser.data)
 
-@api_view(['GET'])
-def list_attach(request,pk):
-    client = Client.objects.get(id=pk)
-    if request.method == 'GET':
-        list_attach = Attachment.objects.filter(client=client)
-        attach = AttachmentSerializer(list_attach, many=True)
-        print(attach)
-        return Response(attach.data)
+# @api_view(['GET'])
+# def list_attach(request,pk):
+#     client = Client.objects.get(id=pk)
+#     if request.method == 'GET':
+#         list_attach = Attachment.objects.filter(client=client)
+#         attach = AttachmentSerializer(list_attach, many=True)
+#         print(attach)
+#         return Response(attach.data)
 
-@api_view(['DELETE'])
-def delete_attach(request,pk, attach_pk):
-    client = Client.objects.get(id=pk)
-    attach = Attachment.objects.get(id=attach_pk)
-    if request.method == 'DELETE':
-        attach.delete()
-        return Response({'Message':'Attachment Deleted'})
-    return Response({'Error':'Fail to delete'}, status=status.HTTP_400_BAD_REQUEST)
+# @api_view(['DELETE'])
+# def delete_attach(request,pk, attach_pk):
+#     client = Client.objects.get(id=pk)
+#     attach = Attachment.objects.get(id=attach_pk)
+#     if request.method == 'DELETE':
+#         attach.delete()
+#         return Response({'Message':'Attachment Deleted'})
+#     return Response({'Error':'Fail to delete'}, status=status.HTTP_400_BAD_REQUEST)
 
 # ***********************************************Bank View's******************************************************
 
@@ -711,7 +736,7 @@ def detail_client(request,pk):
     view_customer = Customer.objects.filter(client=client)
     view_income = IncomeTaxDocument.objects.filter(client=client)
     view_pf = PF.objects.filter(client=client)
-    view_attachment = Attachment.objects.filter(client=client)
+    # view_attachment = Attachment.objects.filter(client=client)
     # view_branchdoc = BranchDocument.objects.filter()
 
     client_serializer = ClientSerializer(client)
@@ -723,7 +748,7 @@ def detail_client(request,pk):
     customer_serializer = CustomerVendorSerializer(view_customer, many=True)
     income_serializer = IncomeTaxDocumentSerializer(view_income, many=True)
     pf_serializer = PfSerializer(view_pf, many=True)
-    attachment_serializer = AttachmentSerializer(view_attachment, many=True)
+    # attachment_serializer = AttachmentSerializer(view_attachment, many=True)
 
     data ={
         'Client' : client_serializer.data,
@@ -735,7 +760,7 @@ def detail_client(request,pk):
         'Customer or Vendor' : customer_serializer.data,
         'Income Tax Document' : income_serializer.data,
         'PF' : pf_serializer.data,
-        'Attachment' : attachment_serializer.data
+        # 'Attachment' : attachment_serializer.data
     }
     return Response(data)
 

@@ -14,10 +14,10 @@ urlpatterns = [
     path('list-client',view=list_client, name='list-client'),
     path('detail-client/<int:pk>', view=detail_client, name='detail-client'),
 
-    path('create-attach/<int:pk>', view=create_attachment, name='create-attach'),
-    path('edit-attach/<int:pk>/<int:attach_pk>',view=edit_attach, name='edit-attach'),
-    path('list-attach/<int:pk>',view=list_attach, name='list-attach'),
-    path('delete-attach/<int:pk>/<int:attach_pk>', view=delete_attach, name='delete-bank'),
+    # path('create-attach/<int:pk>', view=create_attachment, name='create-attach'),
+    # path('edit-attach/<int:pk>/<int:attach_pk>',view=edit_attach, name='edit-attach'),
+    # path('list-attach/<int:pk>',view=list_attach, name='list-attach'),
+    # path('delete-attach/<int:pk>/<int:attach_pk>', view=delete_attach, name='delete-bank'),
 
     path('create-bank/<int:pk>',view=create_bank, name='create-bank'),
     path('edit-bank/<int:pk>/<int:bank_pk>',view=edit_bank, name='edit-bank'),

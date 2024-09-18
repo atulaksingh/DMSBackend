@@ -4,16 +4,16 @@ from api.models import *
 # Register your models here.
 admin.site.register(Client)
 
-class FileInline(admin.StackedInline):
-    model = File
-    extra = 1
+# class FileInline(admin.StackedInline):
+#     model = File
+#     extra = 1
 
-class AttachmentAdmin(admin.ModelAdmin):
-    inlines = [FileInline]
-    list_display = ('file_name', 'status', 'client')
-    search_fields = ('file_name', 'client_name')
+# class AttachmentAdmin(admin.ModelAdmin):
+#     inlines = [FileInline]
+#     list_display = ('file_name', 'status', 'client')
+#     search_fields = ('file_name', 'client_name')
 
-admin.site.register(Attachment, AttachmentAdmin)
+# admin.site.register(Attachment, AttachmentAdmin)
 admin.site.register(File)
 admin.site.register(CompanyDocument)
 admin.site.register(CustomUser)
