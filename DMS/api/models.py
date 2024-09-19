@@ -7,11 +7,12 @@ import os
 #File Model
 class File(models.Model):
     file = models.FileField(upload_to='uploads/', blank=True, null=True)
+    file_name = models.CharField(max_length=100, null=True, blank=True)
 
-    def __str__(self):
-        if self.file:
-            return self.file.name  # Return the file name in the admin panel
-        return 'No file'
+    # def __str__(self):
+    #     if self.file:
+    #         return self.file_name  # Return the file name in the admin panel
+    #     return 'No file'
 
 
 # Client Model
@@ -39,8 +40,9 @@ class Client(models.Model):
     business_detail = models.TextField(null=True, blank=True)
     # mom = models.ManyToManyField(File, related_name='mom_files', blank=True)
     # pf = models.ManyToManyField(File, related_name='pf_files', blank=True)
-    file_name = models.CharField(max_length=100, null=True, blank=True)
+    # file_name = models.CharField(max_length=100, null=True, blank=True)
     status = models.CharField(max_length=40, null=True, blank=True)
+    file_names = models.ManyToManyField(File, related_name='file_names', blank=True)
     files = models.ManyToManyField(File, related_name='files', blank=True)
 
     def __str__(self):

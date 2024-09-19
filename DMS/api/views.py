@@ -26,6 +26,7 @@ from rest_framework.mixins import CreateModelMixin
 
 # *******************************************Client View's***********************************************
 
+#client view
 class create_client(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
