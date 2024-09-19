@@ -15,7 +15,7 @@ class FileSerializer(serializers.ModelSerializer):
 
 class ClientSerializer(serializers.ModelSerializer):
     files = serializers.SerializerMethodField()
-
+            
     class Meta:
         model = Client
         fields = ['id', 'client_name', 'entity_type', 'date_of_incorporation', 'contact_person', 'designation', 'contact_no_1', 'contact_no_2', 'email', 'business_detail', 'status', 'files']
@@ -24,8 +24,15 @@ class ClientSerializer(serializers.ModelSerializer):
         return FileSerializer(obj.files.all(), many=True).data
 
     def create(self, validated_data):
-        files = self.context['request'].FILES.getlist('files')
-
+        # Get the list of files and file names from the request
+        files = self.context['request'].FILES.getlist('files[]')
+        file_names = self.context['request'].data.getlist('file_names[]')
+    
+        # Ensure that the number of files matches the number of file names
+        if len(files) != len(file_names):
+            raise serializers.ValidationError("Each file must have a corresponding file name.")
+    
+        # Create the client instance
         client_instance = Client.objects.create(
             client_name=validated_data.get('client_name'),
             entity_type=validated_data.get('entity_type'),
@@ -38,15 +45,13 @@ class ClientSerializer(serializers.ModelSerializer):
             business_detail=validated_data.get('business_detail'),
             status=validated_data.get('status'),
         )
-
+    
         # Handle uploaded files and associate them with the client
-        for file in files:
-            uploaded_file = File.objects.create(file=file, file_name=file.name, client=client_instance)
-            client_instance.files.add(uploaded_file)
-
+        for file, file_name in zip(files, file_names):
+            File.objects.create(file=file, file_name=file_name, client=client_instance)
+    
         return client_instance
-
-
+    
 
 # # Attachment Serializer
 # class AttachmentSerializer(serializers.ModelSerializer):
