@@ -26,38 +26,17 @@ from rest_framework.mixins import CreateModelMixin
 
 # *******************************************Client View's***********************************************
 
-@api_view(['POST'])
-def create_client(request):
-    instance_data = request.data
-    data = {key: value for key, value in instance_data.items()}
+class create_client(APIView):
+    parser_classes = [MultiPartParser, FormParser]
 
-    client_serializer = ClientSerializer(data=data)
-    if client_serializer.is_valid(raise_exception=True):
-        client_instance = client_serializer.save()
-        print(client_serializer.data)
-
-        # Handle file uploads
-        if request.FILES:
-            files = dict((request.FILES).lists()).get('files', None)
-            # files = request.FILES.getlist('files')
-            # files = request.FILES.getlist('files')
-            if files:
-                for file in files:
-                    file_data = {
-                        "client": client_instance.pk,
-                        "files": file
-                    }
-                    file_serializer = FileSerializer(data=file_data)
-                    if file_serializer.is_valid(raise_exception=True):
-                        file_serializer.save()
-                        print(file_serializer.data)
-
-        # Return the response with the client data
-        return Response(ClientSerializer(client_instance).data, status=status.HTTP_201_CREATED)
-
-    return Response(client_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
+    def post(self, request, *args, **kwargs):
+        serializer = ClientSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            # print(serializer.data)
+            print('data', request.FILES)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def list_client(request):

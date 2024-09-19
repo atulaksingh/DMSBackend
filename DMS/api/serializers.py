@@ -5,27 +5,46 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 
 
-# File serializer
+# File Serializer
 class FileSerializer(serializers.ModelSerializer):
-    # file_name = serializers.CharField(required=False)
-
     class Meta:
         model = File
-        fields = ['client','files']
-
+        fields = ['file']
 
 # Client Serializer
+
 class ClientSerializer(serializers.ModelSerializer):
     files = serializers.SerializerMethodField()
 
     class Meta:
         model = Client
-        fields = ['id','client_name','entity_type','date_of_incorporation','contact_person','designation','contact_no_1','contact_no_2','email','business_detail', 'file_name','status','files']
-
+        fields = ['id','client_name','entity_type','date_of_incorporation','contact_person','designation','contact_no_1','contact_no_2','email','business_detail','file_name','status', 'files']
 
     def get_files(self, obj):
-        files = File.objects.filter(client=obj)
-        return FileSerializer(files, many=True).data
+        return FileSerializer(obj.files.all(), many=True).data
+
+    def create(self, validated_data):
+        files = self.context['request'].FILES.getlist('files')
+
+        file_instance = Client.objects.create(
+            client_name=validated_data.get('client_name'),
+            entity_type=validated_data.get('entity_type'),
+            date_of_incorporation=validated_data.get('date_of_incorporation'),
+            contact_person=validated_data.get('contact_person'),
+            designation=validated_data.get('designation'),
+            contact_no_1=validated_data.get('contact_no_1'),
+            contact_no_2=validated_data.get('contact_no_2'),
+            email=validated_data.get('email'),
+            business_detail=validated_data.get('business_detail'),
+            file_name=validated_data.get('file_name'),
+            status=validated_data.get('status'),
+        )
+
+        # Handle mom files
+        for file in files:
+            uploaded_file = File.objects.create(file=file)
+            file_instance.files.add(uploaded_file)
+        return file_instance
 
 # # Attachment Serializer
 # class AttachmentSerializer(serializers.ModelSerializer):
