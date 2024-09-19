@@ -12,9 +12,9 @@ from api.models import *
 #     # list_display = ('file_name', 'status', 'client')
 #     # search_fields = ('file_name', 'client_name')
 
-admin.site.register(Client)
+# admin.site.register(Client)
 # admin.site.register(Attachment, AttachmentAdmin)
-admin.site.register(File)
+# admin.site.register(File)
 admin.site.register(CompanyDocument)
 admin.site.register(CustomUser)
 admin.site.register(Branch)
@@ -25,3 +25,10 @@ admin.site.register(Customer)
 # admin.site.register(PurchaseInvoice)
 # admin.site.register(BranchDocument)
 
+class FileInline(admin.TabularInline):
+    model = File
+    extra = 1  # Number of empty forms to display
+
+@admin.register(Client)
+class ClientAdmin(admin.ModelAdmin):
+    inlines = [FileInline]

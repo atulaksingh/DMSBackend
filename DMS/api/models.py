@@ -8,6 +8,7 @@ import os
 class File(models.Model):
     file = models.FileField(upload_to='uploads/', blank=True, null=True)
     file_name = models.CharField(max_length=100, null=True, blank=True)
+    client = models.ForeignKey('Client', related_name='files', on_delete=models.CASCADE)
 
     # def __str__(self):
     #     if self.file:
@@ -43,7 +44,8 @@ class Client(models.Model):
     # file_name = models.CharField(max_length=100, null=True, blank=True)
     status = models.CharField(max_length=40, null=True, blank=True)
     # file_names = models.ManyToManyField(File, related_name='file_names', blank=True)
-    files = models.ManyToManyField(File, related_name='files', blank=True)
+    # files = models.ManyToManyField(File, related_name='files', blank=True)
+    
 
     def __str__(self):
         return self.client_name  if self.client_name else 'No name provided'

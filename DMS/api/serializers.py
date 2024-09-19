@@ -15,26 +15,18 @@ class FileSerializer(serializers.ModelSerializer):
 
 class ClientSerializer(serializers.ModelSerializer):
     files = serializers.SerializerMethodField()
-    # file_names = serializers.SerializerMethodField()
 
     class Meta:
         model = Client
-        fields = ['id','client_name','entity_type','date_of_incorporation','contact_person','designation','contact_no_1','contact_no_2','email','business_detail','status','files']
+        fields = ['id', 'client_name', 'entity_type', 'date_of_incorporation', 'contact_person', 'designation', 'contact_no_1', 'contact_no_2', 'email', 'business_detail', 'status', 'files']
 
     def get_files(self, obj):
         return FileSerializer(obj.files.all(), many=True).data
 
-    # def get_file_names(self,obj):
-    #     return FileSerializer(obj.file_names.all(), many=True).data
-
     def create(self, validated_data):
         files = self.context['request'].FILES.getlist('files')
-        file_name = self.context['request'].data.get('file_name')  # Assuming a single file_name for all files
 
-        # if not file_name:  # Check if file_name ,was provided
-        #     raise serializers.ValidationError("file_name is required")
-
-        file_instance = Client.objects.create(
+        client_instance = Client.objects.create(
             client_name=validated_data.get('client_name'),
             entity_type=validated_data.get('entity_type'),
             date_of_incorporation=validated_data.get('date_of_incorporation'),
@@ -44,21 +36,15 @@ class ClientSerializer(serializers.ModelSerializer):
             contact_no_2=validated_data.get('contact_no_2'),
             email=validated_data.get('email'),
             business_detail=validated_data.get('business_detail'),
-            # file_name=validated_data.get('file_name'),
             status=validated_data.get('status'),
         )
 
-        # Handle mom files
+        # Handle uploaded files and associate them with the client
         for file in files:
-            uploaded_file = File.objects.create(file=file, file_name=file_name)
-            file_instance.files.add(uploaded_file)
+            uploaded_file = File.objects.create(file=file, file_name=file.name, client=client_instance)
+            client_instance.files.add(uploaded_file)
 
-
-        # for file_name in file_names:
-        #     uploaded_name = File.objects.create(file_name=file_name)
-        #     file_instance.file_names.add(uploaded_name)
-
-        return file_instance
+        return client_instance
 
 
 
