@@ -31,8 +31,8 @@ class ClientSerializer(serializers.ModelSerializer):
         files = self.context['request'].FILES.getlist('files')
         file_name = self.context['request'].data.get('file_name')  # Assuming a single file_name for all files
 
-        if not file_name:  # Check if file_name was provided
-            raise serializers.ValidationError("file_name is required")
+        # if not file_name:  # Check if file_name ,was provided
+        #     raise serializers.ValidationError("file_name is required")
 
         file_instance = Client.objects.create(
             client_name=validated_data.get('client_name'),

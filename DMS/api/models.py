@@ -42,7 +42,7 @@ class Client(models.Model):
     # pf = models.ManyToManyField(File, related_name='pf_files', blank=True)
     # file_name = models.CharField(max_length=100, null=True, blank=True)
     status = models.CharField(max_length=40, null=True, blank=True)
-    file_names = models.ManyToManyField(File, related_name='file_names', blank=True)
+    # file_names = models.ManyToManyField(File, related_name='file_names', blank=True)
     files = models.ManyToManyField(File, related_name='files', blank=True)
 
     def __str__(self):
