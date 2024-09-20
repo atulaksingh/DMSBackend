@@ -46,18 +46,30 @@ def list_client(request):
         serializers = ClientSerializer(client, many=True)
         return Response(serializers.data)
 
-@api_view(['POST', 'GET'])
-def edit_client(request,pk):
-    client = Client.objects.get(id=pk)
-    client_serializer = ClientSerializer(instance=client, data=request.data)
-    if request.method == 'POST':
-        if client_serializer.is_valid():
-            client_serializer.save()
-            return Response({'Message':'Client Updated'})
-        return Response(client_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-    elif request.method == 'GET':
-        client_ser = ClientSerializer(client)
-        return Response(client_ser.data)
+@api_view(['GET', 'PUT', 'PATCH'])
+def edit_client(request, pk):
+    try:
+        # Get the specific client instance
+        client = Client.objects.get(pk=pk)
+    except Client.DoesNotExist:
+        return Response({"error": "Client not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    # Handle GET request - return client details
+    if request.method == 'GET':
+        serializer = ClientSerializer(client)
+        return Response(serializer.data)
+
+    # Handle PUT or PATCH request - update client details and files
+    elif request.method in ['PUT', 'PATCH']:
+        # `partial=True` allows updating specific fields only in PATCH requests
+        partial = request.method == 'PATCH'
+        serializer = ClientSerializer(client, data=request.data, partial=partial, context={'request': request})
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['DELETE'])
 def delete_client(request,pk):
