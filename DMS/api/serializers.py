@@ -3,53 +3,71 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from api.models import *
 from rest_framework_simplejwt.tokens import RefreshToken
 
+import json
 
 
 # File Serializer
 class FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = File
-        fields = ['file','file_name']
+        fields = ['id', 'files', 'fileinfo']
 
-# Client Serializer
+
+class FileInfoSerializer(serializers.ModelSerializer):
+    files = FileSerializer(many=True, required=False)
+
+    class Meta:
+        model = FileInfo
+        fields = ['id', 'document_type', 'login', 'password', 'remark', 'files']
+
+    def create(self, validated_data):
+        files_data = validated_data.pop('files', [])
+        file_info = FileInfo.objects.create(**validated_data)
+        for file_data in files_data:
+            File.objects.create(fileinfo=file_info, **file_data)
+        return file_info
+
+    def update(self, instance, validated_data):
+        files_data = validated_data.pop('files', [])
+        instance.document_type = validated_data.get('document_type', instance.document_type)
+        instance.login = validated_data.get('login', instance.login)
+        instance.password = validated_data.get('password', instance.password)
+        instance.remark = validated_data.get('remark', instance.remark)
+        instance.save()
+
+        # Clear existing files and add new ones
+        instance.files.all().delete()
+        for file_data in files_data:
+            File.objects.create(fileinfo=instance, **file_data)
+        return instance
+
 
 class ClientSerializer(serializers.ModelSerializer):
-    files = serializers.SerializerMethodField()
+    fileinfos = FileInfoSerializer(many=True, required=False)
 
     class Meta:
         model = Client
-        fields = ['id', 'client_name', 'entity_type', 'date_of_incorporation', 'contact_person', 'designation', 'contact_no_1', 'contact_no_2', 'email', 'business_detail', 'status', 'files']
-
-    def get_files(self, obj):
-        return FileSerializer(obj.files.all(), many=True).data
+        fields = ['id', 'client_name', 'entity_type', 'date_of_incorporation', 
+                  'contact_person', 'designation', 'contact_no_1', 
+                  'contact_no_2', 'email', 'business_detail', 
+                  'status', 'fileinfos']
 
     def create(self, validated_data):
-        files = self.context['request'].FILES.getlist('files[]')
-        file_names = self.context['request'].data.getlist('file_names[]')
+        fileinfos_data = validated_data.pop('fileinfos', [])
+        client = Client.objects.create(**validated_data)
 
-        if len(files) != len(file_names):
-            raise serializers.ValidationError("Each file must have a corresponding file name.")
+        for fileinfo_data in fileinfos_data:
+            # Only create FileInfo if required fields are present
+            if any(fileinfo_data.values()):
+                files_data = fileinfo_data.pop('files', [])
+                file_info = FileInfo.objects.create(client=client, **fileinfo_data)
+                for file_data in files_data:
+                    File.objects.create(fileinfo=file_info, **file_data)
 
-        client_instance = Client.objects.create(
-            client_name=validated_data.get('client_name'),
-            entity_type=validated_data.get('entity_type'),
-            date_of_incorporation=validated_data.get('date_of_incorporation'),
-            contact_person=validated_data.get('contact_person'),
-            designation=validated_data.get('designation'),
-            contact_no_1=validated_data.get('contact_no_1'),
-            contact_no_2=validated_data.get('contact_no_2'),
-            email=validated_data.get('email'),
-            business_detail=validated_data.get('business_detail'),
-            status=validated_data.get('status'),
-        )
-
-        for file, file_name in zip(files, file_names):
-            File.objects.create(file=file, file_name=file_name, client=client_instance)
-
-        return client_instance
+        return client
 
     def update(self, instance, validated_data):
-        # Update the client's fields
+        fileinfos_data = validated_data.pop('fileinfos', [])
         instance.client_name = validated_data.get('client_name', instance.client_name)
         instance.entity_type = validated_data.get('entity_type', instance.entity_type)
         instance.date_of_incorporation = validated_data.get('date_of_incorporation', instance.date_of_incorporation)
@@ -60,23 +78,40 @@ class ClientSerializer(serializers.ModelSerializer):
         instance.email = validated_data.get('email', instance.email)
         instance.business_detail = validated_data.get('business_detail', instance.business_detail)
         instance.status = validated_data.get('status', instance.status)
-
-        # Update or add new files
-        files = self.context['request'].FILES.getlist('files[]')
-        file_names = self.context['request'].data.getlist('file_names[]')
-
-        if len(files) != len(file_names):
-            raise serializers.ValidationError("Each file must have a corresponding file name.")
-
-        # Remove old files if necessary
-        instance.files.all().delete()
-
-        # Add new files
-        for file, file_name in zip(files, file_names):
-            File.objects.create(file=file, file_name=file_name, client=instance)
-
         instance.save()
+
+        # Clear existing fileinfos and add new ones
+        instance.fileinfos.all().delete()
+        for fileinfo_data in fileinfos_data:
+            # Only create FileInfo if required fields are present
+            if any(fileinfo_data.values()):
+                files_data = fileinfo_data.pop('files', [])
+                file_info = FileInfo.objects.create(client=instance, **fileinfo_data)
+                for file_data in files_data:
+                    File.objects.create(fileinfo=file_info, **file_data)
+
         return instance
+
+    # def create(self, validated_data):
+    #     files_data = validated_data.pop('files')
+    #     files_metadata = self.context['request'].POST.getlist('files_metadata[]')
+
+    #     client = Client.objects.create(**validated_data)
+
+    #     for file_data, metadata in zip(files_data, files_metadata):
+    #         file_metadata = json.loads(metadata)
+
+    #         File.objects.create(
+    #             client=client,
+    #             files=file_data.files,  # Use the file object from the request
+    #             document_type=file_metadata.get('files_name'),
+    #             login=file_metadata.get('login'),
+    #             password=file_metadata.get('password'),
+    #             remark=file_metadata.get('remark')
+    #         )
+
+    #     return client
+
 
 # # Attachment Serializer
 # class AttachmentSerializer(serializers.ModelSerializer):

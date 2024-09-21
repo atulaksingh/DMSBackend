@@ -21,23 +21,96 @@ from django.views.generic import View
 from django.shortcuts import render
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import CreateModelMixin
+from rest_framework import generics
+
 # from django.views.decorators.csrf import csrf_exempt
 
 
 # *******************************************Client View's***********************************************
 
 #client view
-class create_client(APIView):
-    parser_classes = [MultiPartParser, FormParser]
+# class create_client(APIView):
+#     parser_classes = [MultiPartParser, FormParser]
 
-    def post(self, request, *args, **kwargs):
-        serializer = ClientSerializer(data=request.data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            # print(serializer.data)
-            print('data', request.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#     def post(self, request, *args, **kwargs):
+
+#         serializer = ClientSerializer(data=request.data, context={'request': request})
+        
+#         if not serializer.is_valid():
+#             print(serializer.errors)
+#         if serializer.is_valid():
+#             serializer.save()
+#             # print(serializer.data)
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# @api_view(['POST'])
+# def create_client(request):
+#     if request.method == 'POST':
+#         client_serializer = ClientSerializer(data=request.data)
+
+#         if client_serializer.is_valid():
+#             print("Received data:", request.data)
+
+#             client = client_serializer.save()
+
+#             # Handle fileinfos
+#             fileinfos_data = request.POST.getlist('fileinfos[]')
+
+#             for index, fileinfo_str in enumerate(fileinfos_data):
+#                 if fileinfo_str:  # Ensure we only process non-empty strings
+#                     fileinfo_data = json.loads(fileinfo_str)  # Convert JSON string to dict
+#                     # Retrieve files for the current index
+#                     files = request.FILES.getlist(f'fileinfos[{index}].files[]')
+
+#                     # Create FileInfo instance
+#                     fileinfo = FileInfo.objects.create(client=client, **fileinfo_data)
+
+#                     # Create File instances
+#                     for file in files:
+#                         File.objects.create(fileinfo=fileinfo, files=file)
+
+#             return Response(client_serializer.data, status=201)
+
+#         return Response(client_serializer.errors, status=400)
+
+
+@api_view(['POST'])
+def create_client(request):
+    if request.method == 'POST':
+        print("Received data:", request.data)  # Debugging output
+        client_serializer = ClientSerializer(data=request.data)
+
+        if client_serializer.is_valid():
+            client = client_serializer.save()
+            print('clien_serializer',client)
+            # Access fileinfos data
+            fileinfos_data = []
+            for key in request.POST.keys():
+                if key.startswith('fileinfos['):
+                    # Parse the index from the key
+                    index = key.split('[')[1].split(']')[0]
+                    if index.isdigit():
+                        fileinfo_str = request.POST.get(f'fileinfos[{index}]')
+                        if fileinfo_str:
+                            fileinfo_data = json.loads(fileinfo_str)
+                            files = request.FILES.getlist(f'fileinfos[{index}].files[]')
+                            fileinfos_data.append({
+                                'fileinfo': fileinfo_data,
+                                'files': files
+                            })
+            print('clien_serializer222',fileinfos_data)
+
+            # Save FileInfo and File instances
+            for entry in fileinfos_data:
+                fileinfo = FileInfo.objects.create(client=client, **entry['fileinfo'])
+                for file in entry['files']:
+                    File.objects.create(fileinfo=fileinfo, files=file)
+
+            return Response(client_serializer.data, status=201)
+
+        return Response(client_serializer.errors, status=400)
+
+
 
 @api_view(['GET'])
 def list_client(request):

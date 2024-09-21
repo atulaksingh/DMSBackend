@@ -3,35 +3,44 @@ from django.contrib.auth.models import AbstractUser, Group, Permission
 import os
 
 # Create your models here.
-
-#File Model
 class File(models.Model):
-    file = models.FileField(upload_to='uploads/', blank=True, null=True)
-    file_name = models.CharField(max_length=100, null=True, blank=True)
-    client = models.ForeignKey('Client', related_name='files', on_delete=models.CASCADE)
-
+    files = models.FileField(upload_to='files', null=True, blank=True)
+    fileinfo = models.ForeignKey('FileInfo', on_delete=models.CASCADE, related_name='files', null=True, blank=True)
     # def __str__(self):
-    #     if self.file:
-    #         return self.file_name  # Return the file name in the admin panel
-    #     return 'No file'
-
-
-# Client Model
-class Client(models.Model):
-    entites = [
-       ('proprietorship','Proprietorship'),
-       ('partnership', 'Partnership'),
-       ('llp', 'LLP'),
-       ('opc', 'OPC'),
-       ('huf', 'HUF'),
-       ('private ltd', 'Private Ltd'),
-       ('Public Limited', 'public limited'),
-       ('trust', 'Trust')
+    #     return self.files.name if self.files.name else 'No name provided'
+class FileInfo(models.Model):
+    document_type_choices = [
+        ('pan', 'PAN'),
+        ('tan', 'TAN'),
+        ('msme', 'MSME'),
+        ('udym', 'UDYM'),
+        ('mca', 'MCA'),
+        ('pf', 'PF'),
+        ('esic', 'ESIC'),
+        ('other', 'OTHER'),
     ]
+    client = models.ForeignKey('Client', on_delete=models.CASCADE, related_name='fileinfos', null=True, blank=True)
+    document_type = models.CharField(max_length=100, choices=document_type_choices, null=True, blank=True)
+    login = models.CharField(max_length=100, null=True, blank=True)
+    password = models.CharField(max_length=100, null=True, blank=True)
+    remark = models.TextField(null=True, blank=True)
 
+
+
+
+class Client(models.Model):
+    entities_choices = [
+        ('proprietorship', 'Proprietorship'),
+        ('partnership', 'Partnership'),
+        ('llp', 'LLP'),
+        ('opc', 'OPC'),
+        ('huf', 'HUF'),
+        ('private ltd', 'Private Ltd'),
+        ('public limited', 'Public Limited'),
+        ('trust', 'Trust'),
+    ]
     client_name = models.CharField(max_length=100, null=True, blank=True)
-    entity_type = models.CharField(max_length=100, choices=entites, null=True, blank=True)
-    # default_share = models.IntegerField(default=100, null=True, blank=True)
+    entity_type = models.CharField(max_length=100, choices=entities_choices, null=True, blank=True)
     date_of_incorporation = models.DateField(null=True, blank=True)
     contact_person = models.CharField(max_length=100, null=True, blank=True)
     designation = models.CharField(max_length=100, null=True, blank=True)
@@ -39,16 +48,10 @@ class Client(models.Model):
     contact_no_2 = models.IntegerField(null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
     business_detail = models.TextField(null=True, blank=True)
-    # mom = models.ManyToManyField(File, related_name='mom_files', blank=True)
-    # pf = models.ManyToManyField(File, related_name='pf_files', blank=True)
-    # file_name = models.CharField(max_length=100, null=True, blank=True)
     status = models.CharField(max_length=40, null=True, blank=True)
-    # file_names = models.ManyToManyField(File, related_name='file_names', blank=True)
-    # files = models.ManyToManyField(File, related_name='files', blank=True)
-    
 
     def __str__(self):
-        return self.client_name  if self.client_name else 'No name provided'
+        return self.client_name if self.client_name else 'No name provided'
 
 # Bank Model
 class Bank(models.Model):
