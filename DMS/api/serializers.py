@@ -47,9 +47,9 @@ class ClientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Client
-        fields = ['id', 'client_name', 'entity_type', 'date_of_incorporation', 
-                  'contact_person', 'designation', 'contact_no_1', 
-                  'contact_no_2', 'email', 'business_detail', 
+        fields = ['id', 'client_name', 'entity_type', 'date_of_incorporation',
+                  'contact_person', 'designation', 'contact_no_1',
+                  'contact_no_2', 'email', 'business_detail',
                   'status', 'fileinfos']
 
     def create(self, validated_data):
@@ -92,38 +92,6 @@ class ClientSerializer(serializers.ModelSerializer):
 
         return instance
 
-    # def create(self, validated_data):
-    #     files_data = validated_data.pop('files')
-    #     files_metadata = self.context['request'].POST.getlist('files_metadata[]')
-
-    #     client = Client.objects.create(**validated_data)
-
-    #     for file_data, metadata in zip(files_data, files_metadata):
-    #         file_metadata = json.loads(metadata)
-
-    #         File.objects.create(
-    #             client=client,
-    #             files=file_data.files,  # Use the file object from the request
-    #             document_type=file_metadata.get('files_name'),
-    #             login=file_metadata.get('login'),
-    #             password=file_metadata.get('password'),
-    #             remark=file_metadata.get('remark')
-    #         )
-
-    #     return client
-
-
-# # Attachment Serializer
-# class AttachmentSerializer(serializers.ModelSerializer):
-#     files = serializers.SerializerMethodField()
-
-#     class Meta:
-#         model = Attachment
-#         fields = ['id', 'client', 'file_name', 'status', 'files']
-
-#     def get_files(self, obj):
-#         files = File.objects.filter(attachment=obj)
-#         return FileSerializer(files, many=True).data
 
 # Bank Serializer
 class BankSerializer(serializers.ModelSerializer):

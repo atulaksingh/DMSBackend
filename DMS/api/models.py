@@ -25,9 +25,6 @@ class FileInfo(models.Model):
     password = models.CharField(max_length=100, null=True, blank=True)
     remark = models.TextField(null=True, blank=True)
 
-
-
-
 class Client(models.Model):
     entities_choices = [
         ('proprietorship', 'Proprietorship'),
@@ -39,6 +36,10 @@ class Client(models.Model):
         ('public limited', 'Public Limited'),
         ('trust', 'Trust'),
     ]
+    status_choices = [
+        ('active','Active'),
+        ('inactive', 'Inactive'),
+    ]
     client_name = models.CharField(max_length=100, null=True, blank=True)
     entity_type = models.CharField(max_length=100, choices=entities_choices, null=True, blank=True)
     date_of_incorporation = models.DateField(null=True, blank=True)
@@ -48,7 +49,7 @@ class Client(models.Model):
     contact_no_2 = models.IntegerField(null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
     business_detail = models.TextField(null=True, blank=True)
-    status = models.CharField(max_length=40, null=True, blank=True)
+    status = models.CharField(max_length=40,choices=status_choices ,null=True, blank=True)
 
     def __str__(self):
         return self.client_name if self.client_name else 'No name provided'
@@ -62,7 +63,6 @@ class Bank(models.Model):
     account_type = models.CharField(max_length=50, null=True, blank=True)
     branch = models.CharField(max_length=100, null=True, blank=True)
     attachment = models.FileField(null=True, blank=True)
-
     def __str__(self):
         return self.bank_name
 

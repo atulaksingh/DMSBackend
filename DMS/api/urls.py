@@ -8,7 +8,7 @@ from rest_framework_simplejwt.views import (
 )
 
 urlpatterns = [
-    path('clients-create', create_client, name='clients-create'), 
+    path('create-client', create_client, name='clients-create'),
     # path('clients-create', ClientCreateView.as_view(), name='client-create'),
 
     path('edit-client/<int:pk>',view=edit_client, name='edit-client'),

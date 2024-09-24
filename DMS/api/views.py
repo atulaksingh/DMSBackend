@@ -28,52 +28,7 @@ from rest_framework import generics
 
 # *******************************************Client View's***********************************************
 
-#client view
-# class create_client(APIView):
-#     parser_classes = [MultiPartParser, FormParser]
-
-#     def post(self, request, *args, **kwargs):
-
-#         serializer = ClientSerializer(data=request.data, context={'request': request})
-        
-#         if not serializer.is_valid():
-#             print(serializer.errors)
-#         if serializer.is_valid():
-#             serializer.save()
-#             # print(serializer.data)
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-# @api_view(['POST'])
-# def create_client(request):
-#     if request.method == 'POST':
-#         client_serializer = ClientSerializer(data=request.data)
-
-#         if client_serializer.is_valid():
-#             print("Received data:", request.data)
-
-#             client = client_serializer.save()
-
-#             # Handle fileinfos
-#             fileinfos_data = request.POST.getlist('fileinfos[]')
-
-#             for index, fileinfo_str in enumerate(fileinfos_data):
-#                 if fileinfo_str:  # Ensure we only process non-empty strings
-#                     fileinfo_data = json.loads(fileinfo_str)  # Convert JSON string to dict
-#                     # Retrieve files for the current index
-#                     files = request.FILES.getlist(f'fileinfos[{index}].files[]')
-
-#                     # Create FileInfo instance
-#                     fileinfo = FileInfo.objects.create(client=client, **fileinfo_data)
-
-#                     # Create File instances
-#                     for file in files:
-#                         File.objects.create(fileinfo=fileinfo, files=file)
-
-#             return Response(client_serializer.data, status=201)
-
-#         return Response(client_serializer.errors, status=400)
-
-
+# ****************************************Frontend create-client api*************************************
 @api_view(['POST'])
 def create_client(request):
     if request.method == 'POST':
@@ -110,6 +65,47 @@ def create_client(request):
 
         return Response(client_serializer.errors, status=400)
 
+# *****************************Backend create-client api*************************************
+# @api_view(['POST'])
+# def create_client(request):
+#     if request.method == 'POST':
+#         print("Received data:", request.data)  # Debugging output
+#         client_serializer = ClientSerializer(data=request.data)
+
+#         if client_serializer.is_valid():
+#             client = client_serializer.save()
+
+#             # Access fileinfos data
+#             fileinfos_data = []
+#             index = 0
+#             while f'fileinfos[{index}].login' in request.POST:
+#                 fileinfo_data = {
+#                     'login': request.POST.get(f'fileinfos[{index}].login'),
+#                     'password': request.POST.get(f'fileinfos[{index}].password'),
+#                     'document_type': request.POST.get(f'fileinfos[{index}].document_type'),
+#                     'remark': request.POST.get(f'fileinfos[{index}].remark'),
+#                 }
+
+#                 files = request.FILES.getlist(f'fileinfos[{index}].files[]')
+
+#                 fileinfos_data.append({
+#                     'fileinfo': fileinfo_data,
+#                     'files': files
+#                 })
+
+#                 index += 1
+
+#             # Save FileInfo and File instances
+#             for entry in fileinfos_data:
+#                 fileinfo = FileInfo.objects.create(client=client, **entry['fileinfo'])
+#                 for file in entry['files']:
+#                     File.objects.create(fileinfo=fileinfo, files=file)
+
+#             print('Data', client_serializer.data)
+
+#             return Response(client_serializer.data, status=201)
+
+#         return Response(client_serializer.errors, status=400)
 
 
 @api_view(['GET'])
@@ -119,29 +115,59 @@ def list_client(request):
         serializers = ClientSerializer(client, many=True)
         return Response(serializers.data)
 
-@api_view(['GET', 'PUT', 'PATCH'])
+
+@api_view(['GET', 'POST'])
 def edit_client(request, pk):
     try:
-        # Get the specific client instance
-        client = Client.objects.get(pk=pk)
+        client = Client.objects.get(id=pk)
     except Client.DoesNotExist:
-        return Response({"error": "Client not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "Client not found"}, status=404)
 
-    # Handle GET request - return client details
+    # Handle GET request: Retrieve the client and pre-populate the frontend form
     if request.method == 'GET':
-        serializer = ClientSerializer(client)
-        return Response(serializer.data)
+        client_serializer = ClientSerializer(client)
+        return Response(client_serializer.data, status=200)
 
-    # Handle PUT or PATCH request - update client details and files
-    elif request.method in ['PUT', 'PATCH']:
-        # `partial=True` allows updating specific fields only in PATCH requests
-        partial = request.method == 'PATCH'
-        serializer = ClientSerializer(client, data=request.data, partial=partial, context={'request': request})
+    # Handle POST request: Update the client and associated FileInfo and File models
+    elif request.method == 'POST':
+        # Update client fields
+        client_serializer = ClientSerializer(client, data=request.data)
 
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if client_serializer.is_valid():
+            client_serializer.save()
+
+            # Access fileinfos data for updating
+            fileinfos_data = []
+            index = 0
+            while f'fileinfos[{index}].login' in request.POST:
+                fileinfo_data = {
+                    'login': request.POST.get(f'fileinfos[{index}].login'),
+                    'password': request.POST.get(f'fileinfos[{index}].password'),
+                    'document_type': request.POST.get(f'fileinfos[{index}].document_type'),
+                    'remark': request.POST.get(f'fileinfos[{index}].remark'),
+                }
+
+                files = request.FILES.getlist(f'fileinfos[{index}].files[]')
+
+                fileinfos_data.append({
+                    'fileinfo': fileinfo_data,
+                    'files': files
+                })
+
+                index += 1
+
+            # Clear existing FileInfos and Files for the client
+            FileInfo.objects.filter(client=client).delete()
+
+            # Save new FileInfo and File instances
+            for entry in fileinfos_data:
+                fileinfo = FileInfo.objects.create(client=client, **entry['fileinfo'])
+                for file in entry['files']:
+                    File.objects.create(fileinfo=fileinfo, files=file)
+
+            return Response(client_serializer.data, status=200)
+
+        return Response(client_serializer.errors, status=400)
 
 
 @api_view(['DELETE'])
@@ -152,72 +178,6 @@ def delete_client(request,pk):
         return Response ({'Message':'Company Deleted'})
     return Response ({'Message':'Fail to delete'}, status=status.HTTP_400_BAD_REQUEST)
 
-# **********************************************Attachment**************************************************
-
-# @api_view(['POST'])
-# @parser_classes([MultiPartParser, FormParser])
-# def create_attachment(request, pk):
-#     client = Client.objects.get(id=pk)
-#     instance_data = request.data
-#     data = {key: value for key, value in instance_data.items()}
-#     data['client'] = client.pk
-
-#     attch_serializer = AttachmentSerializer(data=data)
-#     if attch_serializer.is_valid(raise_exception=True):
-#         attachment_instance = attch_serializer.save(client=client)
-#         print(attch_serializer.data)
-
-#         # Handle file uploads
-#         if request.FILES:
-#             # files = dict((request.FILES).lists()).get('files', None)
-#             files = request.FILES.getlist('files')
-#             # files = request.FILES.getlist('files')
-#             if files:
-#                 for file in files:
-#                     file_data = {
-#                         "attachment": attachment_instance.pk,
-#                         "files": file
-#                     }
-#                     file_serializer = FileSerializer(data=file_data)
-#                     if file_serializer.is_valid(raise_exception=True):
-#                         file_serializer.save()
-
-#         # Return the response with the client data
-#         return Response(AttachmentSerializer(attachment_instance).data, status=status.HTTP_201_CREATED)
-
-#     return Response(attch_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-# @api_view(['POST', 'GET'])
-# def edit_attach(request, pk, attach_pk):
-#     client = Client.objects.get(id=pk)
-#     attach = Attachment.objects.get(id=attach_pk)
-#     attach_serializer = AttachmentSerializer(instance=attach, data= request.data)
-#     if request.method == 'POST':
-#         if attach_serializer.is_valid():
-#             attach_serializer.save(client=client)
-#             return Response({'Message':'Attachment Updated'})
-#         return Response({'Error':'Fail to update attachment'}, status=status.HTTP_400_BAD_REQUEST)
-#     elif request.method == 'GET':
-#         attach_ser = AttachmentSerializer(attach)
-#         return Response(attach_ser.data)
-
-# @api_view(['GET'])
-# def list_attach(request,pk):
-#     client = Client.objects.get(id=pk)
-#     if request.method == 'GET':
-#         list_attach = Attachment.objects.filter(client=client)
-#         attach = AttachmentSerializer(list_attach, many=True)
-#         print(attach)
-#         return Response(attach.data)
-
-# @api_view(['DELETE'])
-# def delete_attach(request,pk, attach_pk):
-#     client = Client.objects.get(id=pk)
-#     attach = Attachment.objects.get(id=attach_pk)
-#     if request.method == 'DELETE':
-#         attach.delete()
-#         return Response({'Message':'Attachment Deleted'})
-#     return Response({'Error':'Fail to delete'}, status=status.HTTP_400_BAD_REQUEST)
 
 # ***********************************************Bank View's******************************************************
 
