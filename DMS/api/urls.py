@@ -9,19 +9,10 @@ from rest_framework_simplejwt.views import (
 
 urlpatterns = [
     path('create-client', create_client, name='clients-create'),
-    # path('clients-create', ClientCreateView.as_view(), name='client-create'),
-
     path('edit-client/<int:pk>',view=edit_client, name='edit-client'),
-
-
     path('delete-client/<int:pk>',view=delete_client, name='delete-client'),
     path('list-client',view=list_client, name='list-client'),
     path('detail-client/<int:pk>', view=detail_client, name='detail-client'),
-
-    # path('create-attach/<int:pk>', view=create_attachment, name='create-attach'),
-    # path('edit-attach/<int:pk>/<int:attach_pk>',view=edit_attach, name='edit-attach'),
-    # path('list-attach/<int:pk>',view=list_attach, name='list-attach'),
-    # path('delete-attach/<int:pk>/<int:attach_pk>', view=delete_attach, name='delete-bank'),
 
     path('create-bank/<int:pk>',view=create_bank, name='create-bank'),
     path('edit-bank/<int:pk>/<int:bank_pk>',view=edit_bank, name='edit-bank'),
@@ -31,6 +22,7 @@ urlpatterns = [
     path('create-owner/<int:pk>',view=create_owner, name='create-owner'),
     path('edit-owner/<int:pk>/<int:owner_pk>',view=edit_owner, name='edit-owner'),
     path('list-owner/<int:pk>',view=list_owner, name='list-owner'),
+    path('single-owner/<int:pk>/<int:owner_pk>',view=single_owner, name='single-owner'),
     path('delete-owner/<int:pk>/<int:owner_pk>',view=delete_owner, name='delete-owner'),
 
     path('user-login', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),

@@ -36,7 +36,7 @@ class FileInfoSerializer(serializers.ModelSerializer):
         instance.save()
 
         # Clear existing files and add new ones
-        instance.files.all().delete()
+        # instance.files.all().delete()
         for file_data in files_data:
             File.objects.create(fileinfo=instance, **file_data)
         return instance
@@ -80,8 +80,6 @@ class ClientSerializer(serializers.ModelSerializer):
         instance.status = validated_data.get('status', instance.status)
         instance.save()
 
-        # Clear existing fileinfos and add new ones
-        instance.fileinfos.all().delete()
         for fileinfo_data in fileinfos_data:
             # Only create FileInfo if required fields are present
             if any(fileinfo_data.values()):
