@@ -181,6 +181,15 @@ def edit_client(request, pk):
         return Response(client_serializer.errors, status=400)
 
 @api_view(['DELETE'])
+def delete_fileinfo(request,pk,fileinfo_pk):
+    if request.method == 'DELETE':
+        client = Client.objects.get(id=pk)
+        fileinfo = FileInfo.objects.get(id=fileinfo_pk, client=client)
+        fileinfo.delete()
+        return Response ({'Message':'Fileinfo Deleted'})
+    return Response ({'Message':'Fail to delete'}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['DELETE'])
 def delete_client(request,pk):
     if request.method == 'DELETE':
         client = Client.objects.get(id=pk)
@@ -214,7 +223,7 @@ def edit_bank(request,pk,bank_pk):
         return Response(bank_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     elif request.method == 'GET':
         bank_ser = BankSerializer(bank)
-        return Response (bank_ser.initial_data)
+        return Response (bank_ser.data)
 
 @api_view(['GET'])
 def list_bank(request, pk):
@@ -224,6 +233,15 @@ def list_bank(request, pk):
         serializers = BankSerializer(bank_list,many=True)
         print(serializers)
         return Response(serializers.data)
+
+@api_view(['GET'])
+def single_bank(request, pk, bank_pk):
+    client = Client.objects.get(id=pk)
+    bank = Bank.objects.get(id=bank_pk, client=client)
+    if request.method == 'GET':
+        serializer = BankSerializer(bank)
+        print(serializer)
+        return Response(serializer.data)
 
 @api_view(['DELETE'])
 def delete_bank(request,pk, bank_pk):
