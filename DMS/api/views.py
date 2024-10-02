@@ -359,7 +359,7 @@ def getUsers(request):
 def dashboarduser(request):
     data = request.data
     try:
-        user = CustomUser.objects.create(first_name=data['fname'],last_name=data['lname'],username=data['email'],
+        user = CustomUser.objects.create(first_name=data['first_name'],last_name=data['last_name'],username=data['email'],
                                      email=data['email'],password=make_password(data['password']), is_active=False)
         # generate token for email sending
         email_subject = "Activate You Account"
@@ -387,7 +387,7 @@ def clientuser(request,pk):
     client = get_object_or_404(Client, id=pk)
     data = request.data
     try:
-        user = CustomUser.objects.create(first_name=data['fname'],last_name=data['lname'],username=data['email'],
+        user = CustomUser.objects.create(first_name=data['first_name'],last_name=data['last_name'],username=data['email'],
                                      email=data['email'],password=make_password(data['password']), is_active=False, client=client)
         # generate token for email sending
         email_subject = "Activate You Account"
@@ -428,8 +428,8 @@ class ActivateAccountView(View):
 @api_view(['POST', 'GET'])
 def edit_clientuser(request, pk, user_pk):
     client = Client.objects.get(id=pk)
-    user = CustomUser.objects.get(id = user_pk)
-    user_serializer = UserSerializerWithToken(data=request.data, instance=user)
+    user = CustomUser.objects.get(id = user_pk, client=client)
+    user_serializer = UserSerializerWithToken(data=request.data, instance=user, partial=True)
     if request.method == 'POST':
         if user_serializer.is_valid():
             user_serializer.save(client=client)
@@ -502,8 +502,8 @@ def edit_companydoc(request,pk,companydoc_pk):
 @api_view(['GET'])
 def list_companydoc(request,pk):
     client = Client.objects.get(id=pk)
-    doc_list = CompanyDocument.objects.filter(client=client)
-    serializer = CompanyDocSerailizer(doc_list,many=True)
+    doc_list = FileInfo.objects.filter(client=client)
+    serializer = FileInfoSerializer(doc_list,many=True)
     print(serializer)
     return Response(serializer.data)
 

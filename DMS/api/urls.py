@@ -34,7 +34,7 @@ urlpatterns = [
     path('user-clientform/<int:pk>', view=clientuser, name='client'),
     path('activate/<uidb64>/<token>',ActivateAccountView.as_view(),name='activate'),
     path('edit-clientuser/<int:pk>/<int:user_pk>', view=edit_clientuser, name='edit-clientuser'),
-    path('user-dashboarduser/<int:user_pk>', view=edit_dashboardUser, name='edit-dashboarduser'),
+    path('edit-dashboarduser/<int:user_pk>', view=edit_dashboardUser, name='edit-dashboarduser'),
     path('delete-clientuser/<int:pk>/<int:user_pk>', view=delete_clientuser, name='delete-clientuser'),
     path('delete-dashboarduser/<int:user_pk>', view=delete_dashboarduser, name='delete-dashboarduser'),
 
