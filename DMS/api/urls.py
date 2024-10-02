@@ -13,6 +13,7 @@ urlpatterns = [
     path('delete-client/<int:pk>',view=delete_client, name='delete-client'),
     path('list-client',view=list_client, name='list-client'),
     path('detail-client/<int:pk>', view=detail_client, name='detail-client'),
+    path('single-fileinfo/<int:pk>/<int:fileinfo_pk>', view=single_fileinfo, name='single-fileinfo'),
     path('delete-fileinfo/<int:pk>/<int:fileinfo_pk>', view=delete_fileinfo, name='delete-fileinfo'),
 
     path('create-bank/<int:pk>',view=create_bank, name='create-bank'),

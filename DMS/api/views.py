@@ -180,6 +180,15 @@ def edit_client(request, pk):
 
         return Response(client_serializer.errors, status=400)
 
+@api_view(['GET'])
+def single_fileinfo(request,pk,fileinfo_pk):
+    client = Client.objects.get(id = pk)
+    fileinfo = FileInfo.objects.get(id=fileinfo_pk, client=client)
+    if request.method == 'GET':
+        serializer = FileInfoSerializer(fileinfo)
+        print(serializer)
+        return Response(serializer.data)
+
 @api_view(['DELETE'])
 def delete_fileinfo(request,pk,fileinfo_pk):
     if request.method == 'DELETE':
