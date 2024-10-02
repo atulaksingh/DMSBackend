@@ -387,7 +387,7 @@ def clientuser(request,pk):
     client = get_object_or_404(Client, id=pk)
     data = request.data
     try:
-        user = CustomUser.objects.create(first_name=data['first_name'],last_name=data['last_name'],username=data['email'],
+        user = CustomUser.objects.create(first_name=data['fname'],last_name=data['lname'],username=data['email'],
                                      email=data['email'],password=make_password(data['password']), is_active=False, client=client)
         # generate token for email sending
         email_subject = "Activate You Account"
@@ -817,10 +817,10 @@ def detail_client(request,pk):
         'Bank' : bank_serializer.data,
         'Owner' : owner_serializer.data,
         'ClientUser' : clientuser.data,
-        'Company Document' : companydoc.data,
+        'Company_Document' : companydoc.data,
         'Branch' : branch_serializer.data,
-        'Customer or Vendor' : customer_serializer.data,
-        'Income Tax Document' : income_serializer.data,
+        'Customer_or_Vendor' : customer_serializer.data,
+        'Income_Tax_Document' : income_serializer.data,
         'PF' : pf_serializer.data,
         # 'Attachment' : attachment_serializer.data
     }
@@ -838,10 +838,10 @@ def detail_branch(request, pk, branch_pk):
     branchdoc_serializer = BranchDocSerailizer(view_branchdoc, many=True)
 
     data = {
-        'Client Name' :client.client_name, # to only retrive client name
+        'Client_Name' :client.client_name, # to only retrive client name
         'Branch' : branch_serializer.data,
-        'Office Location' : officeloaction_serializer.data,
-        'Branch Document' : branchdoc_serializer.data,
+        'Office_Location' : officeloaction_serializer.data,
+        'Branch_Document' : branchdoc_serializer.data,
     }
     return Response(data)
 
