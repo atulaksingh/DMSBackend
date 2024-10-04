@@ -660,37 +660,80 @@ def delete_customer(request,pk, customer_pk):
     return Response({'Error':'Fail to delete Customer or Vendor'},status=status.HTTP_400_BAD_REQUEST)
 
 # **********************************************Branch Document*********************************************
-
 @api_view(['POST'])
-def create_branchdoc(request,pk,branch_pk):
-    client = Client.objects.get(id=pk)
-    branch = Branch.objects.get(id=branch_pk, client=client)
-    if request.method == 'POST':
-        branchdoc_serializer = BranchDocSerailizer(data=request.data)
-        if branchdoc_serializer.is_valid():
-            branchdoc_serializer.save(branch=branch)
-            return Response({'Message':'Branch Document Created', 'Data' : branchdoc_serializer.data}, status=status.HTTP_201_CREATED)
-        return Response(branchdoc_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+@parser_classes([MultiPartParser, FormParser])
+def create_branchdoc(request,branch_pk):
+    branch = Branch.objects.get(id=branch_pk)
+    instance_data = request.data
+    data = {key: value for key, value in instance_data.items()}
 
-@api_view(['POST','GET'])
-def edit_branchdoc(request,pk, branch_pk, branchdoc_pk):
-    client = Client.objects.get(id=pk)
-    branch = Branch.objects.get(id=branch_pk, client=client)
-    branchdoc = BranchDocument.objects.get(id = branchdoc_pk, branch=branch)
-    branchdoc_serializer = BranchDocSerailizer(instance=branchdoc, data=request.data)
+    serializer = BranchDocSerailizer(data=data)
+    if serializer.is_valid(raise_exception=True):
+        doc_instance = serializer.save(branch=branch)
+        print(request.data)
+
+        if request.FILES:
+            files = dict((request.FILES).lists()).get('files',None)
+            # files = request.FILES.getlist('files')
+            if files:
+                for file in files:
+                    file_data = {
+                        'branch_doc' : doc_instance.pk,
+                        'files' : file
+                    }
+                    file_serializer= FilesSerializer(data=file_data)
+                    if file_serializer.is_valid(raise_exception=True):
+                        file_serializer.save()
+
+            return Response(serializer.data)
+    return Response(serializer.errors)
+
+@api_view(['POST', 'GET'])
+@parser_classes([MultiPartParser, FormParser])
+def edit_branchdoc(request, branch_pk, branchdoc_pk):
+    try:
+        branch = Branch.objects.get(id=branch_pk)
+        branchdoc = BranchDocument.objects.get(id=branchdoc_pk, branch=branch)
+    except Branch.DoesNotExist:
+        return Response({'error': 'Branch not found'}, status=status.HTTP_404_NOT_FOUND)
+    except BranchDocument.DoesNotExist:
+        return Response({'error': 'Branch Document not found'}, status=status.HTTP_404_NOT_FOUND)
+
     if request.method == 'POST':
+        # Update branch document fields
+        branchdoc_serializer = BranchDocSerailizer(instance=branchdoc, data=request.data)
         if branchdoc_serializer.is_valid():
             branchdoc_serializer.save(branch=branch)
-            return Response({'Message':'Branch Document updated'})
-        return Response(branchdoc_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            # Handle file updates separately
+            if request.FILES.getlist('files'):
+                # Delete the old files if required
+                Files.objects.filter(branch_doc=branchdoc).delete()
+
+                # Add the new files
+                files = request.FILES.getlist('files')
+                for file in files:
+                    file_data = {
+                        'branch_doc': branchdoc.pk,
+                        'files': file
+                    }
+                    file_serializer = FilesSerializer(data=file_data)
+                    if file_serializer.is_valid():
+                        file_serializer.save()
+                    else:
+                        return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({'Message': 'Branch Document and Files updated successfully'}, status=status.HTTP_200_OK)
+        else:
+            return Response(branchdoc_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     elif request.method == 'GET':
-        branchdoc_ser = BranchDocSerailizer(branchdoc)
-        return Response(branchdoc_ser.data)
+        branchdoc_serializer = BranchDocSerailizer(branchdoc)
+        return Response(branchdoc_serializer.data)
 
 @api_view(['GET'])
-def list_branchdoc(request, pk, branch_pk):
-    client = Client.objects.get(id=pk)
-    branch = Branch.objects.get(id = branch_pk, client=client)
+def list_branchdoc(request, branch_pk):
+    branch = Branch.objects.get(id = branch_pk)
     # branchdoc = BranchDocument.objects.get(id = branchdoc_pk, branch=branch)
     if request.method == 'GET':
         list_branchdoc = BranchDocument.objects.filter(branch=branch)
@@ -698,10 +741,18 @@ def list_branchdoc(request, pk, branch_pk):
         print(branchdoc_serializer)
         return Response(branchdoc_serializer.data)
 
+@api_view(['GET'])
+def single_branchdoc(request, branch_pk, branchdoc_pk):
+    branch = Branch.objects.get(id=branch_pk)
+    doc = BranchDocument.objects.get(id = branchdoc_pk, branch=branch)
+    if request.method == 'GET':
+        ser = BranchDocSerailizer(doc)
+        print(ser)
+        return Response(ser.data)
+
 @api_view(['DELETE'])
-def delete_branchdoc(request, pk ,branch_pk, branchdoc_pk ):
-    client = Client.objects.get(id=pk)
-    branch = Branch.objects.get(id = branch_pk, client=client)
+def delete_branchdoc(request,branch_pk, branchdoc_pk ):
+    branch = Branch.objects.get(id = branch_pk)
     branchdoc = BranchDocument.objects.get(id = branchdoc_pk, branch=branch)
     if request.method == 'DELETE':
         branchdoc.delete()
@@ -849,8 +900,8 @@ def detail_branch(request, pk, branch_pk):
     data = {
         'Client_Name' :client.client_name, # to only retrive client name
         'Branch' : branch_serializer.data,
-        'Office_Location' : officeloaction_serializer.data,
         'Branch_Document' : branchdoc_serializer.data,
+        'Office_Location' : officeloaction_serializer.data,
     }
     return Response(data)
 

@@ -60,10 +60,11 @@ urlpatterns = [
     path('list-customer/<int:pk>',view=list_customer, name='list-customer'),
     path('delete-customer/<int:pk>/<int:customer_pk>', view=delete_customer, name='delete-cutomer'),
 
-    path('create-branchdoc/<int:pk>/<int:branch_pk>', view=create_branchdoc, name='create-branchdoc'),
-    path('edit-branchdoc/<int:pk>/<int:branch_pk>/<int:branchdoc_pk>', view=edit_branchdoc, name='edit-branchdoc'),
-    path('list-branchdoc/<int:pk>/<int:branch_pk>', view=list_branchdoc, name='list-branchdoc'),
-    path('delete-branchdoc/<int:pk>/<int:branch_pk>/<int:branchdoc_pk>', view=delete_branchdoc, name='delete-branchdoc'),
+    path('create-branchdoc/<int:branch_pk>', view=create_branchdoc, name='create-branchdoc'),
+    path('edit-branchdoc/<int:branch_pk>/<int:branchdoc_pk>', view=edit_branchdoc, name='edit-branchdoc'),
+    path('list-branchdoc/<int:branch_pk>', view=list_branchdoc, name='list-branchdoc'),
+    path('single-branchdoc/<int:branch_pk>/<int:branchdoc_pk>', view=single_branchdoc, name='single-branchdoc'),
+    path('delete-branchdoc/<int:branch_pk>/<int:branchdoc_pk>', view=delete_branchdoc, name='delete-branchdoc'),
 
     path('create-incometaxdoc/<int:pk>', view=create_incometaxdoc, name='create-incometaxdoc'),
     path('edit-incometaxdoc/<int:pk>/<int:income_pk>', view=edit_incometaxdoc, name='edit-incometaxdoc'),

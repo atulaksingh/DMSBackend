@@ -112,7 +112,7 @@ class UserSerializerWithToken(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['id','username','email','name','first_name','last_name','ca_admin', 'cus_admin', 'token','client']
+        fields = ['id','username','email','name','first_name','password','last_name','ca_admin', 'cus_admin', 'token','client']
 
     def get_name(self, obj):
         firstname = obj.first_name
@@ -151,11 +151,22 @@ class OfficeLocationSerializer(serializers.ModelSerializer):
         model = OfficeLocation
         fields = '__all__'
 
+class FilesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Files
+        fields = '__all__'
+
 # Branch Document
 class BranchDocSerailizer(serializers.ModelSerializer):
+    files = serializers.SerializerMethodField()
+
     class Meta:
         model = BranchDocument
-        fields = '__all__'
+        fields = ['id','branch','document_type','login','password','remark','files']
+
+    def get_files(self, obj):
+        files = Files.objects.filter(branch_doc=obj)
+        return FilesSerializer(files, many=True).data
 
 # Customer Or Vendor
 class CustomerVendorSerializer(serializers.ModelSerializer):

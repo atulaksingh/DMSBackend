@@ -168,7 +168,11 @@ class BranchDocument(models.Model):
     login = models.CharField(max_length=100, null=True, blank=True)
     password = models.CharField(max_length=100, null=True, blank=True)
     remark = models.TextField(null=True, blank=True)
-    file = models.FileField(null=True, blank=True)
+    # file = models.FileField(null=True, blank=True)
+
+class Files(models.Model):
+    branch_doc = models.ForeignKey(BranchDocument, on_delete=models.CASCADE, null=True, blank=True)
+    files = models.FileField(upload_to='branchfiles',null=True, blank=True)
 
 #Customer or Vendor Model
 class Customer(models.Model):
