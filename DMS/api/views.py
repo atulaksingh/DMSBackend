@@ -23,7 +23,113 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import CreateModelMixin
 from rest_framework import generics
 
-# from django.views.decorators.csrf import csrf_exempt
+from openpyxl import load_workbook
+
+# class ExcelImportView(APIView):
+#     parser_classes = [MultiPartParser]
+
+#     def post(self, request, pk, *args, **kwargs):
+#         # Get the client using the pk from the URL
+#         try:
+#             client = Client.objects.get(pk=pk)
+#         except Client.DoesNotExist:
+#             return Response({"error": "Client not found"}, status=404)
+
+#         file = request.FILES['file']
+
+#         # Load the workbook and select the active worksheet
+#         wb = load_workbook(file)
+#         ws = wb.active
+
+#         pf_entries = []
+
+#         # Iterate through the rows in the Excel file and create PF objects
+#         for row in ws.iter_rows(min_row=2):  # Skip the header row
+#             employee_code = row[0].value
+#             employee_name = row[1].value
+#             # Check if essential fields are not None (you can adjust which fields to check)
+#             if not employee_code or not employee_name:
+#                 continue  # Skip the row if it does not have the essential fields
+
+#             # Get the rest of the values
+#             uan = row[2].value
+#             pf_number = row[3].value
+#             pf_deducted = row[4].value
+#             date_of_joining = row[5].value
+#             status = row[6].value
+#             month = row[7].value
+#             gross_ctc = row[8].value
+#             basic_pay = row[9].value
+#             hra = row[10].value
+#             statutory_bouns = row[11].value
+#             special_allowance = row[12].value
+#             pf = row[13].value
+#             gratutiy = row[14].value
+#             total_gross_salary = row[15].value
+#             number_of_days_in_month = row[16].value
+#             present_days = row[17].value
+#             lwp = row[18].value
+#             leave_adjustment = row[19].value
+#             gender = row[20].value
+#             basic_pay_monthly = row[21].value
+#             hra_monthly = row[22].value
+#             statutory_bonus_monthly = row[23].value
+#             special_allowance_monthly = row[24].value
+#             total_gross_salary_monthly = row[25].value
+#             provident_fund = row[26].value
+#             professional_tax = row[27].value
+#             advance = row[28].value
+#             esic_employee = row[29].value
+#             tds = row[30].value
+#             total_deduction = row[31].value
+#             net_pay = row[32].value
+#             advance_esic_employer_cont = row[33].value
+
+#             # Create the PF object and associate it with the client
+#             pf_entry = PF(
+#                 client=client,
+#                 employee_code=employee_code,
+#                 employee_name=employee_name,
+#                 uan=uan,
+#                 pf_number=pf_number,
+#                 pf_deducted=pf_deducted,
+#                 date_of_joining=date_of_joining,
+#                 status=status,
+#                 month=month,
+#                 gross_ctc=gross_ctc,
+#                 basic_pay=basic_pay,
+#                 hra=hra,
+#                 statutory_bouns=statutory_bouns,
+#                 special_allowance=special_allowance,
+#                 pf=pf,
+#                 gratutiy=gratutiy,
+#                 total_gross_salary=total_gross_salary,
+#                 number_of_days_in_month=number_of_days_in_month,
+#                 present_days=present_days,
+#                 lwp=lwp,
+#                 leave_adjustment=leave_adjustment,
+#                 gender=gender,
+#                 basic_pay_monthly=basic_pay_monthly,
+#                 hra_monthly=hra_monthly,
+#                 statutory_bonus_monthly=statutory_bonus_monthly,
+#                 special_allowance_monthly=special_allowance_monthly,
+#                 total_gross_salary_monthly=total_gross_salary_monthly,
+#                 provident_fund=provident_fund,
+#                 professional_tax=professional_tax,
+#                 advance=advance,
+#                 esic_employee=esic_employee,
+#                 tds=tds,
+#                 total_deduction=total_deduction,
+#                 net_pay=net_pay,
+#                 advance_esic_employer_cont=advance_esic_employer_cont,
+#             )
+#             pf_entry.save()
+#             pf_entries.append(pf_entry)
+
+#         return Response({"status": "success", "data": PfSerializer(pf_entries, many=True).data})
+
+
+
 
 
 # *******************************************Client View's***********************************************
@@ -209,30 +315,101 @@ def delete_client(request,pk):
 
 # ***********************************************Bank View's******************************************************
 
-@api_view(['POST'])
-def create_bank(request, pk):
-    client = get_object_or_404(Client, id=pk)
-    if request.method == 'POST':
-        # client = Client.objects.get(id=client_pk)
-        bank_serializer = BankSerializer(data=request.data)
-        if bank_serializer.is_valid():
-            bank_serializer.save(client=client)
-            return Response({'Message':'Bank Created',"data":bank_serializer.data}, status=status.HTTP_201_CREATED)
-        return Response(bank_serializer.error,status=status.HTTP_400_BAD_REQUEST)
+# @api_view(['POST'])
+# def create_bank(request, pk):
+#     client = get_object_or_404(Client, id=pk)
+#     if request.method == 'POST':
+#         # client = Client.objects.get(id=client_pk)
+#         bank_serializer = BankSerializer(data=request.data)
+#         if bank_serializer.is_valid():
+#             bank_serializer.save(client=client)
+#             return Response({'Message':'Bank Created',"data":bank_serializer.data}, status=status.HTTP_201_CREATED)
+#         return Response(bank_serializer.error,status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['POST','GET'])
-def edit_bank(request,pk,bank_pk):
-    client = get_object_or_404(Client, id=pk)
-    bank = Bank.objects.get(id = bank_pk)
-    bank_serializer = BankSerializer(data=request.data, instance=bank)
+# @api_view(['POST','GET'])
+# def edit_bank(request,pk,bank_pk):
+#     client = get_object_or_404(Client, id=pk)
+#     bank = Bank.objects.get(id = bank_pk)
+#     bank_serializer = BankSerializer(data=request.data, instance=bank)
+#     if request.method == 'POST':
+#         if bank_serializer.is_valid():
+#             bank_serializer.save(client=client)
+#             return Response({'Message':'Bank Updated'})
+#         return Response(bank_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#     elif request.method == 'GET':
+#         bank_ser = BankSerializer(bank)
+#         return Response (bank_ser.data)
+
+@api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
+def create_bank(request,pk):
+    client = Client.objects.get(id=pk)
+    instance_data = request.data
+    data = {key: value for key, value in instance_data.items()}
+
+    serializer = BankSerializer(data=data)
+    if serializer.is_valid(raise_exception=True):
+        bank_instance = serializer.save(client=client)
+        print(request.data)
+
+        if request.FILES:
+            files = dict((request.FILES).lists()).get('files',None)
+            # files = request.FILES.getlist('files')
+            if files:
+                for file in files:
+                    file_data = {
+                        'bank' : bank_instance.pk,
+                        'files' : file
+                    }
+                    file_serializer= FilesSerializer(data=file_data)
+                    if file_serializer.is_valid(raise_exception=True):
+                        file_serializer.save()
+
+            return Response(serializer.data)
+    return Response(serializer.errors)
+
+@api_view(['POST', 'GET'])
+@parser_classes([MultiPartParser, FormParser])
+def edit_bank(request, pk, bank_pk):
+    try:
+        client = Client.objects.get(id=pk)
+        bank = Bank.objects.get(id=bank_pk, client=client)
+    except Client.DoesNotExist:
+        return Response({'error': 'Client not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Bank.DoesNotExist:
+        return Response({'error': 'Bank not found'}, status=status.HTTP_404_NOT_FOUND)
+
     if request.method == 'POST':
+        # Update branch document fields
+        bank_serializer = TDSReturnSerializer(instance=bank, data=request.data)
         if bank_serializer.is_valid():
             bank_serializer.save(client=client)
-            return Response({'Message':'Bank Updated'})
-        return Response(bank_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            # Handle file updates separately
+            if request.FILES.getlist('files'):
+                # Delete the old files if required
+                Files.objects.filter(bank=bank).delete()
+
+                # Add the new files
+                files = request.FILES.getlist('files')
+                for file in files:
+                    file_data = {
+                        'bank': bank.pk,
+                        'files': file
+                    }
+                    file_serializer = FilesSerializer(data=file_data)
+                    if file_serializer.is_valid():
+                        file_serializer.save()
+                    else:
+                        return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({'Message': 'TDS Return and Files updated successfully'}, status=status.HTTP_200_OK)
+        else:
+            return Response(bank_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     elif request.method == 'GET':
-        bank_ser = BankSerializer(bank)
-        return Response (bank_ser.data)
+        serializer = BankSerializer(bank)
+        return Response(serializer.data)
 
 @api_view(['GET'])
 def list_bank(request, pk):
@@ -803,15 +980,118 @@ def delete_incometaxdoc(request,pk,income_pk):
     return Response ({'Message':'Fail to delete Income tax document'}, status=status.HTTP_400_BAD_REQUEST)
 
 #*****************************************************PF*******************************************************
-@api_view(['POST'])
-def create_pf(request,pk):
-    client = Client.objects.get(id = pk)
-    if request.method == 'POST':
-        pf_serializer = PfSerializer(data=request.data)
-        if pf_serializer.is_valid():
-            pf_serializer.save(client=client)
-            return Response({'Message':'Pf created', 'Data' : pf_serializer.data})
-        return Response ({'Error':'Fail to create Pf'},status=status.HTTP_400_BAD_REQUEST)
+# @api_view(['POST'])
+# def create_pf(request,pk):
+#     client = Client.objects.get(id = pk)
+#     if request.method == 'POST':
+#         pf_serializer = PfSerializer(data=request.data)
+#         if pf_serializer.is_valid():
+#             pf_serializer.save(client=client)
+#             return Response({'Message':'Pf created', 'Data' : pf_serializer.data})
+#         return Response ({'Error':'Fail to create Pf'},status=status.HTTP_400_BAD_REQUEST)
+
+class ExcelImportView(APIView):
+    parser_classes = [MultiPartParser]
+
+    def post(self, request, pk, *args, **kwargs):
+        # Get the client using the pk from the URL
+        try:
+            client = Client.objects.get(pk=pk)
+        except Client.DoesNotExist:
+            return Response({"error": "Client not found"}, status=404)
+
+        file = request.FILES['file']
+
+        # Load the workbook and select the active worksheet
+        wb = load_workbook(file)
+        ws = wb.active
+
+        pf_entries = []
+
+        # Iterate through the rows in the Excel file and create PF objects
+        for row in ws.iter_rows(min_row=2):  # Skip the header row
+            employee_code = row[0].value
+            employee_name = row[1].value
+            # Check if essential fields are not None (you can adjust which fields to check)
+            if not employee_code or not employee_name:
+                continue  # Skip the row if it does not have the essential fields
+
+            # Get the rest of the values
+            uan = row[2].value
+            pf_number = row[3].value
+            pf_deducted = row[4].value
+            date_of_joining = row[5].value
+            status = row[6].value
+            month = row[7].value
+            gross_ctc = row[8].value
+            basic_pay = row[9].value
+            hra = row[10].value
+            statutory_bouns = row[11].value
+            special_allowance = row[12].value
+            pf = row[13].value
+            gratutiy = row[14].value
+            total_gross_salary = row[15].value
+            number_of_days_in_month = row[16].value
+            present_days = row[17].value
+            lwp = row[18].value
+            leave_adjustment = row[19].value
+            gender = row[20].value
+            basic_pay_monthly = row[21].value
+            hra_monthly = row[22].value
+            statutory_bonus_monthly = row[23].value
+            special_allowance_monthly = row[24].value
+            total_gross_salary_monthly = row[25].value
+            provident_fund = row[26].value
+            professional_tax = row[27].value
+            advance = row[28].value
+            esic_employee = row[29].value
+            tds = row[30].value
+            total_deduction = row[31].value
+            net_pay = row[32].value
+            advance_esic_employer_cont = row[33].value
+
+            # Create the PF object and associate it with the client
+            pf_entry = PF(
+                client=client,
+                employee_code=employee_code,
+                employee_name=employee_name,
+                uan=uan,
+                pf_number=pf_number,
+                pf_deducted=pf_deducted,
+                date_of_joining=date_of_joining,
+                status=status,
+                month=month,
+                gross_ctc=gross_ctc,
+                basic_pay=basic_pay,
+                hra=hra,
+                statutory_bouns=statutory_bouns,
+                special_allowance=special_allowance,
+                pf=pf,
+                gratutiy=gratutiy,
+                total_gross_salary=total_gross_salary,
+                number_of_days_in_month=number_of_days_in_month,
+                present_days=present_days,
+                lwp=lwp,
+                leave_adjustment=leave_adjustment,
+                gender=gender,
+                basic_pay_monthly=basic_pay_monthly,
+                hra_monthly=hra_monthly,
+                statutory_bonus_monthly=statutory_bonus_monthly,
+                special_allowance_monthly=special_allowance_monthly,
+                total_gross_salary_monthly=total_gross_salary_monthly,
+                provident_fund=provident_fund,
+                professional_tax=professional_tax,
+                advance=advance,
+                esic_employee=esic_employee,
+                tds=tds,
+                total_deduction=total_deduction,
+                net_pay=net_pay,
+                advance_esic_employer_cont=advance_esic_employer_cont,
+            )
+            pf_entry.save()
+            pf_entries.append(pf_entry)
+
+        return Response({"status": "success", "data": PfSerializer(pf_entries, many=True).data})
 
 @api_view(['POST','GET'])
 def edit_pf(request, pk, pf_pk):
@@ -845,6 +1125,458 @@ def delete_pf(request,pk,pf_pk):
         pf.delete()
         return Response({'Message':'Pf deleted'})
     return Response ({'Message':'Fail to delete Pf'}, status=status.HTTP_400_BAD_REQUEST)
+# ***********************************************Tax Audit***************************************************
+@api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
+def create_taxaudit(request,pk):
+    client = Client.objects.get(id=pk)
+    instance_data = request.data
+    data = {key: value for key, value in instance_data.items()}
+
+    serializer = TaxAuditSerializer(data=data)
+    if serializer.is_valid(raise_exception=True):
+        tax_instance = serializer.save(client=client)
+        print(request.data)
+
+        if request.FILES:
+            files = dict((request.FILES).lists()).get('files',None)
+            # files = request.FILES.getlist('files')
+            if files:
+                for file in files:
+                    file_data = {
+                        'tax_audit' : tax_instance.pk,
+                        'files' : file
+                    }
+                    file_serializer= FilesSerializer(data=file_data)
+                    if file_serializer.is_valid(raise_exception=True):
+                        file_serializer.save()
+
+            return Response(serializer.data)
+    return Response(serializer.errors)
+
+@api_view(['POST', 'GET'])
+@parser_classes([MultiPartParser, FormParser])
+def edit_taxaudit(request, pk, taxaudit_pk):
+    try:
+        client = Client.objects.get(id=pk)
+        taxaudit = TaxAudit.objects.get(id=taxaudit_pk, client=client)
+    except Client.DoesNotExist:
+        return Response({'error': 'Client not found'}, status=status.HTTP_404_NOT_FOUND)
+    except TaxAudit.DoesNotExist:
+        return Response({'error': 'Tax Aduit not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'POST':
+        # Update branch document fields
+        taxaudit_serializer = TaxAuditSerializer(instance=taxaudit, data=request.data)
+        if taxaudit_serializer.is_valid():
+            taxaudit_serializer.save(client=client)
+
+            # Handle file updates separately
+            if request.FILES.getlist('files'):
+                # Delete the old files if required
+                Files.objects.filter(tax_audit=taxaudit).delete()
+
+                # Add the new files
+                files = request.FILES.getlist('files')
+                for file in files:
+                    file_data = {
+                        'tax_audit': taxaudit.pk,
+                        'files': file
+                    }
+                    file_serializer = FilesSerializer(data=file_data)
+                    if file_serializer.is_valid():
+                        file_serializer.save()
+                    else:
+                        return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({'Message': 'Tax Audit and Files updated successfully'}, status=status.HTTP_200_OK)
+        else:
+            return Response(taxaudit_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'GET':
+        taxaudit_serializer = TaxAuditSerializer(taxaudit)
+        return Response(taxaudit_serializer.data)
+
+@api_view(['GET'])
+def list_taxaudit(request, pk):
+    client = Client.objects.get(id = pk)
+    if request.method == 'GET':
+        list_taxaudit = TaxAudit.objects.filter(client=client)
+        taxaudit_serializer = TaxAuditSerializer(list_taxaudit, many=True)
+        print(taxaudit_serializer)
+        return Response(taxaudit_serializer.data)
+
+@api_view(['GET'])
+def single_taxaudit(request, pk, taxaudit_pk):
+    client = Client.objects.get(id=pk)
+    taxaudit = TaxAudit.objects.get(id = taxaudit_pk, client=client)
+    if request.method == 'GET':
+        ser = TaxAuditSerializer(taxaudit)
+        print(ser)
+        return Response(ser.data)
+
+@api_view(['DELETE'])
+def delete_taxaudit(request, pk, taxaudit_pk ):
+    client = Client.objects.get(id = pk)
+    taxaudit = TaxAudit.objects.get(id = taxaudit_pk, client=client)
+    if request.method == 'DELETE':
+        taxaudit.delete()
+        return Response({'Messgae':'Tax Audit Delete'})
+    return Response({'Message':'Fail to delete Tax Audit'} ,status=status.HTTP_400_BAD_REQUEST)
+
+# ******************************************************AIR****************************************************
+@api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
+def create_air(request,pk):
+    client = Client.objects.get(id=pk)
+    instance_data = request.data
+    data = {key: value for key, value in instance_data.items()}
+
+    serializer = AIRSerializer(data=data)
+    if serializer.is_valid(raise_exception=True):
+        air_instance = serializer.save(client=client)
+        print(request.data)
+
+        if request.FILES:
+            files = dict((request.FILES).lists()).get('files',None)
+            # files = request.FILES.getlist('files')
+            if files:
+                for file in files:
+                    file_data = {
+                        'air' : air_instance.pk,
+                        'files' : file
+                    }
+                    file_serializer= FilesSerializer(data=file_data)
+                    if file_serializer.is_valid(raise_exception=True):
+                        file_serializer.save()
+
+            return Response(serializer.data)
+    return Response(serializer.errors)
+
+@api_view(['POST', 'GET'])
+@parser_classes([MultiPartParser, FormParser])
+def edit_air(request, pk, air_pk):
+    try:
+        client = Client.objects.get(id=pk)
+        air = AIR.objects.get(id=air_pk, client=client)
+    except Client.DoesNotExist:
+        return Response({'error': 'Client not found'}, status=status.HTTP_404_NOT_FOUND)
+    except AIR.DoesNotExist:
+        return Response({'error': 'AIR not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'POST':
+        # Update branch document fields
+        air_serializer = AIRSerializer(instance=air, data=request.data)
+        if air_serializer.is_valid():
+            air_serializer.save(client=client)
+
+            # Handle file updates separately
+            if request.FILES.getlist('files'):
+                # Delete the old files if required
+                Files.objects.filter(air=air).delete()
+
+                # Add the new files
+                files = request.FILES.getlist('files')
+                for file in files:
+                    file_data = {
+                        'air': air.pk,
+                        'files': file
+                    }
+                    file_serializer = FilesSerializer(data=file_data)
+                    if file_serializer.is_valid():
+                        file_serializer.save()
+                    else:
+                        return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({'Message': 'AIR and Files updated successfully'}, status=status.HTTP_200_OK)
+        else:
+            return Response(air_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'GET':
+        air_serializer = AIRSerializer(air)
+        return Response(air_serializer.data)
+
+@api_view(['GET'])
+def list_air(request, pk):
+    client = Client.objects.get(id = pk)
+    if request.method == 'GET':
+        list_air = AIR.objects.filter(client=client)
+        air_serializer = AIRSerializer(list_air, many=True)
+        print(air_serializer)
+        return Response(air_serializer.data)
+
+@api_view(['GET'])
+def single_air(request, pk, air_pk):
+    client = Client.objects.get(id=pk)
+    air = AIR.objects.get(id = air_pk, client=client)
+    if request.method == 'GET':
+        ser = AIRSerializer(air)
+        print(ser)
+        return Response(ser.data)
+
+@api_view(['DELETE'])
+def delete_air(request, pk, air_pk ):
+    client = Client.objects.get(id = pk)
+    air = AIR.objects.get(id = air_pk, client=client)
+    if request.method == 'DELETE':
+        air.delete()
+        return Response({'Messgae':'AIR Delete'})
+    return Response({'Message':'Fail to delete AIR'} ,status=status.HTTP_400_BAD_REQUEST)
+
+# ******************************************************SFT****************************************************
+@api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
+def create_sft(request,pk):
+    client = Client.objects.get(id=pk)
+    instance_data = request.data
+    data = {key: value for key, value in instance_data.items()}
+
+    serializer = SFTSerializer(data=data)
+    if serializer.is_valid(raise_exception=True):
+        sft_instance = serializer.save(client=client)
+        print(request.data)
+
+        if request.FILES:
+            files = dict((request.FILES).lists()).get('files',None)
+            # files = request.FILES.getlist('files')
+            if files:
+                for file in files:
+                    file_data = {
+                        'sft' : sft_instance.pk,
+                        'files' : file
+                    }
+                    file_serializer= FilesSerializer(data=file_data)
+                    if file_serializer.is_valid(raise_exception=True):
+                        file_serializer.save()
+
+            return Response(serializer.data)
+    return Response(serializer.errors)
+
+@api_view(['POST', 'GET'])
+@parser_classes([MultiPartParser, FormParser])
+def edit_sft(request, pk, sft_pk):
+    try:
+        client = Client.objects.get(id=pk)
+        sft = SFT.objects.get(id=sft_pk, client=client)
+    except Client.DoesNotExist:
+        return Response({'error': 'Client not found'}, status=status.HTTP_404_NOT_FOUND)
+    except SFT.DoesNotExist:
+        return Response({'error': 'SFT not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'POST':
+        # Update branch document fields
+        sft_serializer = SFTSerializer(instance=sft, data=request.data)
+        if sft_serializer.is_valid():
+            sft_serializer.save(client=client)
+
+            # Handle file updates separately
+            if request.FILES.getlist('files'):
+                # Delete the old files if required
+                Files.objects.filter(sft=sft).delete()
+
+                # Add the new files
+                files = request.FILES.getlist('files')
+                for file in files:
+                    file_data = {
+                        'sft': sft.pk,
+                        'files': file
+                    }
+                    file_serializer = FilesSerializer(data=file_data)
+                    if file_serializer.is_valid():
+                        file_serializer.save()
+                    else:
+                        return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({'Message': 'SFT and Files updated successfully'}, status=status.HTTP_200_OK)
+        else:
+            return Response(sft_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'GET':
+        sft_serializer = SFTSerializer(sft)
+        return Response(sft_serializer.data)
+
+@api_view(['GET'])
+def list_sft(request, pk):
+    client = Client.objects.get(id = pk)
+    if request.method == 'GET':
+        list_sft = SFT.objects.filter(client=client)
+        sft_serializer = SFTSerializer(list_sft, many=True)
+        print(sft_serializer)
+        return Response(sft_serializer.data)
+
+@api_view(['GET'])
+def single_sft(request, pk, sft_pk):
+    client = Client.objects.get(id=pk)
+    sft = SFT.objects.get(id = sft_pk, client=client)
+    if request.method == 'GET':
+        ser = SFTSerializer(sft)
+        print(ser)
+        return Response(ser.data)
+
+@api_view(['DELETE'])
+def delete_sft(request, pk, sft_pk ):
+    client = Client.objects.get(id = pk)
+    sft = SFT.objects.get(id = sft_pk, client=client)
+    if request.method == 'DELETE':
+        sft.delete()
+        return Response({'Messgae':'SFT Delete'})
+    return Response({'Message':'Fail to delete SFT'} ,status=status.HTTP_400_BAD_REQUEST)
+
+
+# *************************************************TDS Payment***********************************************
+@api_view(['POST'])
+def create_tdspayment(request, pk):
+    client = Client.objects.get(id=pk)
+    if request.method == 'POST':
+        serializer = TDSPaymentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(client=client)
+            return Response ({'Message':'TDS Payment created', 'Data': serializer.data})
+        return Response({'Error':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET', 'POST'])
+def edit_tdspayment(request, pk, tdspayment_pk):
+    client = Client.objects.get(id=pk)
+    payment = TDSPayment.objects.get(id=tdspayment_pk, client=client)
+    serializer = TDSPaymentSerializer(instance=payment, data=request.data)
+    if request.method == 'GET':
+        tds_serializer = TDSPaymentSerializer(payment)
+        print(tds_serializer.data)
+        return Response (tds_serializer.data)
+    elif request.method == 'POST':
+        if serializer.is_valid():
+            serializer.save(client=client)
+            return Response ({'Message':'TDS Paymen Updated'})
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def list_tdspayment(request, pk):
+    client = Client.objects.get(id=pk)
+    if request.method == 'GET':
+        list_tdspayment = TDSPayment.objects.filter(client=client)
+        tds_ser = TDSPaymentSerializer(list_tdspayment, many = True)
+        return Response(tds_ser.data)
+
+@api_view(['GET'])
+def single_tdspayment(request, pk, tdspayment_pk):
+    client = Client.objects.get(id=pk)
+    tds = TDSPayment.objects.get(id=tdspayment_pk)
+    if request.method == 'GET':
+        ser = TDSPaymentSerializer(tds)
+        return Response(ser.data)
+
+@api_view(['DELETE'])
+def delete_tdspayment(request, pk, tdspayment_pk):
+    client = Client.objects.get(id=pk)
+    tds = TDSPayment.objects.get(id=tdspayment_pk)
+    if request.method == 'DELETE':
+        tds.delete()
+        return Response({'Message':'TDS Payment delete'})
+    return Response (status=status.HTTP_400_BAD_REQUEST)
+
+# *************************************************TDS Return**************************************************
+@api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
+def create_tds(request,pk):
+    client = Client.objects.get(id=pk)
+    instance_data = request.data
+    data = {key: value for key, value in instance_data.items()}
+
+    serializer = TDSReturnSerializer(data=data)
+    if serializer.is_valid(raise_exception=True):
+        tds_instance = serializer.save(client=client)
+        print(request.data)
+
+        if request.FILES:
+            files = dict((request.FILES).lists()).get('files',None)
+            # files = request.FILES.getlist('files')
+            if files:
+                for file in files:
+                    file_data = {
+                        'tds' : tds_instance.pk,
+                        'files' : file
+                    }
+                    file_serializer= FilesSerializer(data=file_data)
+                    if file_serializer.is_valid(raise_exception=True):
+                        file_serializer.save()
+
+            return Response(serializer.data)
+    return Response(serializer.errors)
+
+@api_view(['POST', 'GET'])
+@parser_classes([MultiPartParser, FormParser])
+def edit_tds(request, pk, tds_pk):
+    try:
+        client = Client.objects.get(id=pk)
+        tds = TDSReturn.objects.get(id=tds_pk, client=client)
+    except Client.DoesNotExist:
+        return Response({'error': 'Client not found'}, status=status.HTTP_404_NOT_FOUND)
+    except TDSReturn.DoesNotExist:
+        return Response({'error': 'TDS Return not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'POST':
+        # Update branch document fields
+        tds_serializer = TDSReturnSerializer(instance=tds, data=request.data)
+        if tds_serializer.is_valid():
+            tds_serializer.save(client=client)
+
+            # Handle file updates separately
+            if request.FILES.getlist('files'):
+                # Delete the old files if required
+                Files.objects.filter(tds=tds).delete()
+
+                # Add the new files
+                files = request.FILES.getlist('files')
+                for file in files:
+                    file_data = {
+                        'tds': tds.pk,
+                        'files': file
+                    }
+                    file_serializer = FilesSerializer(data=file_data)
+                    if file_serializer.is_valid():
+                        file_serializer.save()
+                    else:
+                        return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({'Message': 'TDS Return and Files updated successfully'}, status=status.HTTP_200_OK)
+        else:
+            return Response(tds_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'GET':
+        tdsreturn_serializer = TDSReturnSerializer(tds)
+        return Response(tdsreturn_serializer.data)
+
+@api_view(['GET'])
+def list_tds(request, pk):
+    client = Client.objects.get(id = pk)
+    if request.method == 'GET':
+        list_tds = TDSReturn.objects.filter(client=client)
+        tds_serializer = TDSReturnSerializer(list_tds, many=True)
+        # print(sft_serializer)
+        return Response(tds_serializer.data)
+
+@api_view(['GET'])
+def single_tds(request, pk, tds_pk):
+    client = Client.objects.get(id=pk)
+    tds = TDSReturn.objects.get(id = tds_pk, client=client)
+    if request.method == 'GET':
+        ser = TDSReturnSerializer(tds)
+        print(ser)
+        return Response(ser.data)
+
+@api_view(['DELETE'])
+def delete_tds(request, pk, tds_pk ):
+    client = Client.objects.get(id = pk)
+    tds = TDSReturn.objects.get(id = tds_pk, client=client)
+    if request.method == 'DELETE':
+        tds.delete()
+        return Response({'Messgae':'TDS Return Delete'})
+    return Response({'Message':'Fail to delete TDS Return'} ,status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
 
 # ***********************************************Detail page API's*********************************************
 @api_view(['GET'])
@@ -858,6 +1590,11 @@ def detail_client(request,pk):
     view_customer = Customer.objects.filter(client=client)
     view_income = IncomeTaxDocument.objects.filter(client=client)
     view_pf = PF.objects.filter(client=client)
+    view_taxaudit = TaxAudit.objects.filter(client=client)
+    view_air = AIR.objects.filter(client=client)
+    view_sft = SFT.objects.filter(client=client)
+    view_tdspayment = TDSPayment.objects.filter(client=client)
+    view_tds = TDSReturn.objects.filter(client=client)
     # view_attachment = Attachment.objects.filter(client=client)
     # view_branchdoc = BranchDocument.objects.filter()
 
@@ -870,6 +1607,11 @@ def detail_client(request,pk):
     customer_serializer = CustomerVendorSerializer(view_customer, many=True)
     income_serializer = IncomeTaxDocumentSerializer(view_income, many=True)
     pf_serializer = PfSerializer(view_pf, many=True)
+    taxaudit_serializer = TaxAuditSerializer(view_taxaudit, many=True)
+    air_serializer = AIRSerializer(view_air, many=True)
+    sft_serializer = SFTSerializer(view_sft, many=True)
+    tdspayment_serializer = TDSPaymentSerializer(view_tdspayment, many=True)
+    tds_serializer = TDSReturnSerializer(view_tds, many=True)
     # attachment_serializer = AttachmentSerializer(view_attachment, many=True)
 
     data ={
@@ -882,6 +1624,11 @@ def detail_client(request,pk):
         'Customer_or_Vendor' : customer_serializer.data,
         'Income_Tax_Document' : income_serializer.data,
         'PF' : pf_serializer.data,
+        'Tax_Audit' : taxaudit_serializer.data,
+        'AIR' : air_serializer.data,
+        'SFT' : sft_serializer.data,
+        'TDS_Payment' : tdspayment_serializer.data,
+        'TDS_Return' : tds_serializer.data,
         # 'Attachment' : attachment_serializer.data
     }
     return Response(data)
@@ -904,5 +1651,7 @@ def detail_branch(request, pk, branch_pk):
         'Office_Location' : officeloaction_serializer.data,
     }
     return Response(data)
+
+
 
 

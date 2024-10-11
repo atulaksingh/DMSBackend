@@ -62,7 +62,7 @@ class Bank(models.Model):
     ifsc = models.CharField(max_length=50, null=True, blank=True)
     account_type = models.CharField(max_length=50, null=True, blank=True)
     branch = models.CharField(max_length=100, null=True, blank=True)
-    attachment = models.FileField(null=True, blank=True)
+    # attachment = models.FileField(null=True, blank=True)
     def __str__(self):
         return self.bank_name
 
@@ -169,10 +169,6 @@ class BranchDocument(models.Model):
     password = models.CharField(max_length=100, null=True, blank=True)
     remark = models.TextField(null=True, blank=True)
     # file = models.FileField(null=True, blank=True)
-
-class Files(models.Model):
-    branch_doc = models.ForeignKey(BranchDocument, on_delete=models.CASCADE, null=True, blank=True)
-    files = models.FileField(upload_to='branchfiles',null=True, blank=True)
 
 #Customer or Vendor Model
 class Customer(models.Model):
@@ -301,23 +297,91 @@ class PF(models.Model):
     pf = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
     gratutiy = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
     total_gross_salary = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
-    number_of_days_in_month = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
-    present_days = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
-    lwp = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
-    leave_adjustment = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
+    number_of_days_in_month = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    present_days = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    lwp = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    leave_adjustment = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
     gender = models.CharField(max_length=100, null=True, blank=True)
-    basic_pay_monthly = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
-    hra_monthly = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
-    statutory_bonus_monthly = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
-    special_allowance_monthly = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
-    total_gross_salary_monthly = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
-    provident_fund = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
-    professional_tax = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
-    advance = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
-    esic_employee = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
-    tds = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
-    total_deduction = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
-    net_pay = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
-    advance_esic_employer_cont =models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
+    basic_pay_monthly = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    hra_monthly = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    statutory_bonus_monthly = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    special_allowance_monthly = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    total_gross_salary_monthly = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    provident_fund = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    professional_tax = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    advance = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    esic_employee = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    tds = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    total_deduction = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    net_pay = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    advance_esic_employer_cont =models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+
+
+    def __str__(self):
+        return self.employee_name
+
+# Tax Audit
+class TaxAudit(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
+    financial_year = models.IntegerField(null=True, blank=True)
+    month = models.DateField(null=True, blank=True)
+    # attachment = models.FileField(null=True, blank=True)
+
+# AIR
+class AIR(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
+    financial_year = models.IntegerField(null=True, blank=True)
+    month = models.DateField(null=True, blank=True)
+    # attachment = models.FileField(null=True, blank=True)
+
+# SFT
+class SFT(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
+    financial_year = models.IntegerField(null=True, blank=True)
+    month = models.DateField(null=True, blank=True)
+    # attachment = models.FileField(null=True, blank=True)
+
+#TDS Payment
+class TDSPayment(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
+    client_name = models.CharField(max_length=100 ,null=True, blank=True)
+    date = models.DateField(null=True, blank=True)
+    PAN = models.CharField(max_length=100 ,null=True, blank=True)
+    amount = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    cgst = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    sgst = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    igst = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    total_amt = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    tds_rate = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    tds_section = models.CharField(max_length=100 ,null=True, blank=True)
+    tds_amount = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    net_amount = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+
+# TDS Return
+class TDSReturn(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
+    challan_date = models.DateField(null=True, blank=True)
+    challan_no = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    challan_type = models.CharField(max_length=100 ,null=True, blank=True)
+    tds_section = models.CharField(max_length=100 ,null=True, blank=True)
+    amount = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    last_filed_return_ack_no = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    last_filed_return_ack_date = models.DateField(null=True, blank=True)
+    # challan_attachment = models.FileField(null=True, blank=True)
+
+class Files(models.Model):
+    branch_doc = models.ForeignKey(BranchDocument, on_delete=models.CASCADE, null=True, blank=True)
+    tax_audit = models.ForeignKey(TaxAudit, on_delete=models.CASCADE, null=True, blank=True)
+    air = models.ForeignKey(AIR, on_delete=models.CASCADE, null=True, blank=True)
+    sft = models.ForeignKey(SFT, on_delete=models.CASCADE, null=True, blank=True)
+    tds = models.ForeignKey(TDSReturn, on_delete=models.CASCADE, null=True, blank=True)
+    bank = models.ForeignKey(Bank, on_delete=models.CASCADE, null=True, blank=True)
+    files = models.FileField(upload_to='documents',null=True, blank=True)
+
+
+
+
+
+
 
 

@@ -2,6 +2,8 @@ from rest_framework import serializers
 from rest_framework.parsers import MultiPartParser, FormParser
 from api.models import *
 from rest_framework_simplejwt.tokens import RefreshToken
+from datetime import datetime
+
 
 import json
 
@@ -91,11 +93,24 @@ class ClientSerializer(serializers.ModelSerializer):
         return instance
 
 
-# Bank Serializer
+# # Bank Serializer
+# class BankSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Bank
+#         fields = '__all__'
+
+# Bank
 class BankSerializer(serializers.ModelSerializer):
+    files = serializers.SerializerMethodField()
+
     class Meta:
         model = Bank
-        fields = '__all__'
+        fields = ['id','client','bank_name','account_no','ifsc','account_type','branch','files']
+
+    def get_files(self, obj):
+        files = Files.objects.filter(bank=obj)
+        return FilesSerializer(files, many=True).data
+
 
 # Owner Serializer
 class OwnerSerializer(serializers.ModelSerializer):
@@ -151,10 +166,65 @@ class OfficeLocationSerializer(serializers.ModelSerializer):
         model = OfficeLocation
         fields = '__all__'
 
+# class FilesSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Files
+#         # fields = '__all__'
+#         fields = ['id', 'files']
+# from rest_framework import serializers
+
 class FilesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Files
-        fields = '__all__'
+        fields = ['id', 'files', 'branch_doc', 'tax_audit', 'air', 'sft','tds','bank']
+
+    def to_representation(self, instance):
+        # Get the original representation
+        representation = super().to_representation(instance)
+
+        # Check which model is being serialized and remove null fields
+        if representation['tax_audit'] is not None:
+            # If it's TaxAudit, remove AIR and SFT fields
+            representation.pop('air', None)
+            representation.pop('sft', None)
+            representation.pop('tds', None)
+            representation.pop('branch_doc', None)
+            representation.pop('bank', None)
+        elif representation['air'] is not None:
+            # If it's AIR, remove TaxAudit and SFT fields
+            representation.pop('tax_audit', None)
+            representation.pop('sft', None)
+            representation.pop('tds', None)
+            representation.pop('branch_doc', None)
+            representation.pop('bank', None)
+        elif representation['sft'] is not None:
+            # If it's SFT, remove TaxAudit and AIR fields
+            representation.pop('tax_audit', None)
+            representation.pop('air', None)
+            representation.pop('tds', None)
+            representation.pop('branch_doc', None)
+            representation.pop('bank', None)
+        elif representation['tds'] is not None:
+            representation.pop('tax_audit', None)
+            representation.pop('air', None)
+            representation.pop('sft', None)
+            representation.pop('branch_doc', None)
+            representation.pop('bank', None)
+        elif representation['branch_doc'] is not None:
+            representation.pop('tax_audit', None)
+            representation.pop('air', None)
+            representation.pop('sft', None)
+            representation.pop('tds', None)
+            representation.pop('bank', None)
+        elif representation['bank'] is not None:
+            representation.pop('tax_audit', None)
+            representation.pop('air', None)
+            representation.pop('sft', None)
+            representation.pop('tds', None)
+            representation.pop('branch_doc', None)
+
+        return representation
+
 
 # Branch Document
 class BranchDocSerailizer(serializers.ModelSerializer):
@@ -181,7 +251,79 @@ class IncomeTaxDocumentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 # PF
+class DateFromDateTimeField(serializers.DateField):
+    def to_representation(self, value):
+        if isinstance(value, datetime):
+            return value.date()  # Convert datetime to date
+        return super().to_representation(value)
+
 class PfSerializer(serializers.ModelSerializer):
+    date_of_joining = DateFromDateTimeField()
+    month = DateFromDateTimeField()
+
     class Meta:
         model = PF
+        fields = [
+            'employee_code', 'employee_name', 'uan', 'pf_number', 'pf_deducted',
+            'date_of_joining', 'status', 'month', 'gross_ctc', 'basic_pay',
+            'hra', 'statutory_bouns', 'special_allowance', 'pf', 'gratutiy',
+            'total_gross_salary', 'number_of_days_in_month', 'present_days',
+            'lwp', 'leave_adjustment', 'gender', 'basic_pay_monthly', 'hra_monthly',
+            'statutory_bonus_monthly', 'special_allowance_monthly',
+            'total_gross_salary_monthly', 'provident_fund', 'professional_tax',
+            'advance', 'esic_employee', 'tds','total_deduction', 'net_pay', 'advance_esic_employer_cont'
+            ]
+
+# Tax Audit
+class TaxAuditSerializer(serializers.ModelSerializer):
+    files = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TaxAudit
+        fields = ['id','client','financial_year','month','files']
+
+    def get_files(self, obj):
+        files = Files.objects.filter(tax_audit=obj)
+        return FilesSerializer(files, many=True).data
+
+# AIR
+class AIRSerializer(serializers.ModelSerializer):
+    files = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AIR
+        fields = ['id','client','financial_year','month','files']
+
+    def get_files(self, obj):
+        files = Files.objects.filter(air=obj)
+        return FilesSerializer(files, many=True).data
+
+# SFT
+class SFTSerializer(serializers.ModelSerializer):
+    files = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SFT
+        fields = ['id','client','financial_year','month','files']
+
+    def get_files(self, obj):
+        files = Files.objects.filter(sft=obj)
+        return FilesSerializer(files, many=True).data
+
+# TDS Payment
+class TDSPaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TDSPayment
         fields = '__all__'
+
+# TDS Return
+class TDSReturnSerializer(serializers.ModelSerializer):
+    files = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TDSReturn
+        fields = ['id','client','challan_date','challan_no','challan_type','tds_section','amount','last_filed_return_ack_no','last_filed_return_ack_date','files']
+
+    def get_files(self, obj):
+        files = Files.objects.filter(tds=obj)
+        return FilesSerializer(files, many=True).data

@@ -71,9 +71,39 @@ urlpatterns = [
     path('list-incometaxdoc/<int:pk>', view=list_incometaxdoc, name='list-incometaxdoc'),
     path('delete-incometaxdoc/<int:pk>/<int:income_pk>', view=delete_incometaxdoc, name='delete-incometaxdoc'),
 
-    path('create-pf/<int:pk>', view=create_pf, name='create-pf'),
+    path('create-pf/<int:pk>', ExcelImportView.as_view(), name='create-pf'),
     path('edit-pf/<int:pk>/<int:pf_pk>', view=edit_pf, name='edit-pf'),
     path('list-pf/<int:pk>', view=list_pf, name='list-pf'),
     path('delete-pf/<int:pk>/<int:pf_pk>', view=delete_pf, name='delete-pf'),
+
+    path('create-taxaudit/<int:pk>', view=create_taxaudit, name='create-taxaudit'),
+    path('edit-taxaudit/<int:pk>/<int:taxaudit_pk>', view=edit_taxaudit, name='edit-taxaudit'),
+    path('list-taxaudit/<int:pk>', view=list_taxaudit, name='list-taxaudit'),
+    path('single-taxaudit/<int:pk>/<int:taxaudit_pk>', view=single_taxaudit, name='single-taxaudit'),
+    path('delete-taxaudit/<int:pk>/<int:taxaudit_pk>', view=delete_taxaudit, name='delete-taxaudit'),
+
+    path('create-air/<int:pk>', view=create_air, name='create-air'),
+    path('edit-air/<int:pk>/<int:air_pk>', view=edit_air, name='edit-air'),
+    path('list-air/<int:pk>', view=list_air, name='list-air'),
+    path('single-air/<int:pk>/<int:air_pk>', view=single_air, name='single-air'),
+    path('delete-air/<int:pk>/<int:air_pk>', view=delete_air, name='delete-air'),
+
+    path('create-sft/<int:pk>', view=create_sft, name='create-sft'),
+    path('edit-sft/<int:pk>/<int:sft_pk>', view=edit_sft, name='edit-sft'),
+    path('list-sft/<int:pk>', view=list_sft, name='list-sft'),
+    path('single-sft/<int:pk>/<int:sft_pk>', view=single_sft, name='single-sft'),
+    path('delete-sft/<int:pk>/<int:sft_pk>', view=delete_sft, name='delete-sft'),
+
+    path('create-tdspayment/<int:pk>', view=create_tdspayment, name='create-tdspayment'),
+    path('edit-tdspayment/<int:pk>/<int:tdspayment_pk>',view=edit_tdspayment, name='edit-tdspayment'),
+    path('list-tdspayment/<int:pk>',view=list_tdspayment, name='list-tdspayment'),
+    path('single-tdspayment/<int:pk>/<int:tdspayment_pk>', view=single_tdspayment, name='single-tdspayment'),
+    path('delete-tdspayment/<int:pk>/<int:tdspayment_pk>', view=delete_tdspayment, name='delete-tdspayment'),
+
+    path('create-tds/<int:pk>', view=create_tds, name='create-tdsreturn'),
+    path('edit-tds/<int:pk>/<int:tds_pk>', view=edit_tds, name='edit-tdsreturn'),
+    path('list-tds/<int:pk>', view=list_tds, name='list-tdsreturn'),
+    path('single-tds/<int:pk>/<int:tds_pk>', view=single_tds, name='single-tdsreturn'),
+    path('delete-tds/<int:pk>/<int:tds_pk>', view=delete_tds, name='delete-tdsreturn'),
 
 ]
