@@ -280,6 +280,17 @@ class IncomeTaxDocument(models.Model):
 
 #PF
 class PF(models.Model):
+
+    gender = [
+        ('male','Male'),
+        ('female', 'Female'),
+    ]
+
+    status = [
+        ('active','Active'),
+        ('inactive', 'Inactive')
+    ]
+
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True,  related_name='pf_files')
     employee_code = models.CharField(max_length=100, null=True, blank=True)
     employee_name = models.CharField(max_length=100, null=True, blank=True)
@@ -287,7 +298,7 @@ class PF(models.Model):
     pf_number = models.CharField(max_length=100, null=True, blank=True)
     pf_deducted = models.BooleanField(null=True, blank=True)
     date_of_joining = models.DateField(null=True, blank=True)
-    status = models.CharField(max_length=100, null=True, blank=True)
+    status = models.CharField(choices=status, max_length=100, null=True, blank=True)
     month = models.DateField(null=True, blank=True)
     gross_ctc = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     basic_pay = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -301,7 +312,7 @@ class PF(models.Model):
     present_days = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
     lwp = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
     leave_adjustment = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
-    gender = models.CharField(max_length=100, null=True, blank=True)
+    gender = models.CharField(choices=gender, max_length=100, null=True, blank=True)
     basic_pay_monthly = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
     hra_monthly = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
     statutory_bonus_monthly = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)

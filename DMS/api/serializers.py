@@ -264,7 +264,7 @@ class PfSerializer(serializers.ModelSerializer):
     class Meta:
         model = PF
         fields = [
-            'employee_code', 'employee_name', 'uan', 'pf_number', 'pf_deducted',
+            'id','employee_code', 'employee_name', 'uan', 'pf_number', 'pf_deducted',
             'date_of_joining', 'status', 'month', 'gross_ctc', 'basic_pay',
             'hra', 'statutory_bonus', 'special_allowance', 'pf', 'gratuity',
             'total_gross_salary', 'number_of_days_in_month', 'present_days',
