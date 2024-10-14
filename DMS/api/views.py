@@ -1103,7 +1103,7 @@ def edit_pf(request, pk, pf_pk):
         if  pf_serializer.is_valid():
             pf_serializer.save()
             return Response({'Message':'Pf updated'})
-        return Response({'Error':'Fail to update'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(pf_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     elif request.method == 'GET':
         pf_ser = PfSerializer(pf)
         return Response(pf_ser.data)
