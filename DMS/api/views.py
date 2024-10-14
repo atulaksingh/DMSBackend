@@ -1026,10 +1026,10 @@ class ExcelImportView(APIView):
             gross_ctc = row[8].value
             basic_pay = row[9].value
             hra = row[10].value
-            statutory_bouns = row[11].value
+            statutory_bonus = row[11].value
             special_allowance = row[12].value
             pf = row[13].value
-            gratutiy = row[14].value
+            gratuity = row[14].value
             total_gross_salary = row[15].value
             number_of_days_in_month = row[16].value
             present_days = row[17].value
@@ -1064,10 +1064,10 @@ class ExcelImportView(APIView):
                 gross_ctc=gross_ctc,
                 basic_pay=basic_pay,
                 hra=hra,
-                statutory_bouns=statutory_bouns,
+                statutory_bonus=statutory_bonus,
                 special_allowance=special_allowance,
                 pf=pf,
-                gratutiy=gratutiy,
+                gratuity=gratuity,
                 total_gross_salary=total_gross_salary,
                 number_of_days_in_month=number_of_days_in_month,
                 present_days=present_days,
