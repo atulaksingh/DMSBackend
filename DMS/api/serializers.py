@@ -266,7 +266,7 @@ class PfSerializer(serializers.ModelSerializer):
         fields = [
             'employee_code', 'employee_name', 'uan', 'pf_number', 'pf_deducted',
             'date_of_joining', 'status', 'month', 'gross_ctc', 'basic_pay',
-            'hra', 'statutory_bouns', 'special_allowance', 'pf', 'gratutiy',
+            'hra', 'statutory_bonus', 'special_allowance', 'pf', 'gratuity',
             'total_gross_salary', 'number_of_days_in_month', 'present_days',
             'lwp', 'leave_adjustment', 'gender', 'basic_pay_monthly', 'hra_monthly',
             'statutory_bonus_monthly', 'special_allowance_monthly',

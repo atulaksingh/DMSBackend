@@ -71,7 +71,8 @@ urlpatterns = [
     path('list-incometaxdoc/<int:pk>', view=list_incometaxdoc, name='list-incometaxdoc'),
     path('delete-incometaxdoc/<int:pk>/<int:income_pk>', view=delete_incometaxdoc, name='delete-incometaxdoc'),
 
-    path('create-pf/<int:pk>', ExcelImportView.as_view(), name='create-pf'),
+    path('create-pf/<int:pk>', view=create_pf, name='create-pf'),
+    path('create-file/<int:pk>', ExcelImportView.as_view(), name='create-pf'),
     path('edit-pf/<int:pk>/<int:pf_pk>', view=edit_pf, name='edit-pf'),
     path('list-pf/<int:pk>', view=list_pf, name='list-pf'),
     path('delete-pf/<int:pk>/<int:pf_pk>', view=delete_pf, name='delete-pf'),

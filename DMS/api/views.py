@@ -980,15 +980,15 @@ def delete_incometaxdoc(request,pk,income_pk):
     return Response ({'Message':'Fail to delete Income tax document'}, status=status.HTTP_400_BAD_REQUEST)
 
 #*****************************************************PF*******************************************************
-# @api_view(['POST'])
-# def create_pf(request,pk):
-#     client = Client.objects.get(id = pk)
-#     if request.method == 'POST':
-#         pf_serializer = PfSerializer(data=request.data)
-#         if pf_serializer.is_valid():
-#             pf_serializer.save(client=client)
-#             return Response({'Message':'Pf created', 'Data' : pf_serializer.data})
-#         return Response ({'Error':'Fail to create Pf'},status=status.HTTP_400_BAD_REQUEST)
+@api_view(['POST'])
+def create_pf(request,pk):
+    client = Client.objects.get(id = pk)
+    if request.method == 'POST':
+        pf_serializer = PfSerializer(data=request.data)
+        if pf_serializer.is_valid():
+            pf_serializer.save(client=client)
+            return Response({'Message':'Pf created', 'Data' : pf_serializer.data})
+        return Response (pf_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 class ExcelImportView(APIView):
     parser_classes = [MultiPartParser]
