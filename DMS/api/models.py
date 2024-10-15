@@ -291,20 +291,6 @@ class PF(models.Model):
         ('inactive', 'Inactive')
     ]
 
-    month = [
-        ('january', 'January'),
-        ('february','February'),
-        ('march','March'),
-        ('april','April'),
-        ('may','May'),
-        ('june','June'),
-        ('july','July'),
-        ('august','August'),
-        ('september','September'),
-        ('october','October'),
-        ('november','November'),
-        ('december','December'),
-    ]
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True,  related_name='pf_files')
     employee_code = models.CharField(max_length=100, null=True, blank=True)
     employee_name = models.CharField(max_length=100, null=True, blank=True)
@@ -313,7 +299,7 @@ class PF(models.Model):
     pf_deducted = models.BooleanField(null=True, blank=True)
     date_of_joining = models.DateField(null=True, blank=True)
     status = models.CharField(choices=status, max_length=100, null=True, blank=True)
-    month = models.CharField(choices=month,max_length=100,null=True, blank=True)
+    month = models.CharField(max_length=100,null=True, blank=True)
     gross_ctc = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     basic_pay = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     hra = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -349,65 +335,23 @@ class PF(models.Model):
 
 # Tax Audit
 class TaxAudit(models.Model):
-    month = [
-        ('january', 'January'),
-        ('february','February'),
-        ('march','March'),
-        ('april','April'),
-        ('may','May'),
-        ('june','June'),
-        ('july','July'),
-        ('august','August'),
-        ('september','September'),
-        ('october','October'),
-        ('november','November'),
-        ('december','December'),
-    ]
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
     financial_year = models.IntegerField(null=True, blank=True)
-    month = models.CharField(choices=month,max_length=100,null=True, blank=True)
+    month = models.CharField(max_length=100,null=True, blank=True)
     # attachment = models.FileField(null=True, blank=True)
 
 # AIR
 class AIR(models.Model):
-    month = [
-        ('january', 'January'),
-        ('february','February'),
-        ('march','March'),
-        ('april','April'),
-        ('may','May'),
-        ('june','June'),
-        ('july','July'),
-        ('august','August'),
-        ('september','September'),
-        ('october','October'),
-        ('november','November'),
-        ('december','December'),
-    ]
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
     financial_year = models.IntegerField(null=True, blank=True)
-    month = models.CharField(choices=month,max_length=100,null=True, blank=True)
+    month = models.CharField(max_length=100,null=True, blank=True)
     # attachment = models.FileField(null=True, blank=True)
 
 # SFT
 class SFT(models.Model):
-    month = [
-        ('january', 'January'),
-        ('february','February'),
-        ('march','March'),
-        ('april','April'),
-        ('may','May'),
-        ('june','June'),
-        ('july','July'),
-        ('august','August'),
-        ('september','September'),
-        ('october','October'),
-        ('november','November'),
-        ('december','December'),
-    ]
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
     financial_year = models.IntegerField(null=True, blank=True)
-    month = models.CharField(choices=month,max_length=100,null=True, blank=True)
+    month = models.CharField(max_length=100,null=True, blank=True)
     # attachment = models.FileField(null=True, blank=True)
 
 #TDS Payment
