@@ -293,17 +293,17 @@ class PF(models.Model):
 
     month = [
         ('january', 'January'),
-        ('February','February'),
-        ('March','March'),
-        ('April','April'),
-        ('May','May'),
-        ('June','June'),
-        ('July','July'),
-        ('August','August'),
-        ('September','September'),
-        ('October','October'),
-        ('November','November'),
-        ('December','December'),
+        ('february','February'),
+        ('march','March'),
+        ('april','April'),
+        ('may','May'),
+        ('june','June'),
+        ('july','July'),
+        ('august','August'),
+        ('september','September'),
+        ('october','October'),
+        ('november','November'),
+        ('december','December'),
     ]
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True,  related_name='pf_files')
     employee_code = models.CharField(max_length=100, null=True, blank=True)
@@ -351,18 +351,17 @@ class PF(models.Model):
 class TaxAudit(models.Model):
     month = [
         ('january', 'January'),
-        ('February','February'),
-        ('March','March'),
-        ('April','April'),
-        ('May','May'),
-        ('June','June'),
-        ('July','July'),
-        ('August','August'),
-        ('September','September'),
-        ('October','October'),
-        ('November','November'),
-        ('December','December'),
-
+        ('february','February'),
+        ('march','March'),
+        ('april','April'),
+        ('may','May'),
+        ('june','June'),
+        ('july','July'),
+        ('august','August'),
+        ('september','September'),
+        ('october','October'),
+        ('november','November'),
+        ('december','December'),
     ]
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
     financial_year = models.IntegerField(null=True, blank=True)
@@ -373,18 +372,17 @@ class TaxAudit(models.Model):
 class AIR(models.Model):
     month = [
         ('january', 'January'),
-        ('February','February'),
-        ('March','March'),
-        ('April','April'),
-        ('May','May'),
-        ('June','June'),
-        ('July','July'),
-        ('August','August'),
-        ('September','September'),
-        ('October','October'),
-        ('November','November'),
-        ('December','December'),
-
+        ('february','February'),
+        ('march','March'),
+        ('april','April'),
+        ('may','May'),
+        ('june','June'),
+        ('july','July'),
+        ('august','August'),
+        ('september','September'),
+        ('october','October'),
+        ('november','November'),
+        ('december','December'),
     ]
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
     financial_year = models.IntegerField(null=True, blank=True)
@@ -395,18 +393,17 @@ class AIR(models.Model):
 class SFT(models.Model):
     month = [
         ('january', 'January'),
-        ('February','February'),
-        ('March','March'),
-        ('April','April'),
-        ('May','May'),
-        ('June','June'),
-        ('July','July'),
-        ('August','August'),
-        ('September','September'),
-        ('October','October'),
-        ('November','November'),
-        ('December','December'),
-
+        ('february','February'),
+        ('march','March'),
+        ('april','April'),
+        ('may','May'),
+        ('june','June'),
+        ('july','July'),
+        ('august','August'),
+        ('september','September'),
+        ('october','October'),
+        ('november','November'),
+        ('december','December'),
     ]
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
     financial_year = models.IntegerField(null=True, blank=True)
