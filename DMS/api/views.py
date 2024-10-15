@@ -22,115 +22,7 @@ from django.shortcuts import render
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import CreateModelMixin
 from rest_framework import generics
-
 from openpyxl import load_workbook
-
-# class ExcelImportView(APIView):
-#     parser_classes = [MultiPartParser]
-
-#     def post(self, request, pk, *args, **kwargs):
-#         # Get the client using the pk from the URL
-#         try:
-#             client = Client.objects.get(pk=pk)
-#         except Client.DoesNotExist:
-#             return Response({"error": "Client not found"}, status=404)
-
-#         file = request.FILES['file']
-
-#         # Load the workbook and select the active worksheet
-#         wb = load_workbook(file)
-#         ws = wb.active
-
-#         pf_entries = []
-
-#         # Iterate through the rows in the Excel file and create PF objects
-#         for row in ws.iter_rows(min_row=2):  # Skip the header row
-#             employee_code = row[0].value
-#             employee_name = row[1].value
-#             # Check if essential fields are not None (you can adjust which fields to check)
-#             if not employee_code or not employee_name:
-#                 continue  # Skip the row if it does not have the essential fields
-
-#             # Get the rest of the values
-#             uan = row[2].value
-#             pf_number = row[3].value
-#             pf_deducted = row[4].value
-#             date_of_joining = row[5].value
-#             status = row[6].value
-#             month = row[7].value
-#             gross_ctc = row[8].value
-#             basic_pay = row[9].value
-#             hra = row[10].value
-#             statutory_bouns = row[11].value
-#             special_allowance = row[12].value
-#             pf = row[13].value
-#             gratutiy = row[14].value
-#             total_gross_salary = row[15].value
-#             number_of_days_in_month = row[16].value
-#             present_days = row[17].value
-#             lwp = row[18].value
-#             leave_adjustment = row[19].value
-#             gender = row[20].value
-#             basic_pay_monthly = row[21].value
-#             hra_monthly = row[22].value
-#             statutory_bonus_monthly = row[23].value
-#             special_allowance_monthly = row[24].value
-#             total_gross_salary_monthly = row[25].value
-#             provident_fund = row[26].value
-#             professional_tax = row[27].value
-#             advance = row[28].value
-#             esic_employee = row[29].value
-#             tds = row[30].value
-#             total_deduction = row[31].value
-#             net_pay = row[32].value
-#             advance_esic_employer_cont = row[33].value
-
-#             # Create the PF object and associate it with the client
-#             pf_entry = PF(
-#                 client=client,
-#                 employee_code=employee_code,
-#                 employee_name=employee_name,
-#                 uan=uan,
-#                 pf_number=pf_number,
-#                 pf_deducted=pf_deducted,
-#                 date_of_joining=date_of_joining,
-#                 status=status,
-#                 month=month,
-#                 gross_ctc=gross_ctc,
-#                 basic_pay=basic_pay,
-#                 hra=hra,
-#                 statutory_bouns=statutory_bouns,
-#                 special_allowance=special_allowance,
-#                 pf=pf,
-#                 gratutiy=gratutiy,
-#                 total_gross_salary=total_gross_salary,
-#                 number_of_days_in_month=number_of_days_in_month,
-#                 present_days=present_days,
-#                 lwp=lwp,
-#                 leave_adjustment=leave_adjustment,
-#                 gender=gender,
-#                 basic_pay_monthly=basic_pay_monthly,
-#                 hra_monthly=hra_monthly,
-#                 statutory_bonus_monthly=statutory_bonus_monthly,
-#                 special_allowance_monthly=special_allowance_monthly,
-#                 total_gross_salary_monthly=total_gross_salary_monthly,
-#                 provident_fund=provident_fund,
-#                 professional_tax=professional_tax,
-#                 advance=advance,
-#                 esic_employee=esic_employee,
-#                 tds=tds,
-#                 total_deduction=total_deduction,
-#                 net_pay=net_pay,
-#                 advance_esic_employer_cont=advance_esic_employer_cont,
-#             )
-#             pf_entry.save()
-#             pf_entries.append(pf_entry)
-
-#         return Response({"status": "success", "data": PfSerializer(pf_entries, many=True).data})
-
-
-
-
 
 # *******************************************Client View's***********************************************
 
@@ -723,7 +615,7 @@ def edit_branch(request,pk,branch_pk):
         if branch_serializer.is_valid():
             branch_serializer.save(client=client)
             return Response({'Message':'Branch Updated'},status=status.HTTP_200_OK)
-        return Response({'Error':'Fail to update branch'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'Error':branch_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     elif request.method == 'GET':
         branch_ser = BranchSerailizer(branch)
         return Response (branch_ser.data)
@@ -756,7 +648,7 @@ def create_officelocation(request,branch_pk):
         if officeLocation_serializer.is_valid():
             officeLocation_serializer.save(branch=branch)
             return Response({'Message':'Office Location Created', 'Data': officeLocation_serializer.data}, status=status.HTTP_201_CREATED)
-        return Response ({'Error':'Fail to create Office Location'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response ({'Error':'Fail to create Office Location','Error':officeLocation_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
 def edit_officelocation(request,branch_pk,office_pk):
@@ -767,7 +659,7 @@ def edit_officelocation(request,branch_pk,office_pk):
         if officeLocation_serializer.is_valid():
             officeLocation_serializer.save(branch=branch)
             return Response({'Message':'Office Loaction Update'})
-        return Response ({'Error':'Fail to update Office Location'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response ({'Error':'Fail to update Office Location','Error':officeLocation_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     elif request.method == 'GET':
         office_ser = OfficeLocationSerializer(office)
         return Response (office_ser.data)
@@ -802,7 +694,7 @@ def create_customer(request, pk):
         if customer_serializer.is_valid():
             customer_serializer.save(client=client)
             return Response({'Message':'Customer or Vendor Created', 'Data' : customer_serializer.data}, status=status.HTTP_201_CREATED)
-        return Response ({'Error':'Fail to create Customer or Vendor'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response ({'Error':'Fail to create Customer or Vendor','Error':customer_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
 def edit_customer(request, pk, customer_pk):
@@ -813,7 +705,7 @@ def edit_customer(request, pk, customer_pk):
         if customer_serializer.is_valid():
             customer_serializer.save(client=client)
             return Response({'Message':'Customer or Vendor Updated'})
-        return Response({'Error':'Fail to update Customer or Vendor'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'Error':'Fail to update Customer or Vendor','Error':customer_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     elif request.method == 'GET':
         customer_ser = CustomerVendorSerializer(customer)
         return Response(customer_ser.data)
@@ -1008,90 +900,49 @@ class ExcelImportView(APIView):
 
         pf_entries = []
 
-        # Iterate through the rows in the Excel file and create PF objects
+        # Define the fields in a list to optimize the entry creation
+        fields = [
+            'employee_code', 'employee_name', 'uan', 'pf_number', 'pf_deducted',
+            'date_of_joining', 'status', 'month', 'gross_ctc', 'basic_pay',
+            'hra', 'statutory_bonus', 'special_allowance', 'pf', 'gratuity',
+            'total_gross_salary', 'number_of_days_in_month', 'present_days',
+            'lwp', 'leave_adjustment', 'gender', 'basic_pay_monthly',
+            'hra_monthly', 'statutory_bonus_monthly', 'special_allowance_monthly',
+            'total_gross_salary_monthly', 'provident_fund', 'professional_tax',
+            'advance', 'esic_employee', 'tds', 'total_deduction', 'net_pay',
+            'advance_esic_employer_cont'
+        ]
+
+        # Iterate through the rows in the Excel file and create or update PF objects
         for row in ws.iter_rows(min_row=2):  # Skip the header row
-            employee_code = row[0].value
-            employee_name = row[1].value
-            # Check if essential fields are not None (you can adjust which fields to check)
-            if not employee_code or not employee_name:
-                continue  # Skip the row if it does not have the essential fields
+            # Create a dictionary for the current row
+            data = {field: row[i].value for i, field in enumerate(fields)}
 
-            # Get the rest of the values
-            uan = row[2].value
-            pf_number = row[3].value
-            pf_deducted = row[4].value
-            date_of_joining = row[5].value
-            status = row[6].value
-            month = row[7].value
-            gross_ctc = row[8].value
-            basic_pay = row[9].value
-            hra = row[10].value
-            statutory_bonus = row[11].value
-            special_allowance = row[12].value
-            pf = row[13].value
-            gratuity = row[14].value
-            total_gross_salary = row[15].value
-            number_of_days_in_month = row[16].value
-            present_days = row[17].value
-            lwp = row[18].value
-            leave_adjustment = row[19].value
-            gender = row[20].value
-            basic_pay_monthly = row[21].value
-            hra_monthly = row[22].value
-            statutory_bonus_monthly = row[23].value
-            special_allowance_monthly = row[24].value
-            total_gross_salary_monthly = row[25].value
-            provident_fund = row[26].value
-            professional_tax = row[27].value
-            advance = row[28].value
-            esic_employee = row[29].value
-            tds = row[30].value
-            total_deduction = row[31].value
-            net_pay = row[32].value
-            advance_esic_employer_cont = row[33].value
+            employee_code = data['employee_code']
+            month = data['month']
 
-            # Create the PF object and associate it with the client
-            pf_entry = PF(
-                client=client,
-                employee_code=employee_code,
-                employee_name=employee_name,
-                uan=uan,
-                pf_number=pf_number,
-                pf_deducted=pf_deducted,
-                date_of_joining=date_of_joining,
-                status=status,
-                month=month,
-                gross_ctc=gross_ctc,
-                basic_pay=basic_pay,
-                hra=hra,
-                statutory_bonus=statutory_bonus,
-                special_allowance=special_allowance,
-                pf=pf,
-                gratuity=gratuity,
-                total_gross_salary=total_gross_salary,
-                number_of_days_in_month=number_of_days_in_month,
-                present_days=present_days,
-                lwp=lwp,
-                leave_adjustment=leave_adjustment,
-                gender=gender,
-                basic_pay_monthly=basic_pay_monthly,
-                hra_monthly=hra_monthly,
-                statutory_bonus_monthly=statutory_bonus_monthly,
-                special_allowance_monthly=special_allowance_monthly,
-                total_gross_salary_monthly=total_gross_salary_monthly,
-                provident_fund=provident_fund,
-                professional_tax=professional_tax,
-                advance=advance,
-                esic_employee=esic_employee,
-                tds=tds,
-                total_deduction=total_deduction,
-                net_pay=net_pay,
-                advance_esic_employer_cont=advance_esic_employer_cont,
-            )
-            pf_entry.save()
-            pf_entries.append(pf_entry)
+            # Skip rows without essential fields
+            if not employee_code or not month:
+                continue
+
+            # Check if an entry with the same employee_code and month exists
+            instance = PF.objects.filter(employee_code=employee_code, month=month).first()
+
+            if instance:
+                # Update existing entry
+                for field, value in data.items():
+                    setattr(instance, field, value)
+                instance.save()
+                return Response('updated the data for the existing employee')
+            else:
+                # Create new PF entry and associate it with the client
+                pf_entry = PF(client=client, **data)
+                pf_entry.save()
+                pf_entries.append(pf_entry)
+
 
         return Response({"status": "success", "data": PfSerializer(pf_entries, many=True).data})
+
 
 @api_view(['POST','GET'])
 def edit_pf(request, pk, pf_pk):

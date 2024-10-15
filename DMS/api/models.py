@@ -291,6 +291,20 @@ class PF(models.Model):
         ('inactive', 'Inactive')
     ]
 
+    month = [
+        ('january', 'January'),
+        ('February','February'),
+        ('March','March'),
+        ('April','April'),
+        ('May','May'),
+        ('June','June'),
+        ('July','July'),
+        ('August','August'),
+        ('September','September'),
+        ('October','October'),
+        ('November','November'),
+        ('December','December'),
+    ]
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True,  related_name='pf_files')
     employee_code = models.CharField(max_length=100, null=True, blank=True)
     employee_name = models.CharField(max_length=100, null=True, blank=True)
@@ -299,7 +313,7 @@ class PF(models.Model):
     pf_deducted = models.BooleanField(null=True, blank=True)
     date_of_joining = models.DateField(null=True, blank=True)
     status = models.CharField(choices=status, max_length=100, null=True, blank=True)
-    month = models.DateField(null=True, blank=True)
+    month = models.CharField(choices=month,max_length=100,null=True, blank=True)
     gross_ctc = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     basic_pay = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     hra = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -328,28 +342,75 @@ class PF(models.Model):
     advance_esic_employer_cont =models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
 
 
+    # def __str__(self):
+    #     return self.employee_name
     def __str__(self):
-        return self.employee_name
+        return str(self.employee_code) if str(self.employee_code) else "Unnamed PF"
 
 # Tax Audit
 class TaxAudit(models.Model):
+    month = [
+        ('january', 'January'),
+        ('February','February'),
+        ('March','March'),
+        ('April','April'),
+        ('May','May'),
+        ('June','June'),
+        ('July','July'),
+        ('August','August'),
+        ('September','September'),
+        ('October','October'),
+        ('November','November'),
+        ('December','December'),
+
+    ]
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
     financial_year = models.IntegerField(null=True, blank=True)
-    month = models.DateField(null=True, blank=True)
+    month = models.CharField(choices=month,max_length=100,null=True, blank=True)
     # attachment = models.FileField(null=True, blank=True)
 
 # AIR
 class AIR(models.Model):
+    month = [
+        ('january', 'January'),
+        ('February','February'),
+        ('March','March'),
+        ('April','April'),
+        ('May','May'),
+        ('June','June'),
+        ('July','July'),
+        ('August','August'),
+        ('September','September'),
+        ('October','October'),
+        ('November','November'),
+        ('December','December'),
+
+    ]
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
     financial_year = models.IntegerField(null=True, blank=True)
-    month = models.DateField(null=True, blank=True)
+    month = models.CharField(choices=month,max_length=100,null=True, blank=True)
     # attachment = models.FileField(null=True, blank=True)
 
 # SFT
 class SFT(models.Model):
+    month = [
+        ('january', 'January'),
+        ('February','February'),
+        ('March','March'),
+        ('April','April'),
+        ('May','May'),
+        ('June','June'),
+        ('July','July'),
+        ('August','August'),
+        ('September','September'),
+        ('October','October'),
+        ('November','November'),
+        ('December','December'),
+
+    ]
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
     financial_year = models.IntegerField(null=True, blank=True)
-    month = models.DateField(null=True, blank=True)
+    month = models.CharField(choices=month,max_length=100,null=True, blank=True)
     # attachment = models.FileField(null=True, blank=True)
 
 #TDS Payment
