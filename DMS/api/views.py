@@ -23,6 +23,12 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import CreateModelMixin
 from rest_framework import generics
 from openpyxl import load_workbook
+from openpyxl import load_workbook
+from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser
+from rest_framework.response import Response
+from .models import Client, PF
+from .serializers import PfSerializer
 
 # *******************************************Client View's***********************************************
 
@@ -882,6 +888,152 @@ def create_pf(request,pk):
             return Response({'Message':'Pf created', 'Data' : pf_serializer.data})
         return Response (pf_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
+# class ExcelImportView(APIView):
+#     parser_classes = [MultiPartParser]
+
+#     def post(self, request, pk, *args, **kwargs):
+#         # Get the client using the pk from the URL
+#         try:
+#             client = Client.objects.get(pk=pk)
+#         except Client.DoesNotExist:
+#             return Response({"error": "Client not found"}, status=404)
+
+#         file = request.FILES['file']
+
+#         # Load the workbook and select the active worksheet
+#         wb = load_workbook(file)
+#         ws = wb.active
+
+#         pf_entries = []
+
+#         # Iterate through the rows in the Excel file and create/update PF objects
+#         for row in ws.iter_rows(min_row=2):  # Skip the header row
+#             employee_code = row[0].value
+#             employee_name = row[1].value
+
+#             # Skip rows without essential fields
+#             if not employee_code or not employee_name:
+#                 continue
+
+#             # Get the rest of the values
+#             uan = row[2].value
+#             pf_number = row[3].value
+#             pf_deducted = row[4].value
+#             date_of_joining = row[5].value
+#             status = row[6].value
+#             month = row[7].value
+#             gross_ctc = row[8].value
+#             basic_pay = row[9].value
+#             hra = row[10].value
+#             statutory_bonus = row[11].value
+#             special_allowance = row[12].value
+#             pf = row[13].value
+#             gratuity = row[14].value
+#             total_gross_salary = row[15].value
+#             number_of_days_in_month = row[16].value
+#             present_days = row[17].value
+#             lwp = row[18].value
+#             leave_adjustment = row[19].value
+#             gender = row[20].value
+#             basic_pay_monthly = row[21].value
+#             hra_monthly = row[22].value
+#             statutory_bonus_monthly = row[23].value
+#             special_allowance_monthly = row[24].value
+#             total_gross_salary_monthly = row[25].value
+#             provident_fund = row[26].value
+#             professional_tax = row[27].value
+#             advance = row[28].value
+#             esic_employee = row[29].value
+#             tds = row[30].value
+#             total_deduction = row[31].value
+#             net_pay = row[32].value
+#             advance_esic_employer_cont = row[33].value
+
+#             # Check if the PF entry for the employee_code and month already exists
+#             existing_pf_entry = PF.objects.filter(employee_code=employee_code, month=month).first()
+
+#             if existing_pf_entry:
+#                 # If it exists, update the existing entry
+#                 existing_pf_entry.employee_name = employee_name
+#                 existing_pf_entry.uan = uan
+#                 existing_pf_entry.pf_number = pf_number
+#                 existing_pf_entry.pf_deducted = pf_deducted
+#                 existing_pf_entry.date_of_joining = date_of_joining
+#                 existing_pf_entry.status = status
+#                 existing_pf_entry.gross_ctc = gross_ctc
+#                 existing_pf_entry.basic_pay = basic_pay
+#                 existing_pf_entry.hra = hra
+#                 existing_pf_entry.statutory_bonus = statutory_bonus
+#                 existing_pf_entry.special_allowance = special_allowance
+#                 existing_pf_entry.pf = pf
+#                 existing_pf_entry.gratuity = gratuity
+#                 existing_pf_entry.total_gross_salary = total_gross_salary
+#                 existing_pf_entry.number_of_days_in_month = number_of_days_in_month
+#                 existing_pf_entry.present_days = present_days
+#                 existing_pf_entry.lwp = lwp
+#                 existing_pf_entry.leave_adjustment = leave_adjustment
+#                 existing_pf_entry.gender = gender
+#                 existing_pf_entry.basic_pay_monthly = basic_pay_monthly
+#                 existing_pf_entry.hra_monthly = hra_monthly
+#                 existing_pf_entry.statutory_bonus_monthly = statutory_bonus_monthly
+#                 existing_pf_entry.special_allowance_monthly = special_allowance_monthly
+#                 existing_pf_entry.total_gross_salary_monthly = total_gross_salary_monthly
+#                 existing_pf_entry.provident_fund = provident_fund
+#                 existing_pf_entry.professional_tax = professional_tax
+#                 existing_pf_entry.advance = advance
+#                 existing_pf_entry.esic_employee = esic_employee
+#                 existing_pf_entry.tds = tds
+#                 existing_pf_entry.total_deduction = total_deduction
+#                 existing_pf_entry.net_pay = net_pay
+#                 existing_pf_entry.advance_esic_employer_cont = advance_esic_employer_cont
+#                 existing_pf_entry.save()
+
+#                 pf_entries.append(existing_pf_entry)
+
+#             else:
+#                 # If it doesn't exist, create a new PF entry
+#                 pf_entry = PF(
+#                     client=client,
+#                     employee_code=employee_code,
+#                     employee_name=employee_name,
+#                     uan=uan,
+#                     pf_number=pf_number,
+#                     pf_deducted=pf_deducted,
+#                     date_of_joining=date_of_joining,
+#                     status=status,
+#                     month=month,
+#                     gross_ctc=gross_ctc,
+#                     basic_pay=basic_pay,
+#                     hra=hra,
+#                     statutory_bonus=statutory_bonus,
+#                     special_allowance=special_allowance,
+#                     pf=pf,
+#                     gratuity=gratuity,
+#                     total_gross_salary=total_gross_salary,
+#                     number_of_days_in_month=number_of_days_in_month,
+#                     present_days=present_days,
+#                     lwp=lwp,
+#                     leave_adjustment=leave_adjustment,
+#                     gender=gender,
+#                     basic_pay_monthly=basic_pay_monthly,
+#                     hra_monthly=hra_monthly,
+#                     statutory_bonus_monthly=statutory_bonus_monthly,
+#                     special_allowance_monthly=special_allowance_monthly,
+#                     total_gross_salary_monthly=total_gross_salary_monthly,
+#                     provident_fund=provident_fund,
+#                     professional_tax=professional_tax,
+#                     advance=advance,
+#                     esic_employee=esic_employee,
+#                     tds=tds,
+#                     total_deduction=total_deduction,
+#                     net_pay=net_pay,
+#                     advance_esic_employer_cont=advance_esic_employer_cont,
+#                 )
+#                 pf_entry.save()
+#                 pf_entries.append(pf_entry)
+
+#         return Response({"status": "success", "data": PfSerializer(pf_entries, many=True).data})
+
 class ExcelImportView(APIView):
     parser_classes = [MultiPartParser]
 
@@ -900,133 +1052,47 @@ class ExcelImportView(APIView):
 
         pf_entries = []
 
-        # Iterate through the rows in the Excel file and create/update PF objects
+        # Define the fields in a list to optimize the entry creation
+        fields = [
+            'employee_code', 'employee_name', 'uan', 'pf_number', 'pf_deducted',
+            'date_of_joining', 'status', 'month', 'gross_ctc', 'basic_pay',
+            'hra', 'statutory_bonus', 'special_allowance', 'pf', 'gratuity',
+            'total_gross_salary', 'number_of_days_in_month', 'present_days',
+            'lwp', 'leave_adjustment', 'gender', 'basic_pay_monthly',
+            'hra_monthly', 'statutory_bonus_monthly', 'special_allowance_monthly',
+            'total_gross_salary_monthly', 'provident_fund', 'professional_tax',
+            'advance', 'esic_employee', 'tds', 'total_deduction', 'net_pay',
+            'advance_esic_employer_cont'
+        ]
+
+        # Iterate through the rows in the Excel file and create or update PF objects
         for row in ws.iter_rows(min_row=2):  # Skip the header row
-            employee_code = row[0].value
-            employee_name = row[1].value
+            # Create a dictionary for the current row
+            data = {field: row[i].value for i, field in enumerate(fields)}
+
+            employee_code = data['employee_code']
+            month = data['month']
 
             # Skip rows without essential fields
-            if not employee_code or not employee_name:
+            if not employee_code or not month:
                 continue
 
-            # Get the rest of the values
-            uan = row[2].value
-            pf_number = row[3].value
-            pf_deducted = row[4].value
-            date_of_joining = row[5].value
-            status = row[6].value
-            month = row[7].value
-            gross_ctc = row[8].value
-            basic_pay = row[9].value
-            hra = row[10].value
-            statutory_bonus = row[11].value
-            special_allowance = row[12].value
-            pf = row[13].value
-            gratuity = row[14].value
-            total_gross_salary = row[15].value
-            number_of_days_in_month = row[16].value
-            present_days = row[17].value
-            lwp = row[18].value
-            leave_adjustment = row[19].value
-            gender = row[20].value
-            basic_pay_monthly = row[21].value
-            hra_monthly = row[22].value
-            statutory_bonus_monthly = row[23].value
-            special_allowance_monthly = row[24].value
-            total_gross_salary_monthly = row[25].value
-            provident_fund = row[26].value
-            professional_tax = row[27].value
-            advance = row[28].value
-            esic_employee = row[29].value
-            tds = row[30].value
-            total_deduction = row[31].value
-            net_pay = row[32].value
-            advance_esic_employer_cont = row[33].value
+            # Check if an entry with the same employee_code and month exists
+            instance = PF.objects.filter(employee_code=employee_code, month=month).first()
 
-            # Check if the PF entry for the employee_code and month already exists
-            existing_pf_entry = PF.objects.filter(employee_code=employee_code, month=month).first()
-
-            if existing_pf_entry:
-                # If it exists, update the existing entry
-                existing_pf_entry.employee_name = employee_name
-                existing_pf_entry.uan = uan
-                existing_pf_entry.pf_number = pf_number
-                existing_pf_entry.pf_deducted = pf_deducted
-                existing_pf_entry.date_of_joining = date_of_joining
-                existing_pf_entry.status = status
-                existing_pf_entry.gross_ctc = gross_ctc
-                existing_pf_entry.basic_pay = basic_pay
-                existing_pf_entry.hra = hra
-                existing_pf_entry.statutory_bonus = statutory_bonus
-                existing_pf_entry.special_allowance = special_allowance
-                existing_pf_entry.pf = pf
-                existing_pf_entry.gratuity = gratuity
-                existing_pf_entry.total_gross_salary = total_gross_salary
-                existing_pf_entry.number_of_days_in_month = number_of_days_in_month
-                existing_pf_entry.present_days = present_days
-                existing_pf_entry.lwp = lwp
-                existing_pf_entry.leave_adjustment = leave_adjustment
-                existing_pf_entry.gender = gender
-                existing_pf_entry.basic_pay_monthly = basic_pay_monthly
-                existing_pf_entry.hra_monthly = hra_monthly
-                existing_pf_entry.statutory_bonus_monthly = statutory_bonus_monthly
-                existing_pf_entry.special_allowance_monthly = special_allowance_monthly
-                existing_pf_entry.total_gross_salary_monthly = total_gross_salary_monthly
-                existing_pf_entry.provident_fund = provident_fund
-                existing_pf_entry.professional_tax = professional_tax
-                existing_pf_entry.advance = advance
-                existing_pf_entry.esic_employee = esic_employee
-                existing_pf_entry.tds = tds
-                existing_pf_entry.total_deduction = total_deduction
-                existing_pf_entry.net_pay = net_pay
-                existing_pf_entry.advance_esic_employer_cont = advance_esic_employer_cont
-                existing_pf_entry.save()
-
-                pf_entries.append(existing_pf_entry)
-
+            if instance:
+                # Update existing entry
+                for field, value in data.items():
+                    setattr(instance, field, value)
+                instance.save()
             else:
-                # If it doesn't exist, create a new PF entry
-                pf_entry = PF(
-                    client=client,
-                    employee_code=employee_code,
-                    employee_name=employee_name,
-                    uan=uan,
-                    pf_number=pf_number,
-                    pf_deducted=pf_deducted,
-                    date_of_joining=date_of_joining,
-                    status=status,
-                    month=month,
-                    gross_ctc=gross_ctc,
-                    basic_pay=basic_pay,
-                    hra=hra,
-                    statutory_bonus=statutory_bonus,
-                    special_allowance=special_allowance,
-                    pf=pf,
-                    gratuity=gratuity,
-                    total_gross_salary=total_gross_salary,
-                    number_of_days_in_month=number_of_days_in_month,
-                    present_days=present_days,
-                    lwp=lwp,
-                    leave_adjustment=leave_adjustment,
-                    gender=gender,
-                    basic_pay_monthly=basic_pay_monthly,
-                    hra_monthly=hra_monthly,
-                    statutory_bonus_monthly=statutory_bonus_monthly,
-                    special_allowance_monthly=special_allowance_monthly,
-                    total_gross_salary_monthly=total_gross_salary_monthly,
-                    provident_fund=provident_fund,
-                    professional_tax=professional_tax,
-                    advance=advance,
-                    esic_employee=esic_employee,
-                    tds=tds,
-                    total_deduction=total_deduction,
-                    net_pay=net_pay,
-                    advance_esic_employer_cont=advance_esic_employer_cont,
-                )
+                # Create new PF entry and associate it with the client
+                pf_entry = PF(client=client, **data)
                 pf_entry.save()
                 pf_entries.append(pf_entry)
 
         return Response({"status": "success", "data": PfSerializer(pf_entries, many=True).data})
+
 
 
 @api_view(['POST','GET'])
