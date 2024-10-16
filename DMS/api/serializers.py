@@ -259,7 +259,6 @@ class DateFromDateTimeField(serializers.DateField):
 
 class PfSerializer(serializers.ModelSerializer):
     date_of_joining = DateFromDateTimeField()
-    month = DateFromDateTimeField()
 
     class Meta:
         model = PF
