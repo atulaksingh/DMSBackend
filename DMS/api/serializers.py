@@ -178,52 +178,52 @@ class FilesSerializer(serializers.ModelSerializer):
 #         model = Files
 #         fields = ['id', 'files', 'branch_doc', 'tax_audit', 'air', 'sft','tds','bank']
 
-#     def to_representation(self, instance):
-#         # Get the original representation
-#         representation = super().to_representation(instance)
+    def to_representation(self, instance):
+        # Get the original representation
+        representation = super().to_representation(instance)
 
-#         # Check which model is being serialized and remove null fields
-#         if representation['tax_audit'] is not None:
-#             # If it's TaxAudit, remove AIR and SFT fields
-#             representation.pop('air', None)
-#             representation.pop('sft', None)
-#             representation.pop('tds', None)
-#             representation.pop('branch_doc', None)
-#             representation.pop('bank', None)
-#         elif representation['air'] is not None:
-#             # If it's AIR, remove TaxAudit and SFT fields
-#             representation.pop('tax_audit', None)
-#             representation.pop('sft', None)
-#             representation.pop('tds', None)
-#             representation.pop('branch_doc', None)
-#             representation.pop('bank', None)
-#         elif representation['sft'] is not None:
-#             # If it's SFT, remove TaxAudit and AIR fields
-#             representation.pop('tax_audit', None)
-#             representation.pop('air', None)
-#             representation.pop('tds', None)
-#             representation.pop('branch_doc', None)
-#             representation.pop('bank', None)
-#         elif representation['tds'] is not None:
-#             representation.pop('tax_audit', None)
-#             representation.pop('air', None)
-#             representation.pop('sft', None)
-#             representation.pop('branch_doc', None)
-#             representation.pop('bank', None)
-#         elif representation['branch_doc'] is not None:
-#             representation.pop('tax_audit', None)
-#             representation.pop('air', None)
-#             representation.pop('sft', None)
-#             representation.pop('tds', None)
-#             representation.pop('bank', None)
-#         elif representation['bank'] is not None:
-#             representation.pop('tax_audit', None)
-#             representation.pop('air', None)
-#             representation.pop('sft', None)
-#             representation.pop('tds', None)
-#             representation.pop('branch_doc', None)
+        # Check which model is being serialized and remove null fields
+        if representation['tax_audit'] is not None:
+            # If it's TaxAudit, remove AIR and SFT fields
+            representation.pop('air', None)
+            representation.pop('sft', None)
+            representation.pop('tds', None)
+            representation.pop('branch_doc', None)
+            representation.pop('bank', None)
+        elif representation['air'] is not None:
+            # If it's AIR, remove TaxAudit and SFT fields
+            representation.pop('tax_audit', None)
+            representation.pop('sft', None)
+            representation.pop('tds', None)
+            representation.pop('branch_doc', None)
+            representation.pop('bank', None)
+        elif representation['sft'] is not None:
+            # If it's SFT, remove TaxAudit and AIR fields
+            representation.pop('tax_audit', None)
+            representation.pop('air', None)
+            representation.pop('tds', None)
+            representation.pop('branch_doc', None)
+            representation.pop('bank', None)
+        elif representation['tds'] is not None:
+            representation.pop('tax_audit', None)
+            representation.pop('air', None)
+            representation.pop('sft', None)
+            representation.pop('branch_doc', None)
+            representation.pop('bank', None)
+        elif representation['branch_doc'] is not None:
+            representation.pop('tax_audit', None)
+            representation.pop('air', None)
+            representation.pop('sft', None)
+            representation.pop('tds', None)
+            representation.pop('bank', None)
+        elif representation['bank'] is not None:
+            representation.pop('tax_audit', None)
+            representation.pop('air', None)
+            representation.pop('sft', None)
+            representation.pop('tds', None)
+            representation.pop('branch_doc', None)
 
-#         return representation
+        return representation
 
 
 # Branch Document

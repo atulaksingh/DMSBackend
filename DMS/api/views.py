@@ -1153,8 +1153,7 @@ def create_taxaudit(request,pk):
                     if file_serializer.is_valid(raise_exception=True):
                         file_serializer.save()
 
-            return Response(TaxAuditSerializer(tax_instance).data
-                            )
+            return Response({'Message':'taxaudit created','Data':serializer.data})
     return Response(serializer.errors)
 
 @api_view(['POST', 'GET'])
@@ -1253,7 +1252,7 @@ def create_air(request,pk):
                     if file_serializer.is_valid(raise_exception=True):
                         file_serializer.save()
 
-            return Response(serializer.data)
+            return Response({'Message':'taxaudit created','Data':serializer.data})
     return Response(serializer.errors)
 
 @api_view(['POST', 'GET'])
@@ -1352,7 +1351,7 @@ def create_sft(request,pk):
                     if file_serializer.is_valid(raise_exception=True):
                         file_serializer.save()
 
-            return Response(serializer.data)
+            return Response({'Message':'taxaudit created','Data':serializer.data})
     return Response(serializer.errors)
 
 @api_view(['POST', 'GET'])
@@ -1503,7 +1502,7 @@ def create_tds(request,pk):
                     if file_serializer.is_valid(raise_exception=True):
                         file_serializer.save()
 
-            return Response(serializer.data)
+            return Response({'Message':'taxaudit created','Data':serializer.data})
     return Response(serializer.errors)
 
 @api_view(['POST', 'GET'])
