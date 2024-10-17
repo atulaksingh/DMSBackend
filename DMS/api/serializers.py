@@ -166,64 +166,64 @@ class OfficeLocationSerializer(serializers.ModelSerializer):
         model = OfficeLocation
         fields = '__all__'
 
-# class FilesSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Files
-#         # fields = '__all__'
-#         fields = ['id', 'files']
-# from rest_framework import serializers
-
 class FilesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Files
-        fields = ['id', 'files', 'branch_doc', 'tax_audit', 'air', 'sft','tds','bank']
+        fields = '__all__'
+        # fields = ['id', 'files']
+# from rest_framework import serializers
 
-    def to_representation(self, instance):
-        # Get the original representation
-        representation = super().to_representation(instance)
+# class FilesSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Files
+#         fields = ['id', 'files', 'branch_doc', 'tax_audit', 'air', 'sft','tds','bank']
 
-        # Check which model is being serialized and remove null fields
-        if representation['tax_audit'] is not None:
-            # If it's TaxAudit, remove AIR and SFT fields
-            representation.pop('air', None)
-            representation.pop('sft', None)
-            representation.pop('tds', None)
-            representation.pop('branch_doc', None)
-            representation.pop('bank', None)
-        elif representation['air'] is not None:
-            # If it's AIR, remove TaxAudit and SFT fields
-            representation.pop('tax_audit', None)
-            representation.pop('sft', None)
-            representation.pop('tds', None)
-            representation.pop('branch_doc', None)
-            representation.pop('bank', None)
-        elif representation['sft'] is not None:
-            # If it's SFT, remove TaxAudit and AIR fields
-            representation.pop('tax_audit', None)
-            representation.pop('air', None)
-            representation.pop('tds', None)
-            representation.pop('branch_doc', None)
-            representation.pop('bank', None)
-        elif representation['tds'] is not None:
-            representation.pop('tax_audit', None)
-            representation.pop('air', None)
-            representation.pop('sft', None)
-            representation.pop('branch_doc', None)
-            representation.pop('bank', None)
-        elif representation['branch_doc'] is not None:
-            representation.pop('tax_audit', None)
-            representation.pop('air', None)
-            representation.pop('sft', None)
-            representation.pop('tds', None)
-            representation.pop('bank', None)
-        elif representation['bank'] is not None:
-            representation.pop('tax_audit', None)
-            representation.pop('air', None)
-            representation.pop('sft', None)
-            representation.pop('tds', None)
-            representation.pop('branch_doc', None)
+#     def to_representation(self, instance):
+#         # Get the original representation
+#         representation = super().to_representation(instance)
 
-        return representation
+#         # Check which model is being serialized and remove null fields
+#         if representation['tax_audit'] is not None:
+#             # If it's TaxAudit, remove AIR and SFT fields
+#             representation.pop('air', None)
+#             representation.pop('sft', None)
+#             representation.pop('tds', None)
+#             representation.pop('branch_doc', None)
+#             representation.pop('bank', None)
+#         elif representation['air'] is not None:
+#             # If it's AIR, remove TaxAudit and SFT fields
+#             representation.pop('tax_audit', None)
+#             representation.pop('sft', None)
+#             representation.pop('tds', None)
+#             representation.pop('branch_doc', None)
+#             representation.pop('bank', None)
+#         elif representation['sft'] is not None:
+#             # If it's SFT, remove TaxAudit and AIR fields
+#             representation.pop('tax_audit', None)
+#             representation.pop('air', None)
+#             representation.pop('tds', None)
+#             representation.pop('branch_doc', None)
+#             representation.pop('bank', None)
+#         elif representation['tds'] is not None:
+#             representation.pop('tax_audit', None)
+#             representation.pop('air', None)
+#             representation.pop('sft', None)
+#             representation.pop('branch_doc', None)
+#             representation.pop('bank', None)
+#         elif representation['branch_doc'] is not None:
+#             representation.pop('tax_audit', None)
+#             representation.pop('air', None)
+#             representation.pop('sft', None)
+#             representation.pop('tds', None)
+#             representation.pop('bank', None)
+#         elif representation['bank'] is not None:
+#             representation.pop('tax_audit', None)
+#             representation.pop('air', None)
+#             representation.pop('sft', None)
+#             representation.pop('tds', None)
+#             representation.pop('branch_doc', None)
+
+#         return representation
 
 
 # Branch Document
@@ -273,6 +273,18 @@ class PfSerializer(serializers.ModelSerializer):
             'advance', 'esic_employee', 'tds','total_deduction', 'net_pay', 'advance_esic_employer_cont'
             ]
 
+# # Tax Audit
+# class TaxAuditSerializer(serializers.ModelSerializer):
+#     files = serializers.SerializerMethodField()
+
+#     class Meta:
+#         model = TaxAudit
+#         fields = ['id','client','financial_year','month','files']
+
+#     def get_files(self, obj):
+#         files = Files.objects.filter(tax_audit=obj)
+#         return FilesSerializer(files, many=True).data
+
 # Tax Audit
 class TaxAuditSerializer(serializers.ModelSerializer):
     files = serializers.SerializerMethodField()
@@ -284,6 +296,7 @@ class TaxAuditSerializer(serializers.ModelSerializer):
     def get_files(self, obj):
         files = Files.objects.filter(tax_audit=obj)
         return FilesSerializer(files, many=True).data
+
 
 # AIR
 class AIRSerializer(serializers.ModelSerializer):
