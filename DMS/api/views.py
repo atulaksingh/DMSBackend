@@ -1141,8 +1141,8 @@ def create_taxaudit(request,pk):
         print(request.data)
 
         if request.FILES:
-            files = dict((request.FILES).lists()).get('files',None)
-            # files = request.FILES.getlist('files')
+            # files = dict((request.FILES).lists()).get('files',None)
+            files = request.FILES.getlist('files')
             if files:
                 for file in files:
                     file_data = {
