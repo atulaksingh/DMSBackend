@@ -66,7 +66,7 @@ class Bank(models.Model):
     def __str__(self):
         return self.bank_name
 
-#Owner Model
+# Owner Model
 class Owner(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
     owner_name = models.CharField(max_length=100, null=True, blank=True)
@@ -80,7 +80,7 @@ class Owner(models.Model):
     # def __str__(self):
     #     return self.owner_name
 
-#User Model
+# User Model
 class CustomUser(AbstractUser):
 
     groups = models.ManyToManyField(
@@ -128,7 +128,7 @@ class CompanyDocument(models.Model):
     file = models.FileField(null=True, blank=True)
 
 
-#Branch Model
+# Branch Model
 class Branch(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
     branch_name = models.CharField(max_length=100, null=True, blank=True)
@@ -141,7 +141,7 @@ class Branch(models.Model):
     def __str__(self):
         return self.branch_name
 
-#OfficeLocation Model
+# OfficeLocation Model
 class OfficeLocation(models.Model):
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True, blank=True)
     location = models.CharField(max_length=100, null=True, blank=True)
@@ -170,7 +170,7 @@ class BranchDocument(models.Model):
     remark = models.TextField(null=True, blank=True)
     # file = models.FileField(null=True, blank=True)
 
-#Customer or Vendor Model
+# Customer or Vendor Model
 class Customer(models.Model):
    name = models.CharField(max_length=100, null=True, blank=True)
    gst_no = models.CharField(max_length=100, null=True, blank=True)
@@ -184,12 +184,26 @@ class Customer(models.Model):
    def __str__(self):
         return self.name
 
-#HSN Code Model
+# HSN Code Model
 class HSNCode(models.Model):
     hsn_code = models.IntegerField(null=True, blank=True)
     gst_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
-#Sales Invoice Model
+# Product Model
+class Product(models.Model):
+    hsn = models.ForeignKey(HSNCode, on_delete=models.CASCADE,null=True, blank=True)
+    product_name = models.CharField(max_length=100, null=True, blank=True)
+    unit_of_measure = models.DecimalField(null=True, blank=True, decimal_places=2, max_digits=10)
+
+
+# Description Model
+class ProductDescription(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    unit = models.DecimalField(null=True, blank=True, max_digits=10, decimal_places=2)
+    rate = models.DecimalField(null=True, blank=True, max_digits=10, decimal_places=2)
+
+# Sales Invoice Model
 class SalesInvoice(models.Model):
 
     invoice_type = [
@@ -217,10 +231,10 @@ class SalesInvoice(models.Model):
     invoice_type = models.CharField(max_length=100, choices=invoice_type, null=True, blank=True)
     entry_type = models.CharField(max_length=100, choices=entry_type, null=True, blank=True)
     hsn = models.ForeignKey(HSNCode, on_delete=models.CASCADE, null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
-    unit_of_measure = models.CharField(max_length=100, null=True, blank=True)
-    unit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    # description = models.TextField(null=True, blank=True)
+    # unit_of_measure = models.CharField(max_length=100, null=True, blank=True)
+    # unit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    # rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     taxable_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     cgst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     sgst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -232,7 +246,7 @@ class SalesInvoice(models.Model):
     tds = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     amount_receivable = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
-#Purchase Invoice Model
+# Purchase Invoice Model
 class PurchaseInvoice(models.Model):
    entry_type = [
         ('purchase_invoice', 'Purchase_Invoice'),

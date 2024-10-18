@@ -3,17 +3,13 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from api.models import *
 from rest_framework_simplejwt.tokens import RefreshToken
 from datetime import datetime
-
-
 import json
-
 
 # File Serializer
 class FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = File
         fields = ['id', 'files', 'fileinfo']
-
 
 class FileInfoSerializer(serializers.ModelSerializer):
     files = FileSerializer(many=True, required=False)
@@ -339,3 +335,9 @@ class TDSReturnSerializer(serializers.ModelSerializer):
     def get_files(self, obj):
         files = Files.objects.filter(tds=obj)
         return FilesSerializer(files, many=True).data
+
+# Sales Invoice
+class SalesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SalesInvoice
+        fields = '__all__'

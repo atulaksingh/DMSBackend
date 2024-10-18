@@ -312,6 +312,10 @@ def edit_bank(request, pk, bank_pk):
 @api_view(['GET'])
 def list_bank(request, pk):
     client = Client.objects.get(id=pk)
+    off=OfficeLocation.objects.filter(branch__client=client)
+    print('gh',off)
+    # for i in off:
+    #     print('fff',i)
     if request.method == 'GET':
         bank_list = Bank.objects.filter(client=client)
         serializers = BankSerializer(bank_list,many=True)
@@ -1574,6 +1578,22 @@ def delete_tds(request, pk, tds_pk ):
         tds.delete()
         return Response({'Messgae':'TDS Return Delete'})
     return Response({'Message':'Fail to delete TDS Return'} ,status=status.HTTP_400_BAD_REQUEST)
+
+# ***********************************************Sales*******************************************
+# @api_view(['POST'])
+# def create_sales(request,pk):
+#     client = Client.objects.get(id=pk)
+#     off=OfficeLocation.objects.filter(branch__client=client)
+#     print('gh',off)
+#     # office=request.data.get('office_location_id')
+#     print('dd',office)
+
+#     # officelocation = OfficeLocation.objects.get(id=officelocation_pk)
+#     if request.method == 'POST':
+#         serializers = SalesInvoice(data=request.data)
+#         if serializers.is_valid():
+#             serializers.save()
+#             return Response(serializers.data)
 
 # ***********************************************Detail page API's*********************************************
 @api_view(['GET'])
