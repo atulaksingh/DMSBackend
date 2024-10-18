@@ -107,7 +107,7 @@ urlpatterns = [
     path('single-tds/<int:pk>/<int:tds_pk>', view=single_tds, name='single-tdsreturn'),
     path('delete-tds/<int:pk>/<int:tds_pk>', view=delete_tds, name='delete-tdsreturn'),
 
-    path('create-sales/<int:pk>', view=create_sales, name='create-sales'),
+    # path('create-sales/<int:pk>', view=create_sales, name='create-sales'),
 
 
 ]
