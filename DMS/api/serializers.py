@@ -341,3 +341,26 @@ class SalesSerializer(serializers.ModelSerializer):
     class Meta:
         model = SalesInvoice
         fields = '__all__'
+
+
+
+class HSNSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HSNCode
+        fields = ['id','hsn_code', 'gst_rate']
+
+
+class ProductSerializer(serializers.ModelSerializer):
+    hsn_code = serializers.CharField(source='hsn.hsn_code', read_only=True)
+    class Meta:
+        model = Product
+        fields = ['id', 'product_name', 'unit_of_measure', 'hsn_code','hsn']
+
+
+
+class ProductDescriptionSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.product_name', read_only=True)
+
+    class Meta:
+        model = ProductDescription
+        fields = ['id', 'description', 'unit', 'rate','product_name','product']

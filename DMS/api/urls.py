@@ -107,7 +107,30 @@ urlpatterns = [
     path('single-tds/<int:pk>/<int:tds_pk>', view=single_tds, name='single-tdsreturn'),
     path('delete-tds/<int:pk>/<int:tds_pk>', view=delete_tds, name='delete-tdsreturn'),
 
-    # path('create-sales/<int:pk>', view=create_sales, name='create-sales'),
+    path('create-sales/<int:pk>/', view=create_sales, name='create-sales'),  # Note the trailing slash
+
+
+    # hsn master
+
+    path('create-hsn', view=create_hsn, name='create-hsn'),
+    path('create-hsn-excel', view=import_hsn_excel, name='create-hsn-excel'),
+    path('edit-hsn/<int:pk>', view=edit_hsn, name='edit-hsn'),
+
+    path('list-hsn', view=list_hsn, name='list-hsn'),
+    path('delete-hsn/<int:pk>', view=delete_hsn, name='delete-hsn'),
+    # product
+    path('create-product', view=create_product, name='create-product'),
+    path('edit-product/<int:pk>', view=edit_product, name='edit-product'),
+
+    path('list-product', view=list_product, name='list-product'),
+    path('delete-product/<int:pk>', view=delete_product, name='delete-product'),
+
+
+# Product Description
+    path('create-product-description', view=create_product_description, name='create-product-description'),
+    path('list-product-description', view=list_product_description, name='list-product-description'),
+    path('edit-product-description/<int:pk>', view=edit_product_description, name='edit-product-description'),
+    path('delete-product-description/<int:pk>', view=delete_product_description, name='delete-product-description'),
 
 
 ]

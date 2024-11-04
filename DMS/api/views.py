@@ -29,6 +29,8 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from .models import Client, PF
 from .serializers import PfSerializer
+import pandas as pd
+from django.http import JsonResponse
 
 # *******************************************Client View's***********************************************
 
@@ -116,8 +118,23 @@ def create_client(request):
 def list_client(request):
     if request.method == 'GET':
         client = Client.objects.all()
+        hsn = HSNCode.objects.all()
+        product = Product.objects.all()
+        product_description = ProductDescription.objects.all()
+
         serializers = ClientSerializer(client, many=True)
-        return Response(serializers.data)
+        serializers2 = HSNSerializer(hsn, many=True)
+        serializers3 = ProductSerializer(product, many=True)
+        serializers4 = ProductDescriptionSerializer(product_description, many=True)
+
+        context = {
+            'clients':serializers.data,
+            'hsn':serializers2.data,
+            'product':serializers3.data,
+            'product_description':serializers4.data
+        }
+
+        return Response(context)
 
 @api_view(['GET', 'POST'])
 def edit_client(request, pk):
@@ -1580,20 +1597,134 @@ def delete_tds(request, pk, tds_pk ):
     return Response({'Message':'Fail to delete TDS Return'} ,status=status.HTTP_400_BAD_REQUEST)
 
 # ***********************************************Sales*******************************************
-# @api_view(['POST'])
-# def create_sales(request,pk):
-#     client = Client.objects.get(id=pk)
-#     off=OfficeLocation.objects.filter(branch__client=client)
-#     print('gh',off)
-#     # office=request.data.get('office_location_id')
-#     print('dd',office)
+# @api_view(['GET', 'POST'])
+# def create_sales(request, pk):
+#     try:
+#         client = Client.objects.get(id=pk)
+#     except Client.DoesNotExist:
+#         return Response({"error": "Client not found."}, status=404)
+    
+#     if request.method == 'GET':
+#         off = OfficeLocation.objects.filter(branch__client=client)
+#         customer = Customer.objects.filter(client=client, customer=True)
+#         product = Product.objects.all()
+        
+#         serializer_customer = CustomerVendorSerializer(customer, many=True)
+#         serializer = OfficeLocationSerializer(off, many=True)
+#         product_serializer = ProductSerializer(product, many=True)
 
-#     # officelocation = OfficeLocation.objects.get(id=officelocation_pk)
-#     if request.method == 'POST':
-#         serializers = SalesInvoice(data=request.data)
-#         if serializers.is_valid():
-#             serializers.save()
-#             return Response(serializers.data)
+#         # Retrieve query parameters
+#         received_value = request.GET.get('newValue')
+#         product_id = request.GET.get('productID')
+        
+
+#         print("Received newValue:", received_value)
+#         print("Received productID:", product_id)  # Check if productID is received
+#         if product_id:
+#             print('eysss')
+#             try:
+
+#                 hsn_cc = Product.objects.get(id = product_id).hsn       
+#                 # hsn_cc_serializer = HSNSerializer(hsn_cc)
+#                 return Response({
+#                     "message": "Product HSN found",
+#                     "hsn": HSNSerializer(hsn_cc).data
+#                 })
+
+#                 # print('products',hsn_cc_serializer)
+#             except(ValueError, Product.DoesNotExist):
+#                 return Response({"error": "Invalid Product ID."},status=400)
+
+#         # Process received_value
+#         if received_value:
+#             try:
+#                 received_value = int(received_value)
+#                 location = OfficeLocation.objects.get(id=received_value)
+#                 return Response({
+#                     "message": "Location found",
+#                     "location": OfficeLocationSerializer(location).data
+#                 })
+#             except (ValueError, OfficeLocation.DoesNotExist):
+#                 return Response({"error": "Invalid location ID."}, status=400)
+#         # Return all if no specific location is selected
+#         context = {
+#             'serializer_customer': serializer_customer.data,
+#             'serializer': serializer.data,
+#             'product_serializer': product_serializer.data
+#         }
+#         return Response(context)
+
+@api_view(['GET', 'POST'])
+def create_sales(request, pk):
+    try:
+        client = Client.objects.get(id=pk)
+    except Client.DoesNotExist:
+        return Response({"error": "Client not found."}, status=404)
+    
+    if request.method == 'GET':
+        # Initialize response context with default values
+        context = {
+            'serializer_customer': [],
+            'serializer': [],
+            'product_serializer': [],
+            'message': None,
+            'hsn': None,
+            'location': None
+        }
+
+        # Retrieve query parameters
+        received_value = request.GET.get('newValue')
+        product_id = request.GET.get('productID')
+
+        # Process productID if it exists
+        if product_id:
+            try:
+                hsn_cc = Product.objects.get(id=product_id).hsn
+                context.update({
+                    "message": "Product HSN found",
+                    "hsn": HSNSerializer(hsn_cc).data
+                })
+            except (ValueError, Product.DoesNotExist):
+                return Response({"error": "Invalid Product ID."}, status=400)
+
+        # Process received_value if it exists
+        if received_value:
+            try:
+                received_value = int(received_value)
+                location = OfficeLocation.objects.get(id=received_value)
+                context.update({
+                    "message": "Location found",
+                    "location": OfficeLocationSerializer(location).data
+                })
+            except (ValueError, OfficeLocation.DoesNotExist):
+                return Response({"error": "Invalid location ID."}, status=400)
+
+        # Add data only if productID and received_value were not provided
+        if not product_id and not received_value:
+            off = OfficeLocation.objects.filter(branch__client=client)
+            customer = Customer.objects.filter(client=client, customer=True)
+            product = Product.objects.all()
+
+            serializer_customer = CustomerVendorSerializer(customer, many=True)
+            serializer = OfficeLocationSerializer(off, many=True)
+            product_serializer = ProductSerializer(product, many=True)
+
+            context.update({
+                'serializer_customer': serializer_customer.data,
+                'serializer': serializer.data,
+                'product_serializer': product_serializer.data
+            })
+
+        return Response(context)
+
+
+    # if request.method == 'POST':
+    #     serializer = SalesInvoiceSerializer(data=request.data)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response(serializer.data, status=201)
+    #     return Response(serializer.errors, status=400)
+
 
 # ***********************************************Detail page API's*********************************************
 @api_view(['GET'])
@@ -1670,5 +1801,194 @@ def detail_branch(request, pk, branch_pk):
     return Response(data)
 
 
+@api_view(['POST'])
+def import_hsn_excel(request):
+    if request.method == 'POST':
+        # Check if an Excel file is provided
+        if 'file' not in request.FILES:
+            return Response({'Error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get the uploaded Excel file
+        excel_file = request.FILES['file']
+
+        try:
+            # Read the Excel file using pandas
+            df = pd.read_excel(excel_file)
+
+            # List to hold successful imports and errors
+            successful_imports = []
+            errors = []
+
+            # Ensure there are at least two columns
+            if df.shape[1] < 2:
+                return Response({'Error': 'The Excel file must contain at least two columns'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Iterate through each row and create a new record
+            for index, row in df.iterrows():
+                data = {}
+
+                # Assign the first column to hsn_code and the second to gst_rate
+                try:
+                    data['hsn_code'] = int(row[0])  # Convert to int
+                    data['gst_rate'] = float(row[1])  # Convert to float
+                except ValueError as ve:
+                    errors.append({'row': index + 1, 'error': str(ve)})
+                    continue  # Skip this row if there's a conversion error
+
+                # Use the serializer to validate and save data
+                serializer = HSNSerializer(data=data)
+                if serializer.is_valid():
+                    serializer.save()
+                    successful_imports.append(data)
+                else:
+                    errors.append({'row': index + 1, 'errors': serializer.errors})
+
+            # Prepare response
+            response_message = {'Message': 'HSN records imported successfully', 'Imported': successful_imports}
+            if errors:
+                response_message['Errors'] = errors
+
+            return Response(response_message, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({'Error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(['POST','GET'])
+def create_hsn(request):
+    if request.method == 'POST':
+        serializer = HSNSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response ({'Message':'TDS Payment created', 'Data': serializer.data})
+        return Response({'Error':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET', 'POST'])
+def edit_hsn(request, pk):
+    hsn = HSNCode.objects.get(id=pk)
+    serializer = HSNSerializer(instance=hsn, data=request.data)
+    if request.method == 'GET':
+        hsn_serializer = HSNSerializer(hsn)
+        # print(tds_serializer.data)
+        return Response (hsn_serializer.data)
+    elif request.method == 'POST':
+        if serializer.is_valid():
+            serializer.save()
+            return Response ({'Message':'hsn Code Updated'})
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def list_hsn(request):
+    if request.method == 'GET':
+        hsn_code = HSNCode.objects.all()
+        serializer = HSNSerializer(hsn_code, many=True)
+        return Response(serializer.data)
+
+
+
+@api_view(['DELETE'])
+def delete_hsn(request, pk):
+    hsn = HSNCode.objects.get(id = pk)
+    if request.method == 'DELETE':
+        hsn.delete()
+        return Response({'Messgae':'HSN Return Delete'})
+    return Response({'Message':'Fail to delete HSN Return'} ,status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+@api_view(['POST','GET'])
+def create_product(request):
+    if request.method=="GET":
+        hsn_list = HSNCode.objects.all()
+        serializer =HSNSerializer(hsn_list,many=True)
+        return Response(serializer.data)
+    if request.method == 'POST':
+        serializer = ProductSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response ({'Message':'Product Payment created', 'Data': serializer.data})
+        return Response({'Error':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+@api_view(['GET', 'POST'])
+def edit_product(request, pk):
+    product = Product.objects.get(id=pk)
+    serializer = ProductSerializer(instance=product, data=request.data)
+    if request.method == 'GET':
+        product_serializer = ProductSerializer(product)
+        # print(tds_serializer.data)
+        return Response (product_serializer.data)
+    elif request.method == 'POST':
+        if serializer.is_valid():
+            serializer.save()
+            return Response ({'Message':'Product Updated'})
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def list_product(request):
+    if request.method == 'GET':
+        product = Product.objects.all()
+        serializer = ProductSerializer(product, many=True)
+        print(serializer.data,'lklklkk')
+        return Response(serializer.data)
+    
+
+
+@api_view(['DELETE'])
+def delete_product(request, pk):
+    product = Product.objects.get(id = pk)
+    if request.method == 'DELETE':
+        product.delete()
+        return Response({'Messgae':'Product Return Delete'})
+    return Response({'Message':'Fail to delete HSN Return'} ,status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+@api_view(['POST','GET'])
+def create_product_description(request):
+    if request.method=="GET":
+        product = Product.objects.all()
+        serializer =ProductSerializer(product,many=True)
+        return Response(serializer.data)
+    if request.method == 'POST':
+        serializer = ProductDescriptionSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response ({'Message':'Product Description created', 'Data': serializer.data})
+        return Response({'Error':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def list_product_description(request):
+    if request.method == 'GET':
+        product_description = ProductDescription.objects.all()
+        serializer = ProductDescriptionSerializer(product_description, many=True)
+        print(serializer.data,'lklklkk')
+        return Response(serializer.data)
+
+@api_view(['GET', 'POST'])
+def edit_product_description(request, pk):
+    product_description = ProductDescription.objects.get(id=pk)
+    serializer = ProductDescriptionSerializer(instance=product_description, data=request.data)
+    if request.method == 'GET':
+        product_serializer = ProductDescriptionSerializer(product_description)
+        # print(tds_serializer.data)
+        return Response (product_serializer.data)
+    elif request.method == 'POST':
+        if serializer.is_valid():
+            serializer.save()
+            return Response ({'Message':'Product Description Updated'})
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['DELETE'])
+def delete_product_description(request, pk):
+    product_description = ProductDescription.objects.get(id = pk)
+    if request.method == 'DELETE':
+        product_description.delete()
+        return Response({'Messgae':'Product Description Return Delete'})
+    return Response({'Message':'Fail to delete Product Description Return'} ,status=status.HTTP_400_BAD_REQUEST)

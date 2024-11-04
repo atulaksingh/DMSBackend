@@ -218,3 +218,6 @@ DEFAULT_FROM_EMAIL = 'vaishnavitalari1404@gmail.com'
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_ALL_HEADERS = True
 CORS_ALLOW_ALL_ORIGIN = True
+# CORS_ALLOW_HEADERS = list(default_headers) + [
+#     'X-Custom-Ids',
+# ]
