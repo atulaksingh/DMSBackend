@@ -349,7 +349,18 @@ class SalesSerializer(serializers.ModelSerializer):
         model = SalesInvoice
         fields = '__all__'
 
+# class SalesSerializer2(serializers.ModelSerializer):
+#     class Meta:
+#         model = SalesInvoice
+#         fields = ['attach_e_way_bill','client']
+class SalesSerializer2(serializers.ModelSerializer):
+    attach_e_way_bill = serializers.FileField()
 
+    class Meta:
+        model = SalesInvoice  # Your model where the file should be saved
+        fields = ['attach_e_way_bill', 'client']
+
+# class SalesSer
 
 
 class HSNSerializer(serializers.ModelSerializer):

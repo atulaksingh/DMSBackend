@@ -1727,17 +1727,75 @@ def create_sales_get(request, pk):
         return Response(context)
 
 
+# @api_view(['POST'])
+# def create_sale(request, pk):
+#     client = Client.objects.get(id=pk)
+#     if request.method == 'POST':
+#         serializers = SalesSerializer(data=request.data)
+#         if serializers.is_valid():
+#             serializers.save(client=client)
+#             return Response({'Message':'Sales E-way bill uploaded', 'Data':serializers.data})
+#         return Response({'Error':serializers.errors}, status=status.HTTP_400_BAD_REQUEST)
+# @api_view(['POST'])
+# def create_sale(request, pk):
+#     client = Client.objects.get(id=pk)
+#     if request.method == 'POST':
+#         # Assuming 'files' is a list of file data sent in the request
+#         files = request.FILES.getlist('files')  # Get the list of files from the request
+
+#         # Check if files are uploaded
+#         if not files:
+#             return Response({'Error': 'No files uploaded'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Create an empty list to store all the serializers for each file
+#         created_entries = []
+
+#         # Loop through the uploaded files and create individual sale entries
+#         for file in files:
+#             # Create a separate serializer for each file
+#             sale_data = request.data.copy()  # Make a copy of the request data
+#             sale_data['file'] = file  # Add the current file to the data
+
+#             serializer = SalesSerializer(data=sale_data)
+#             if serializer.is_valid():
+#                 # Save each entry separately, associating the sale with the client
+#                 created_entry = serializer.save(client=client)
+#                 created_entries.append(created_entry)
+#             else:
+#                 return Response({'Error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+#         # If all files are uploaded successfully, return a success response with the created entries
+#         return Response({'Message': 'Sales E-way bill uploaded for multiple files', 'Data' :serializer.data})
+
+
 @api_view(['POST'])
 def create_sale(request, pk):
     client = Client.objects.get(id=pk)
-    if request.method == 'POST':
-        serializers = SalesSerializer(data=request.data)
-        if serializers.is_valid():
-            serializers.save(client=client)
-            return Response({'Message':'Sales E-way bill uploaded', 'Data':serializers.data})
-        return Response({'Error':serializers.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+    # Check if 'attach_e_way_bill' is in the request files
+    if 'attach_e_way_bill' in request.FILES:
+        # Iterate through each file in the 'attach_e_way_bill' field
+        for e_way_bill in request.FILES.getlist('attach_e_way_bill'):
+            # Prepare data for each file
+            sale_data = {
+                'attach_e_way_bill': e_way_bill,  # The file being uploaded
+                'client': client.id,  # Associate the file with the client
+            }
 
+            # Initialize the serializer for each file
+            serializer = SalesSerializer2(data=sale_data)
+
+            # Check if the serializer is valid
+            if serializer.is_valid():
+                # Save each file as a separate object
+                serializer.save()
+            else:
+                return Response({'Error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        # If all files are processed, return success response
+        return Response({'Message': 'Sales E-way bill(s) uploaded successfully.'}, status=status.HTTP_201_CREATED)
+    else:
+        return Response({'Error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
 
 # @api_view(['POST'])
 # def create_sales_post(request,pk):
