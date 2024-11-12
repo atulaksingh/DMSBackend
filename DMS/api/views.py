@@ -31,6 +31,8 @@ from .models import Client, PF
 from .serializers import PfSerializer
 import pandas as pd
 from django.http import JsonResponse
+from django.db.models import Sum, F
+from django.db.models.functions import Coalesce
 
 # *******************************************Client View's***********************************************
 
@@ -296,7 +298,8 @@ def edit_bank(request, pk, bank_pk):
 
     if request.method == 'POST':
         # Update branch document fields
-        bank_serializer = TDSReturnSerializer(instance=bank, data=request.data)
+        print('kjjkkj')
+        bank_serializer = BankSerializer(instance=bank, data=request.data)
         if bank_serializer.is_valid():
             bank_serializer.save(client=client)
 
@@ -362,11 +365,14 @@ def delete_bank(request,pk, bank_pk):
 @api_view(['POST'])
 def create_owner(request, pk):
     client = get_object_or_404(Client, id=pk)
+    print('pkkkkk',pk)
     if request.method == 'POST':
         owner_serializer = OwnerSerializer(data=request.data)
         if owner_serializer.is_valid():
             # sum of a for loop values of share of all the owners created
-            total_shares = sum([owner.share for owner in Owner.objects.all()])
+            total_shares = Owner.objects.filter(client=client).aggregate(
+            total_share=Coalesce(Sum(F('share')), 0))['total_share']
+            # total_shares = sum([owner.share for owner in Owner.objects.all()])
             # calculating remaining shares by subtracting total shares by 100
             remaining_shares = 100 - total_shares
             # new share means the value of share while creating this owner
@@ -1655,7 +1661,7 @@ def delete_tds(request, pk, tds_pk ):
 #         return Response(context)
 
 @api_view(['GET', 'POST'])
-def create_sales(request, pk):
+def create_sales_get(request, pk):
     try:
         client = Client.objects.get(id=pk)
     except Client.DoesNotExist:
@@ -1704,18 +1710,232 @@ def create_sales(request, pk):
             off = OfficeLocation.objects.filter(branch__client=client)
             customer = Customer.objects.filter(client=client, customer=True)
             product = Product.objects.all()
+            branch = Branch.objects.all()
 
             serializer_customer = CustomerVendorSerializer(customer, many=True)
             serializer = OfficeLocationSerializer(off, many=True)
             product_serializer = ProductSerializer(product, many=True)
+            branch_serializer = BranchSerailizer(branch, many=True)
 
             context.update({
                 'serializer_customer': serializer_customer.data,
                 'serializer': serializer.data,
-                'product_serializer': product_serializer.data
+                'product_serializer': product_serializer.data,
+                'branch_serializer': branch_serializer.data
             })
 
         return Response(context)
+
+
+
+
+# @api_view(['POST'])
+# def create_sales_post(request,pk):
+
+#     if request.method=='POST':
+#         print('this is post',request.data)   
+#         form_data = request.data.get('formData', {})
+#         off_serializer = OfficeLocationSerializer(data=form_data)
+#         if off_serializer.is_valid():
+            
+#             off_serializer.save()
+
+#         print('vendor data',off_serializer)
+#         return Response({'Message':'working'})
+
+
+
+
+from decimal import Decimal, InvalidOperation
+
+# Helper function to safely convert to Decimal
+def safe_decimal(value, default='0'):
+    try:
+        return Decimal(value)
+    except (ValueError, InvalidOperation):
+        return Decimal(default)
+
+@api_view(['POST'])
+def create_sales_post(request, pk):
+    if request.method == 'POST':
+        print('this post', request.data)
+        form_data = request.data.get('formData', {})
+        vendor_data = request.data.get('vendorData', {})
+        rows = request.data.get('rows', [])
+
+        off_loc_id = form_data.get('offLocID')
+        location = form_data.get('location')
+        branch_id = form_data.get('branchID')
+        vendor_id = vendor_data.get('vendorID')
+
+        location_exists = False
+        vendor_exists = False
+        off_location = None  # Initialize off_location to None
+        off_serializer = None  # Initialize off_serializer to None
+        print('locc id', off_loc_id)
+
+        # Check for existing location
+        if off_loc_id:
+            existing_location = OfficeLocation.objects.filter(id=off_loc_id, location=location).first()
+            if existing_location:
+                location_exists = True
+                off_location = existing_location  # Assign the existing location
+
+        # Check for existing vendor
+        if vendor_id:
+            existing_vendor = Customer.objects.filter(id=vendor_id, client=pk).first()
+            if existing_vendor:
+                vendor_exists = True
+                vendor = existing_vendor  # Assign the existing vendor
+
+        # Retrieve related instances for saving new records
+        branch_instance = Branch.objects.get(id=branch_id) if branch_id else None
+        client_instance = Client.objects.get(id=pk) if pk else None
+
+        # Create vendor if it doesn't exist
+        if not vendor_exists:
+            vendor_serializer = CustomerVendorSerializer(data=vendor_data)
+            if vendor_serializer.is_valid():
+                vendor = vendor_serializer.save(client=client_instance)  # Save and assign vendor
+            else:
+                return Response(vendor_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create location if it doesn't exist
+        if not location_exists:
+            off_serializer = OfficeLocationSerializer(data=form_data)
+            if off_serializer.is_valid():
+                off_location = off_serializer.save(branch=branch_instance)  # Save and assign location
+            else:
+                return Response(off_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Process rows and create ProductSummaries
+        product_summaries = []
+        for row in rows:
+            hsn_code = row.get('hsnCode')
+            gst_rate = safe_decimal(row.get('gstRate', '0'))
+            product_name = row.get('product')
+            description_text = row.get('description')
+            unit_value = safe_decimal(row.get('unit', '0'))
+
+            hsn_code_obj, _ = HSNCode.objects.get_or_create(hsn_code=hsn_code, defaults={'gst_rate': gst_rate})
+            product_obj, _ = Product.objects.get_or_create(product_name=product_name, defaults={'hsn': hsn_code_obj})
+            product_description_obj, _ = ProductDescription.objects.get_or_create(
+                product=product_obj, description=description_text, defaults={'unit': unit_value})
+
+            product_summary = ProductSummary.objects.create(
+                hsn=hsn_code_obj, product=product_obj, prod_description=product_description_obj)
+            product_summaries.append(product_summary)
+
+        # Prepare the sales invoice data with the correct PK values
+        sales_invoice_data = {
+            'client_Location': off_location.id if off_location else None,  # Use location ID if exists
+            'customer': vendor.id if vendor else None,  # Use vendor ID if exists
+            'product_summaries': [ps.id for ps in product_summaries],  # Use only the IDs for product summaries
+            'invoice_no': form_data.get('invoiceNo'),
+            'invoice_date': form_data.get('invoiceDate'),
+            'invoice_type': form_data.get('invoiceType'),
+            'entry_type': form_data.get('entryType'),
+            'taxable_amount': form_data.get('taxableAmount'),
+            'cgst': form_data.get('cgst'),
+            'sgst': form_data.get('sgst'),
+            'igst': form_data.get('igst'),
+            'total_invoice_value': form_data.get('totalInvoiceValue'),
+            'tds_tcs_rate': form_data.get('tdsTcsRate'),
+            'tds_tcs_section': form_data.get('tdsTcsSection'),
+            'tds': form_data.get('tds'),
+            'tcs': form_data.get('tcs'),
+            'amount_receivable': form_data.get('amountReceivable'),
+        }
+
+        sales_invoice_serializer = SalesSerializer(data=sales_invoice_data)
+        if sales_invoice_serializer.is_valid():
+            sales_invoice = sales_invoice_serializer.save()
+        else:
+            return Response(sales_invoice_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Prepare response data
+        response_data = {
+            'Message': 'Location, Vendor, and Sales Invoice created',
+            'location_data': off_serializer.data if off_serializer else {},  # Only include location data if created
+            'vendor_data': vendor_serializer.data if not vendor_exists else {},  # Only include vendor data if created
+            'sales_invoice_data': sales_invoice_serializer.data,
+            'product_summaries': [{'id': summary.id, 'product_name': summary.product_name()} for summary in product_summaries]
+        }
+
+        return Response(response_data, status=status.HTTP_201_CREATED)
+
+
+
+# important view dont delete
+# @api_view(['POST'])
+# def create_sales_post(request, pk):
+#     if request.method == 'POST':
+#         print('This is post:', request.data)  # Print the entire request data for debugging
+#         form_data = request.data.get('formData', {})
+#         vendorData = request.data.get('vendorData', {})
+
+#         # Extract fields for existence check
+#         off_loc_id = form_data.get('offLocID')
+#         location = form_data.get('location')
+#         branch_id = form_data.get('branchID')
+        
+#         print('Branch ID:', branch_id)
+#         vendor_id = vendorData.get('vendorID')
+#         print('vendor ID:', vendor_id)
+#         print('pkk ID:', pk)
+
+#         # Flags to track existence
+#         location_exists = False
+#         vendor_exists = False
+
+#         # Check for existing location
+#         if off_loc_id:
+#             existing_location = OfficeLocation.objects.filter(id=off_loc_id, location=location).first()
+#             if existing_location:
+#                 location_exists = True
+#                 print('Location already exists:', existing_location)
+        
+#         # Check for existing vendor
+#         if vendor_id:
+#             existing_vendor = Customer.objects.filter(id=vendor_id, client=pk).first()
+#             if existing_vendor:
+#                 vendor_exists = True
+#                 print('Vendor already exists:', existing_vendor)
+
+#         # Retrieve related instances for saving new records
+#         branch_instance = Branch.objects.get(id=branch_id) if branch_id else None
+#         client_instance = Client.objects.get(id=pk) if pk else None
+
+#         # If vendor does not exist, create it
+#         if not vendor_exists:
+#             vendor_serializer = CustomerVendorSerializer(data=vendorData)
+#             if vendor_serializer.is_valid():
+#                 vendor = vendor_serializer.save(client=client_instance)  # Assuming `client` is the foreign key
+#                 print('New vendor created:', vendor_serializer.data)
+#             else:
+#                 return Response(vendor_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#         # If location does not exist, create it
+#         if not location_exists:
+#             off_serializer = OfficeLocationSerializer(data=form_data)
+#             if off_serializer.is_valid():
+#                 off_serializer.save(branch=branch_instance)  # Pass the Branch instance
+#                 print('New location created:', off_serializer.data)
+#                 return Response({
+#                     'Message': 'Location and/or Vendor created', 
+#                     'location_data': off_serializer.data, 
+#                     'vendor_data': vendor_serializer.data if not vendor_exists else {}
+#                 }, status=status.HTTP_201_CREATED)
+#             else:
+#                 return Response(off_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#         # If both location and vendor already exist
+#         return Response({'Message': 'Location and Vendor already exist'}, status=status.HTTP_200_OK)
+
+
+
+
+
 
 
     # if request.method == 'POST':
@@ -1992,3 +2212,24 @@ def delete_product_description(request, pk):
         product_description.delete()
         return Response({'Messgae':'Product Description Return Delete'})
     return Response({'Message':'Fail to delete Product Description Return'} ,status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+@api_view(['GET'])
+def sales_invoice_list(request):
+    """
+    View to list all sales invoices with their related product summaries.
+    """
+    # Fetch all sales invoices with related data (optimized query with prefetch_related)
+    sales_invoices = SalesInvoice.objects.prefetch_related(
+        'product_summaries', 'product_summaries__product', 'product_summaries__hsn', 
+        'product_summaries__prod_description', 'customer', 'client_location'
+    ).all()
+
+    # Serialize the data
+    serializer = SalesInvoiceSerializer(sales_invoices, many=True)
+
+    # Return the serialized data
+    return Response(serializer.data, status=status.HTTP_200_OK)

@@ -26,7 +26,16 @@ admin.site.register(SFT)
 admin.site.register(AIR)
 admin.site.register(TDSPayment)
 admin.site.register(TDSReturn)
-admin.site.register(SalesInvoice)
+# admin.site.register(SalesInvoice)
+admin.site.register(Product)
+admin.site.register(ProductDescription)
+admin.site.register(HSNCode)
+# admin.site.register(ProductSummary)
+# @admin.register(ProductSummary)
+# class ProductSummaryAdmin(admin.ModelAdmin):
+#     list_display = ['id', 'hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
+#     readonly_fields = ['hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
+
 # admin.site.register(HSNCode)
 # admin.site.register(SalesInvoice)
 # admin.site.register(PurchaseInvoice)
@@ -59,3 +68,48 @@ class FileInfoAdmin(admin.ModelAdmin):
 @admin.register(File)
 class FileAdmin(admin.ModelAdmin):
     list_display = ['fileinfo', 'files']  # Displays associated FileInfo and file
+
+
+
+# class ProductSummaryInline(admin.TabularInline):
+#     model = SalesInvoice.product_summaries.through  # Use the through model for many-to-many
+#     extra = 0  # Remove empty extra rows
+
+#     def get_queryset(self, request):
+#         # Limit the queryset to only show related ProductSummary objects
+#         qs = super().get_queryset(request)
+#         return qs
+
+#     # Optionally, if you want to display specific fields from ProductSummary
+#     readonly_fields = ('hsn', 'product', 'prod_description')
+#     fields = ('hsn', 'product', 'prod_description')
+
+
+
+# class SalesInvoiceAdmin(admin.ModelAdmin):
+#     inlines = [ProductSummaryInline]  # Include the inline for related ProductSummaries
+
+#     # Customize list_display, search_fields, etc., if needed
+#     list_display = ('invoice_no', 'invoice_date', 'total_invoice_value')
+
+# admin.site.register(SalesInvoice, SalesInvoiceAdmin)
+class ProductSummaryInline(admin.TabularInline):
+    model = SalesInvoice.product_summaries.through  # Access the through model
+    extra = 0
+    readonly_fields = ['prod_description_display']
+
+    # Custom method to display the product description
+    def prod_description_display(self, instance):
+        return instance.productsummary.prod_description.description if instance.productsummary.prod_description else "No Description"
+
+    prod_description_display.short_description = "Product Description"  # Label for admin display
+
+@admin.register(SalesInvoice)
+class SalesInvoiceAdmin(admin.ModelAdmin):
+    list_display = ['id', 'client_Location', 'customer', 'invoice_no', 'invoice_date']
+    inlines = [ProductSummaryInline]  # Inline to show associated ProductSummary entries
+
+@admin.register(ProductSummary)
+class ProductSummaryAdmin(admin.ModelAdmin):
+    list_display = ['id', 'hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
+    readonly_fields = ['hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']

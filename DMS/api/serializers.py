@@ -162,6 +162,13 @@ class OfficeLocationSerializer(serializers.ModelSerializer):
         model = OfficeLocation
         fields = '__all__'
 
+    # def create(self, validated_data):
+    #     branch_id = validated_data.get('branchID')
+    #     if branch_id:
+    #         branch = Branch.objects.get(id=branch_id)
+    #         validated_data['branchID'] = branch  # Set the branch object
+
+    #     return super().create(validated_data)
 class FilesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Files
@@ -354,7 +361,21 @@ class ProductSerializer(serializers.ModelSerializer):
     hsn_code = serializers.CharField(source='hsn.hsn_code', read_only=True)
     class Meta:
         model = Product
-        fields = ['id', 'product_name', 'unit_of_measure', 'hsn_code','hsn']
+        fields = ['id', 'product_name', 'hsn_code','hsn']
+
+# class ProductDescriptionSerializer2(serializers.ModelSerializer):
+
+#     class Meta:
+#         model = ProductDescription
+#         fields = ['id', 'description', 'unit', 'rate']
+
+# class ProductSerializer2(serializers.ModelSerializer):
+#     hsn_code = serializers.CharField(source='hsn.hsn_code', read_only=True)
+#     gst_rate = serializers.CharField(source='hsn.gst_rate', read_only=True)
+#     description_name = serializers.CharField(source='ProductDescription.description', read_only=True)
+#     class Meta:
+#         model = Product
+#         fields = ['id', 'product_name', 'hsn_code','gst_rate','hsn','description','description_name']
 
 
 
@@ -364,3 +385,29 @@ class ProductDescriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductDescription
         fields = ['id', 'description', 'unit', 'rate','product_name','product']
+
+
+
+# class ProductSummarySerializer(serializers.ModelSerializer):
+#     gst_rate = serializers.CharField(source='hsn.gst_rate', read_only=True)
+#     hsn_code = serializers.CharField(source='hsn.hsn_code', read_only=True)
+#     product_name = serializers.CharField(source='product.product_name', read_only=True)
+#     description = serializers.CharField(source='prod_description.description', read_only=True)
+#     unit = serializers.CharField(source='prod_description.unit', read_only=True)
+#     rate = serializers.CharField(source='prod_description.rate', read_only=True)
+
+#     class Meta:
+#         model = ProductSummary
+#         fields = ['id','hsn','product','prod_description','hsn_code','gst_rate','product_name','unit','rate','description']
+
+class ProductSummarySerializer(serializers.ModelSerializer):
+    gst_rate = serializers.CharField(source='hsn.gst_rate', read_only=True)
+    hsn_code = serializers.CharField(source='hsn.hsn_code', read_only=True)
+    product_name = serializers.CharField(source='product.product_name', read_only=True)
+    description = serializers.CharField(source='prod_description.description', read_only=True)
+    unit = serializers.CharField(source='prod_description.unit', read_only=True)
+    rate = serializers.CharField(source='prod_description.rate', read_only=True)
+
+    class Meta:
+        model = ProductSummary
+        fields = ['id', 'hsn', 'product', 'prod_description', 'hsn_code', 'gst_rate', 'product_name', 'description', 'unit', 'rate']
