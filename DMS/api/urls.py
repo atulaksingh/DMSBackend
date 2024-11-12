@@ -108,7 +108,7 @@ urlpatterns = [
     path('delete-tds/<int:pk>/<int:tds_pk>', view=delete_tds, name='delete-tdsreturn'),
 
     path('get-sales/<int:pk>/', view=create_sales_get, name='get-sales'),  # Note the trailing slash
-    path('create-sales/<int:pk>', view=create_sales_post, name='create-sales'),  # Note the trailing slash
+    path('create-sales/<int:pk>', view=create_sale, name='create-sales'),  # Note the trailing slash
 
 
     # hsn master

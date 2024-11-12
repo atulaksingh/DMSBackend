@@ -1609,12 +1609,12 @@ def delete_tds(request, pk, tds_pk ):
 #         client = Client.objects.get(id=pk)
 #     except Client.DoesNotExist:
 #         return Response({"error": "Client not found."}, status=404)
-    
+
 #     if request.method == 'GET':
 #         off = OfficeLocation.objects.filter(branch__client=client)
 #         customer = Customer.objects.filter(client=client, customer=True)
 #         product = Product.objects.all()
-        
+
 #         serializer_customer = CustomerVendorSerializer(customer, many=True)
 #         serializer = OfficeLocationSerializer(off, many=True)
 #         product_serializer = ProductSerializer(product, many=True)
@@ -1622,7 +1622,7 @@ def delete_tds(request, pk, tds_pk ):
 #         # Retrieve query parameters
 #         received_value = request.GET.get('newValue')
 #         product_id = request.GET.get('productID')
-        
+
 
 #         print("Received newValue:", received_value)
 #         print("Received productID:", product_id)  # Check if productID is received
@@ -1630,7 +1630,7 @@ def delete_tds(request, pk, tds_pk ):
 #             print('eysss')
 #             try:
 
-#                 hsn_cc = Product.objects.get(id = product_id).hsn       
+#                 hsn_cc = Product.objects.get(id = product_id).hsn
 #                 # hsn_cc_serializer = HSNSerializer(hsn_cc)
 #                 return Response({
 #                     "message": "Product HSN found",
@@ -1666,7 +1666,7 @@ def create_sales_get(request, pk):
         client = Client.objects.get(id=pk)
     except Client.DoesNotExist:
         return Response({"error": "Client not found."}, status=404)
-    
+
     if request.method == 'GET':
         # Initialize response context with default values
         context = {
@@ -1727,17 +1727,27 @@ def create_sales_get(request, pk):
         return Response(context)
 
 
+@api_view(['POST'])
+def create_sale(request, pk):
+    client = Client.objects.get(id=pk)
+    if request.method == 'POST':
+        serializers = SalesSerializer(data=request.data)
+        if serializers.is_valid():
+            serializers.save(client=client)
+            return Response({'Message':'Sales E-way bill uploaded', 'Data':serializers.data})
+        return Response({'Error':serializers.errors}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 # @api_view(['POST'])
 # def create_sales_post(request,pk):
 
 #     if request.method=='POST':
-#         print('this is post',request.data)   
+#         print('this is post',request.data)
 #         form_data = request.data.get('formData', {})
 #         off_serializer = OfficeLocationSerializer(data=form_data)
 #         if off_serializer.is_valid():
-            
+
 #             off_serializer.save()
 
 #         print('vendor data',off_serializer)
@@ -1878,7 +1888,7 @@ def create_sales_post(request, pk):
 #         off_loc_id = form_data.get('offLocID')
 #         location = form_data.get('location')
 #         branch_id = form_data.get('branchID')
-        
+
 #         print('Branch ID:', branch_id)
 #         vendor_id = vendorData.get('vendorID')
 #         print('vendor ID:', vendor_id)
@@ -1894,7 +1904,7 @@ def create_sales_post(request, pk):
 #             if existing_location:
 #                 location_exists = True
 #                 print('Location already exists:', existing_location)
-        
+
 #         # Check for existing vendor
 #         if vendor_id:
 #             existing_vendor = Customer.objects.filter(id=vendor_id, client=pk).first()
@@ -1922,8 +1932,8 @@ def create_sales_post(request, pk):
 #                 off_serializer.save(branch=branch_instance)  # Pass the Branch instance
 #                 print('New location created:', off_serializer.data)
 #                 return Response({
-#                     'Message': 'Location and/or Vendor created', 
-#                     'location_data': off_serializer.data, 
+#                     'Message': 'Location and/or Vendor created',
+#                     'location_data': off_serializer.data,
 #                     'vendor_data': vendor_serializer.data if not vendor_exists else {}
 #                 }, status=status.HTTP_201_CREATED)
 #             else:
@@ -2155,7 +2165,7 @@ def list_product(request):
         serializer = ProductSerializer(product, many=True)
         print(serializer.data,'lklklkk')
         return Response(serializer.data)
-    
+
 
 
 @api_view(['DELETE'])
@@ -2224,12 +2234,12 @@ def sales_invoice_list(request):
     """
     # Fetch all sales invoices with related data (optimized query with prefetch_related)
     sales_invoices = SalesInvoice.objects.prefetch_related(
-        'product_summaries', 'product_summaries__product', 'product_summaries__hsn', 
+        'product_summaries', 'product_summaries__product', 'product_summaries__hsn',
         'product_summaries__prod_description', 'customer', 'client_location'
     ).all()
 
     # Serialize the data
-    serializer = SalesInvoiceSerializer(sales_invoices, many=True)
+    serializer = SalesSerializer(sales_invoices, many=True)
 
     # Return the serialized data
     return Response(serializer.data, status=status.HTTP_200_OK)

@@ -351,6 +351,7 @@ class SalesSerializer(serializers.ModelSerializer):
 
 
 
+
 class HSNSerializer(serializers.ModelSerializer):
     class Meta:
         model = HSNCode

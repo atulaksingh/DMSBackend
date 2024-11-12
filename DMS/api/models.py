@@ -296,7 +296,7 @@ class SalesInvoice(models.Model):
         ('debit_note', 'Debit Note'),
         ('income', 'Income'),
     ]
-
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
     client_Location = models.ForeignKey(OfficeLocation, on_delete=models.CASCADE, null=True, blank=True)
     attach_invoice = models.FileField(null=True, blank=True)
     attach_e_way_bill = models.FileField(null=True, blank=True)
@@ -306,10 +306,10 @@ class SalesInvoice(models.Model):
     invoice_date = models.DateField(null=True, blank=True)
     invoice_type = models.CharField(max_length=100, choices=invoice_type, null=True, blank=True)
     entry_type = models.CharField(max_length=100, choices=entry_type, null=True, blank=True)
-    
+
     # Link to ProductSummary for each item in the invoice
     product_summaries = models.ManyToManyField(ProductSummary, blank=True, related_name="sales_invoices")
-    
+
     taxable_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     cgst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     sgst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
