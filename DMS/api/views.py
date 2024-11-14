@@ -2002,18 +2002,6 @@ def create_sales_post(request, pk):
 
 
 
-
-
-
-
-    # if request.method == 'POST':
-    #     serializer = SalesInvoiceSerializer(data=request.data)
-    #     if serializer.is_valid():
-    #         serializer.save()
-    #         return Response(serializer.data, status=201)
-    #     return Response(serializer.errors, status=400)
-
-
 # ***********************************************Detail page API's*********************************************
 @api_view(['GET'])
 def detail_client(request,pk):

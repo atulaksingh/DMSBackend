@@ -288,6 +288,7 @@ class SalesInvoice(models.Model):
         ('advance received', 'Advance Received'),
         ('export', 'Export'),
         ('unregistered local', 'Unregistered Local'),
+        ('unregistered non-local', 'Unregistered non-Local'),
         ('sez', 'SEZ')
     ]
 

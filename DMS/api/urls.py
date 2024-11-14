@@ -109,7 +109,7 @@ urlpatterns = [
 
     path('get-sales/<int:pk>/', view=create_sales_get, name='get-sales'),  # Note the trailing slash
     path('create-sales/<int:pk>', view=create_sale, name='create-sales'),  # Note the trailing slash
-
+    path('create-sales-post/<int:pk>', view=create_sales_post, name='create-sales-post'),
 
     # hsn master
 
