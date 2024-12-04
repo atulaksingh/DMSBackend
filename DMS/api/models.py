@@ -179,13 +179,13 @@ class Customer(models.Model):
    gst_no = models.CharField(max_length=100, null=True, blank=True)
    pan = models.CharField(max_length=100, null=True, blank=True)
    address = models.TextField(null=True, blank=True)
-#    type = models.CharField(max_length=100, choices=type_choices, null=True, blank=True)
    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
    customer = models.BooleanField(null=True, blank=True)
    vendor = models.BooleanField(null=True, blank=True)
 
    def __str__(self):
-        return self.name
+       return self.name if self.name else "No Name"
+
 
 # HSN Code Model
 # class HSNCode(models.Model):
@@ -227,12 +227,21 @@ class Product(models.Model):
 
     def __str__(self):
         return self.product_name
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['product_name', 'hsn'], name='unique_product_hsn')
+        ]
+
 
 class ProductDescription(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     unit = models.DecimalField(null=True, blank=True, max_digits=10, decimal_places=2)
     rate = models.DecimalField(null=True, blank=True, max_digits=10, decimal_places=2)
+    product_amount = models.IntegerField(null=True, blank=True)
+    cgst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    sgst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    igst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     def __str__(self):
         return f"Description for {self.product}"
@@ -312,19 +321,17 @@ class SalesInvoice(models.Model):
     product_summaries = models.ManyToManyField(ProductSummary, blank=True, related_name="sales_invoices")
 
     taxable_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    cgst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    sgst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    igst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    totalall_gst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     total_invoice_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     tds_tcs_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     tds_tcs_section = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     tcs = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     tds = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     amount_receivable = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-
     def __str__(self):
-        return f"Sales Invoice {self.invoice_no} - {self.customer}"
-
+        invoice_no = self.invoice_no or "No Invoice Number"
+        customer_name = self.customer.name if self.customer else "No Customer"
+        return f"Sales Invoice {invoice_no} - {customer_name}"
 
 # Sales Invoice Model
 # class SalesInvoice(models.Model):

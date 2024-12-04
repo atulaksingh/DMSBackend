@@ -1,0 +1,19 @@
+1. If Branch GST starting 2 digit is equal to Party GST 2 digit			
+Then CGST & SGST Applicable			
+			
+2. If Branch GST starting 2 digit is not equal to Party GST 2 digit			
+Then IGST  Applicable			
+
+Condition 1.
+ If customer gst number exists
+ If customer gst number starting 2 digits is equals to branch gst number starting 2 digits and invoice type is equals to SEZ then[IGST] 
+ If customer gst number starting 2 digits is equals to branch gst number starting 2 digits and invoice type is equals to other then SEZ then[CGST, SGST]
+ If customer GST number starting 2 digits is not equals to branch GST number starting 2 digits then [IGST]
+ If customer GST number does not exists then it should display only 2 invoice types [unregistered local and unregistered non-local]
+ If unregistered local [CGST, SGST]
+ if unregistered non-local [IGST]
+
+Note: 
+  unregistered local and unregistered non-local options will not be disable till the custmers enters the GST number 
+  as soon as the GST number is enterd this 2 fields will be disable 
+  

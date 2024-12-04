@@ -6,6 +6,8 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+# from .views import UpdateSalesInvoiceAPIView
+
 
 urlpatterns = [
     path('create-client', create_client, name='clients-create'),
@@ -109,7 +111,10 @@ urlpatterns = [
 
     path('get-sales/<int:pk>/', view=create_sales_get, name='get-sales'),  # Note the trailing slash
     path('create-sales/<int:pk>', view=create_sale, name='create-sales'),  # Note the trailing slash
-    path('create-sales-post/<int:pk>', view=create_sales_post, name='create-sales-post'),
+    path('create-sales-post/<int:client_pk>/<int:invoice_pk>', view=update_sales_invoice, name='create-sales-post'),
+    path('get-sales-invoice/<int:client_pk>/<int:invoice_pk>', view=update_sales_invoice, name='get-sales-invoice'),
+    path('create-sales-post2/<int:client_pk>', view=create_sales_invoice2, name='create-sales-post2'),
+    path('sales-view/<int:client_pk>/<int:invoice_pk>', view=sales_invoice_detail_view, name='sales-view'),
 
     # hsn master
 

@@ -1,0 +1,10 @@
+client- date dd/mm/yyyy, selected file name text
+owner - password field
+branch - add country , pincode fields(auto), gst(charfield), email-id near contact
+         address-(country, state, city, pin)
+owner ko client user k andar dhekana hai as admin
+owner form mai bool field for admin
+costomer or vendor = add email, phone and option both 
+sales- fetch by name also
+sales details - add attachment, e-way bill
+
