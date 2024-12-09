@@ -3588,99 +3588,154 @@ def create_purchase_get(request, pk):
         return Response(context)
 
 
-# @api_view(['POST'])
-# def create_purchase_invoice2(request, client_pk):
-#     try:
-#         payload = request.data
-#         print('payload',payload)
+@api_view(['POST'])
+def create_purchase_invoice2(request, client_pk):
+    try:
+        payload = request.data
+        print('payload',payload)
 
-#         rows_data = defaultdict(dict)
-#         for key, value in payload.items():
-#             if key.startswith("row["):
-#                 row_index = key.split('[')[1].split(']')[0]
-#                 field_name = key.split('[')[2].split(']')[0]
-#                 rows_data[int(row_index)][field_name] = value
-#         rows = [rows_data[index] for index in sorted(rows_data.keys())]
-#         form_data = {
-#             "offLocID" : payload.get("formData[offLocID]"),
-#             "location" : payload.get("formData[location]"),
-#             "contact" :  payload.get("formData[contact]"),
-#             "address" : payload.get("formData[address]"),
-#             "city" : payload.get("formData[city]"),
-#             "state" : payload.get("formData[state]"),
-#             "country" : payload.get("formData[country]"),
-#             "branchID" : payload.get("formData[branchID]"),
-#         }
-#         customer_data = {
-#             "name" : payload.get("customerData[name]"),
-#             "gst_no" : payload.get("customerData[gst_no]"),
-#             "pan" : payload.get("customerData[pan]"),
-#             "customer_address" : payload.get("customerData[customer_address]"),
-#             "customer" : payload.get("customerData[customer]", "").lower() == "true",
-#             "vendor" : payload.get("customerData[vendor]", "").lower() == "true",
-#         }
-#         invoice_data = {
-#             "invoice_no" : payload.get("invoiceData[0][invoice_no]"),
-#             "invoice_date" : payload.get("invoiceData[0][invoice_date]"),
-#             "month" : payload.get("invoiceData[0][month]"),
-#             "invoice_type" : payload.get("invoiceData[0][invoice_type]"),
-#             "entry_type" : payload.get("invoiceData[0][entry_type]"),
-#             "taxable_amount" : payload.get("invoiceData[0][taxable_amount]"),
-#             "totalall_gst" : payload.get("invoiceData[0][totalall_gst]"),
-#             "total_invoice_value" : payload.get("invoiceData[0][total_invoice_value]"),
-#             "tds_tcs_rate": payload.get("invoiceData[0][tds_tcs_rate]"),
-#             "tcs": payload.get("invoiceData[0][tcs]"),
-#             "tds": payload.get("invoiceData[0][tds]"),
-#             "amount_receivable": payload.get("invoiceData[0][amount_receivable]"),
-#         }
-#         attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
-#         attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
+        rows_data = defaultdict(dict)
+        for key, value in payload.items():
+            if key.startswith("row["):
+                row_index = key.split('[')[1].split(']')[0]
+                field_name = key.split('[')[2].split(']')[0]
+                rows_data[int(row_index)][field_name] = value
+        rows = [rows_data[index] for index in sorted(rows_data.keys())]
+        form_data = {
+            "offLocID" : payload.get("formData[offLocID]"),
+            "location" : payload.get("formData[location]"),
+            "contact" :  payload.get("formData[contact]"),
+            "address" : payload.get("formData[address]"),
+            "city" : payload.get("formData[city]"),
+            "state" : payload.get("formData[state]"),
+            "country" : payload.get("formData[country]"),
+            "branchID" : payload.get("formData[branchID]"),
+        }
+        customer_data = {
+            "name" : payload.get("customerData[name]"),
+            "gst_no" : payload.get("customerData[gst_no]"),
+            "pan" : payload.get("customerData[pan]"),
+            "customer_address" : payload.get("customerData[customer_address]"),
+            "customer" : payload.get("customerData[customer]", "").lower() == "true",
+            "vendor" : payload.get("customerData[vendor]", "").lower() == "true",
+        }
+        invoice_data = {
+            "invoice_no" : payload.get("invoiceData[0][invoice_no]"),
+            "invoice_date" : payload.get("invoiceData[0][invoice_date]"),
+            "month" : payload.get("invoiceData[0][month]"),
+            "invoice_type" : payload.get("invoiceData[0][invoice_type]"),
+            "entry_type" : payload.get("invoiceData[0][entry_type]"),
+            "taxable_amount" : payload.get("invoiceData[0][taxable_amount]"),
+            "totalall_gst" : payload.get("invoiceData[0][totalall_gst]"),
+            "total_invoice_value" : payload.get("invoiceData[0][total_invoice_value]"),
+            "tds_tcs_rate": payload.get("invoiceData[0][tds_tcs_rate]"),
+            "tcs": payload.get("invoiceData[0][tcs]"),
+            "tds": payload.get("invoiceData[0][tds]"),
+            "amount_receivable": payload.get("invoiceData[0][amount_receivable]"),
+        }
+        attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
+        attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
 
-#         location_obj = None
-#         if form_data["offLocID"]:
-#             location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
-#             if not location_obj:
-#                 return Response({"error":"Office Location not found"}, status=status.HTTP_400_BAD_REQUEST)
-#         else:
-#             branch_instance = Branch.objects.filter(id=form_data["branchID"], client_id=client_pk).first()
-#             if not branch_instance:
-#                 return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
-#                                 status=status.HTTP_404_NOT_FOUND)
-#             location_obj = OfficeLocation.objects.create(
-#                 location = form_data.get("location"),
-#                 contact = form_data.get("contact"),
-#                 address = form_data.get("address"),
-#                 city = form_data.get("city"),
-#                 state = form_data.get("state"),
-#                 country = form_data.get("country"),
-#                 branch = branch_instance
+        location_obj = None
+        if form_data["offLocID"]:
+            location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
+            if not location_obj:
+                return Response({"error":"Office Location not found"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            branch_instance = Branch.objects.filter(id=form_data["branchID"], client_id=client_pk).first()
+            if not branch_instance:
+                return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+                                status=status.HTTP_404_NOT_FOUND)
+            location_obj = OfficeLocation.objects.create(
+                location = form_data.get("location"),
+                contact = form_data.get("contact"),
+                address = form_data.get("address"),
+                city = form_data.get("city"),
+                state = form_data.get("state"),
+                country = form_data.get("country"),
+                branch = branch_instance
 
-#             )
-#         customer_obj = None
-#         if customer_data.get('gst_no'):
-#             existing_customer = Customer.objects.filter(client_id=client_pk, gst_no = customer_data["gst_no"]).first()
-#             if existing_customer:
-#                 customer_serializer = CustomerVendorSerializer(existing_customer, data= customer_data, partial=True)
-#                 if customer_serializer.is_valid():
-#                     customer_obj = customer_serializer.save(client_id=client_pk)
-#                 else:
-#                     return Response({"customer_errors": customer_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-#             else:
-#                 customer_serializer = CustomerVendorSerializer(data=customer_data)
-#                 if customer_serializer.is_valid():
-#                     customer_obj = customer_serializer.save(client_id=client_pk)
-#                 else:
-#                     return Response({"vendor_errors": customer_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            )
+        customer_obj = None
+        if customer_data.get('gst_no'):
+            existing_customer = Customer.objects.filter(client_id=client_pk, gst_no = customer_data["gst_no"]).first()
+            if existing_customer:
+                customer_serializer = CustomerVendorSerializer(existing_customer, data= customer_data, partial=True)
+                if customer_serializer.is_valid():
+                    customer_obj = customer_serializer.save(client_id=client_pk)
+                else:
+                    return Response({"customer_errors": customer_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                customer_serializer = CustomerVendorSerializer(data=customer_data)
+                if customer_serializer.is_valid():
+                    customer_obj = customer_serializer.save(client_id=client_pk)
+                else:
+                    return Response({"vendor_errors": customer_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-#         purchase_invoice = PurchaseInvoice.objects.create(
-#             client_id = client_pk,
-#             client_Location = location_obj
-#             customer = customer_obj,
-#             attach_invoice = attach_invoice,
-#             attach_e_way_bill = attach_e_way_bill,
-#             **invoice_data
+        purchase_invoice = PurchaseInvoice.objects.create(
+            client_id = client_pk,
+            client_Location = location_obj,
+            customer = customer_obj,
+            attach_invoice = attach_invoice,
+            attach_e_way_bill = attach_e_way_bill,
+            **invoice_data
+        )
 
-#         )
+        product_summeries = []
+        for row in rows:
+            hsn_code = row.get('hsnCode')
+            gst_rate = safe_decimal(row.get('gstRate', '0'))
+            product_name = row.get('product')
+            product_id = row.get('product_id')  # Assuming the frontend sends this if selecting an existing product
+            description_text = row.get('description', '')
+            unit_value = safe_decimal(row.get('unit', '0'))
+            rate_value = safe_decimal(row.get('rate', '0'))
+            amount = safe_decimal(row.get('product_amount', '0'))
+            cgst = safe_decimal(row.get('cgst', '0'))
+            sgst = safe_decimal(row.get('sgst', '0'))
+            igst = safe_decimal(row.get('igst', '0'))
+
+            hsn_code_obj, _ = HSNCode.objects.get_or_create(
+                hsn_code = hsn_code, defaults={'gst_rate':gst_rate}
+            )
+
+            if product_id:
+                product_obj = Product.objects.filter(id=product_id).first()
+                if not product_obj:
+                    return Response({'error':f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+
+                else:
+                    product_obj = Product.objects.get_or_create(
+                        product_name = product_name, hsn=hsn_code_obj, defaults={'unit_of_measure':unit_value}
+                    )
+
+            product_description_obj, _ = ProductDescription.objects.get_or_create(
+                product = product_obj,
+                description = description_text,
+                defaults={
+                    'unit' : unit_value,
+                    'rate' : rate_value,
+                    'product_amount' : amount,
+                    'cgst' : cgst,
+                    'sgst' : sgst,
+                    'igst' : igst
+                }
+            )
+
+            product_summary = ProductSummary.objects.create(
+                hsn=hsn_code_obj,
+                product = product_obj,
+                product_description = product_description_obj
+            )
+            product_summeries.append(product_summary)
+
+            purchase_invoice.product_summaries.add(product_summary)
+
+        return Response({"message": "Purchase Invoice created successfully.", "invoice_id": purchase_invoice.id}, status=status.HTTP_201_CREATED)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 
 
 
