@@ -432,6 +432,8 @@ class SalesSerializerList(serializers.ModelSerializer):
             'tds_tcs_rate',
             'product_summaries'
         ]
+
+# Sales Invoice
     # def get_product_summaries(self, obj):
     #     # Access related product summaries
     #     product_summaries = obj.product_summaries.all()
@@ -485,6 +487,7 @@ class SalesSerializer2(serializers.ModelSerializer):
     class Meta:
         model = SalesInvoice  # Your model where the file should be saved
         fields = ['attach_e_way_bill', 'client']
+
 
 # class SalesSer
 
@@ -570,3 +573,80 @@ class ProductSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductSummary
         fields = ['id', 'hsn', 'product', 'prod_description', 'hsn_code', 'gst_rate', 'product_name', 'product_amount','description', 'unit', 'rate']
+
+#******************************************************Purchase
+
+class PurchaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PurchaseInvoice
+        fields = '__all__'
+
+class PurchaseSerializer3(serializers.ModelSerializer):
+    class Meta:
+        model = PurchaseInvoice
+        exclude = ['client','client_Location','vendor','product_summeries']
+
+class PurchaseSerializerList(serializers.ModelSerializer):
+    client_name = serializers.CharField(source='client.client_name', read_only= True)
+    customer_name = serializers.CharField(source='customer.name', read_only= True)
+    customer_gst_no = serializers.CharField(source='customer.gst_no', read_only = True)
+    customer_pan = serializers.CharField(source= 'customer.pan', read_only=True)
+    customer_address = serializers.CharField(source='customer.address', read_only= True)
+    customer_customer = serializers.CharField(source='customer.customer', read_only=True)
+    customer_vendor = serializers.CharField(source='customer.vendor', read_only=True)
+    client_location_name = serializers.CharField(source='client_Location.location', read_only=True)
+    contact = serializers.CharField(source='client_Location.contact', read_only=True)
+    address = serializers.CharField(source='client_Location.address', ready_only=True)
+    city = serializers.CharField(source='client_Location.city',read_only=True)
+    state = serializers.CharField(source='cliet_Location.state', read_only=True)
+    country = serializers.CharField(source='client_Location.country', read_only=True)
+    product_summaries = ProductSummarySerializerList(many=True, read_only= True)
+    class Meta:
+        model = PurchaseInvoice
+        fields = [
+           'id',
+            "invoice_no",
+            "invoice_date",
+            "invoice_type",
+            "entry_type",
+            'attach_e_way_bill',
+            "client_name",
+            "customer_name",
+            "customer_gst_no",
+            "customer_pan",
+            "customer_address",
+            "customer_customer",
+            "customer_vendor",
+            "client_location_name",
+            "contact",
+            "address",
+            "city",
+            "state",
+            "country",
+            "taxable_amount",
+            "totalall_gst",
+            "total_invoice_value",
+            "amount_receivable",
+            'tcs',
+            'tds',
+            'tds_tcs_rate',
+            'product_summaries',
+        ]
+
+class PurchaseSerializer2(serializers.ModelSerializer):
+    class Meta:
+        model = PurchaseInvoice
+        fields = ['attach_e_way_bill', 'client']
+
+class PurchaseSerializer2(serializers.ModelSerializer):
+    attach_e_way_bill = serializers.FileField()
+    class Meta:
+        model = PurchaseInvoice
+        fields = ['attach_e_way_bill','client']
+
+# class HSNSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = HSNCode
+#         fields = ['id','hsn_code','gst_rate']
+
+

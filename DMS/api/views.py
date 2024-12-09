@@ -1981,7 +1981,7 @@ def create_sale(request, pk):
 #     except Exception as e:
 #         print("Error in update_sales_invoice:", str(e))
 #         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
 
 
 
@@ -2344,9 +2344,9 @@ def safe_decimal(value):
 #                 # Map 'customer_address' to 'address' if provided
 #                 if 'customer_address' in vendor_data:
 #                     vendor_data['address'] = vendor_data.pop('customer_address')
-            
+
 #                 vendor_id = vendor_data.get('vendorID')
-            
+
 #                 if vendor_id:  # Update existing vendor
 #                     # Fetch the vendor by ID
 #                     vendor_obj = Customer.objects.filter(id=vendor_id).first()
@@ -2368,7 +2368,7 @@ def safe_decimal(value):
 #                         pan=vendor_data.get('pan'),
 #                         address=vendor_data.get('address')
 #                     ).first()
-            
+
 #                     if existing_vendor:
 #                         vendor_obj = existing_vendor  # Use the existing vendor
 #                     else:
@@ -2378,12 +2378,12 @@ def safe_decimal(value):
 #                             vendor_obj = vendor_serializer.save(client=sales_invoice.client)
 #                         else:
 #                             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-            
+
 #                 # Assign the updated or newly created vendor to the sales invoice
 #                 sales_invoice.customer = vendor_obj
 #                 sales_invoice.save()
 
-            
+
 
 #             # Process rows for product summaries
 #             product_summaries = []
@@ -2469,7 +2469,7 @@ def get_sales_invoice_data(request, client_pk, invoice_pk):
     """
     # Fetch the sales invoice with related client information
     sales_invoice = SalesInvoice.objects.filter(client_id=client_pk, id=invoice_pk).first()
-    
+
     if not sales_invoice:
         return Response({"error": "Sales Invoice not found."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -2536,10 +2536,10 @@ def get_sales_invoice_data(request, client_pk, invoice_pk):
 from django.core.exceptions import ObjectDoesNotExist
 from collections import defaultdict
 from django.http import QueryDict
-# update view 
+# update view
 @api_view(['GET', 'PUT'])
 def update_sales_invoice(request, client_pk, invoice_pk):
-    
+
     try:
         # Handle GET request
         if request.method == 'GET':
@@ -2568,7 +2568,7 @@ def update_sales_invoice(request, client_pk, invoice_pk):
             ]
 
 
-            
+
 
             response_data = {
                 "sales_invoice": sales_invoice_data,
@@ -2759,9 +2759,9 @@ def update_sales_invoice(request, client_pk, invoice_pk):
                 # Check for 'customer_address' in vendor data and map it to 'address'
                 if 'customer_address' in vendor_data:
                     vendor_data['address'] = vendor_data.pop('customer_address')  # Replace 'customer_address' with 'address'
-            
+
                 vendor_id = request.data.get("vendorData[vendorID]")  # Retrieve vendorID if provided
-            
+
                 if vendor_id:  # If vendorID is provided
                     # Fetch the existing vendor
                     vendor_obj = Customer.objects.filter(id=vendor_id).first()
@@ -2801,10 +2801,10 @@ def update_sales_invoice(request, client_pk, invoice_pk):
                             vendor_obj = vendor_serializer.save(client=sales_invoice.client)
                         else:
                             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-            
+
                 # Assign the updated/created vendor to the sales invoice
                 sales_invoice.customer = vendor_obj
-            
+
 
             # Process rows for product summaries
             product_summaries = []
@@ -2882,7 +2882,7 @@ def update_sales_invoice(request, client_pk, invoice_pk):
         print("Error in update_sales_invoice:", str(e))
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-# ***************************# create sales post new  
+# ***************************# create sales post new
 from decimal import Decimal, InvalidOperation
 
 
@@ -3168,12 +3168,12 @@ def create_sales_invoice2(request, client_pk):
             cgst = safe_decimal(row.get('cgst', '0'))
             sgst = safe_decimal(row.get('sgst', '0'))
             igst = safe_decimal(row.get('igst', '0'))
-        
+
             # Handle HSNCode
             hsn_code_obj, _ = HSNCode.objects.get_or_create(
                 hsn_code=hsn_code, defaults={'gst_rate': gst_rate}
             )
-        
+
             # Handle Product (existing or new)
             if product_id:
                 # Use existing product
@@ -3185,7 +3185,7 @@ def create_sales_invoice2(request, client_pk):
                 product_obj, _ = Product.objects.get_or_create(
                     product_name=product_name, hsn=hsn_code_obj, defaults={'unit_of_measure': unit_value}
                 )
-        
+
             # Handle ProductDescription
             product_description_obj, _ = ProductDescription.objects.get_or_create(
                 product=product_obj,
@@ -3199,7 +3199,7 @@ def create_sales_invoice2(request, client_pk):
                     'igst': igst,
                 }
             )
-        
+
             # Create ProductSummary
             product_summary = ProductSummary.objects.create(
                 hsn=hsn_code_obj,
@@ -3207,7 +3207,7 @@ def create_sales_invoice2(request, client_pk):
                 prod_description=product_description_obj
             )
             product_summaries.append(product_summary)
-        
+
             # Link ProductSummary to the SalesInvoice
             sales_invoice.product_summaries.add(product_summary)  # Add the product summary to the invoice
 
@@ -3384,7 +3384,7 @@ def sales_invoice_detail_view(request, client_pk, invoice_pk):
         sales_invoice.tds = safe_decimal(data.get('tds', sales_invoice.tds))
         sales_invoice.tcs = safe_decimal(data.get('tcs', sales_invoice.tcs))
         sales_invoice.amount_receivable = safe_decimal(data.get('amount_receivable', sales_invoice.amount_receivable))
-        
+
         # Update product summaries if provided
         rows = data.get('rows', [])
         product_summaries = []
@@ -3525,6 +3525,261 @@ def sales_invoice_detail_view(request, client_pk, invoice_pk):
 #         # If both location and vendor already exist
 #         return Response({'Message': 'Location and Vendor already exist'}, status=status.HTTP_200_OK)
 
+# **************************************************Purchase***************************************************
+@api_view(['GET','POST'])
+def create_purchase_get(request, pk):
+    try:
+        client = Client.objects.get(id=pk)
+    except Client.DoesNotExist:
+        return Response({'error':'Client not Found.'}, status=404)
+
+    if request.method == 'GET':
+        context = {
+            'serializer_customer':[],
+            'serializer': [],
+            'product_serializer':[],
+            'message':None,
+            'hsn':None,
+            'location':None,
+        }
+        received_value = request.GET.get('newValue')
+        product_Id = request.GET.get('productID')
+        if product_Id:
+            try:
+                hsn_cc = Product.objects.get(id=product_Id).hsn
+                context.update({
+                    'message':'Product HSN found',
+                    'hsn':HSNSerializer(hsn_cc).data
+                })
+            except (ValueError, Product.DoesNotExist):
+                return Response({'error':'Invalid Product ID'}, status=400)
+
+        if received_value:
+            try:
+                received_value = int(received_value)
+                location = OfficeLocation.objects.get(id=received_value)
+                branch_gst = location.branch.gst_no
+                print('branch val', branch_gst)
+                context.update({
+                    "message":"Location Found",
+                    "location" : OfficeLocationSerializer(location).data,
+                    "branch_gst": branch_gst
+                })
+            except (ValueError, OfficeLocation.DoesNotExist):
+                return Response({'error':'Invalid location ID.'}, status=400)
+
+        if not product_Id and not received_value:
+            off = OfficeLocation.objects.filter(branch__client=client)
+            customer = Customer.objects.filter(client=client, customer=True)
+            product = Product.objects.all()
+            branch = Branch.objects.filter(client=client)
+
+            serializer_customer = CustomerVendorSerializer(customer, many=True)
+            serializers = OfficeLocationSerializer(off, many=True)
+            product_serializer = ProductSerializer(product, many=True)
+            branch_serializer = BranchSerailizer(branch, many= True)
+
+            context.update({
+                'serializer_customer' : serializer_customer.data,
+                'serializer' : serializers.data,
+                'product_serializer' : product_serializer.data,
+                'branch_serializer' : branch_serializer.data
+            })
+        return Response(context)
+
+
+# @api_view(['POST'])
+# def create_purchase_invoice2(request, client_pk):
+#     try:
+#         payload = request.data
+#         print('payload',payload)
+
+#         rows_data = defaultdict(dict)
+#         for key, value in payload.items():
+#             if key.startswith("row["):
+#                 row_index = key.split('[')[1].split(']')[0]
+#                 field_name = key.split('[')[2].split(']')[0]
+#                 rows_data[int(row_index)][field_name] = value
+#         rows = [rows_data[index] for index in sorted(rows_data.keys())]
+#         form_data = {
+#             "offLocID" : payload.get("formData[offLocID]"),
+#             "location" : payload.get("formData[location]"),
+#             "contact" :  payload.get("formData[contact]"),
+#             "address" : payload.get("formData[address]"),
+#             "city" : payload.get("formData[city]"),
+#             "state" : payload.get("formData[state]"),
+#             "country" : payload.get("formData[country]"),
+#             "branchID" : payload.get("formData[branchID]"),
+#         }
+#         customer_data = {
+#             "name" : payload.get("customerData[name]"),
+#             "gst_no" : payload.get("customerData[gst_no]"),
+#             "pan" : payload.get("customerData[pan]"),
+#             "customer_address" : payload.get("customerData[customer_address]"),
+#             "customer" : payload.get("customerData[customer]", "").lower() == "true",
+#             "vendor" : payload.get("customerData[vendor]", "").lower() == "true",
+#         }
+#         invoice_data = {
+#             "invoice_no" : payload.get("invoiceData[0][invoice_no]"),
+#             "invoice_date" : payload.get("invoiceData[0][invoice_date]"),
+#             "month" : payload.get("invoiceData[0][month]"),
+#             "invoice_type" : payload.get("invoiceData[0][invoice_type]"),
+#             "entry_type" : payload.get("invoiceData[0][entry_type]"),
+#             "taxable_amount" : payload.get("invoiceData[0][taxable_amount]"),
+#             "totalall_gst" : payload.get("invoiceData[0][totalall_gst]"),
+#             "total_invoice_value" : payload.get("invoiceData[0][total_invoice_value]"),
+#             "tds_tcs_rate": payload.get("invoiceData[0][tds_tcs_rate]"),
+#             "tcs": payload.get("invoiceData[0][tcs]"),
+#             "tds": payload.get("invoiceData[0][tds]"),
+#             "amount_receivable": payload.get("invoiceData[0][amount_receivable]"),
+#         }
+#         attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
+#         attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
+
+#         location_obj = None
+#         if form_data["offLocID"]:
+#             location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
+#             if not location_obj:
+#                 return Response({"error":"Office Location not found"}, status=status.HTTP_400_BAD_REQUEST)
+#         else:
+#             branch_instance = Branch.objects.filter(id=form_data["branchID"], client_id=client_pk).first()
+#             if not branch_instance:
+#                 return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+#                                 status=status.HTTP_404_NOT_FOUND)
+#             location_obj = OfficeLocation.objects.create(
+#                 location = form_data.get("location"),
+#                 contact = form_data.get("contact"),
+#                 address = form_data.get("address"),
+#                 city = form_data.get("city"),
+#                 state = form_data.get("state"),
+#                 country = form_data.get("country"),
+#                 branch = branch_instance
+
+#             )
+#         customer_obj = None
+#         if customer_data.get('gst_no'):
+#             existing_customer = Customer.objects.filter(client_id=client_pk, gst_no = customer_data["gst_no"]).first()
+#             if existing_customer:
+#                 customer_serializer = CustomerVendorSerializer(existing_customer, data= customer_data, partial=True)
+#                 if customer_serializer.is_valid():
+#                     customer_obj = customer_serializer.save(client_id=client_pk)
+#                 else:
+#                     return Response({"customer_errors": customer_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+#             else:
+#                 customer_serializer = CustomerVendorSerializer(data=customer_data)
+#                 if customer_serializer.is_valid():
+#                     customer_obj = customer_serializer.save(client_id=client_pk)
+#                 else:
+#                     return Response({"vendor_errors": customer_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+#         purchase_invoice = PurchaseInvoice.objects.create(
+#             client_id = client_pk,
+#             client_Location = location_obj
+#             customer = customer_obj,
+#             attach_invoice = attach_invoice,
+#             attach_e_way_bill = attach_e_way_bill,
+#             **invoice_data
+
+#         )
+
+
+
+
+
+#
+@api_view(['GET','PATCH'])
+def purchase_invoice_detail_view(request, client_pk, invoice_pk):
+    try:
+        purchase_invoice = SalesInvoice.objects.get(client=client_pk, pk=invoice_pk)
+    except PurchaseInvoice.DoesNotExist:
+        return Response({'error':'Sales invoice not found'}, status=404)
+
+    if request.method == 'GET':
+        serializers = PurchaseSerializerList(purchase_invoice)
+        return Response(serializers.data, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'PATCH':
+        data = request.data
+        purchase_invoice.invoice_no = data.get('invoice_no',purchase_invoice.invoice_no)
+        purchase_invoice.invoice_date = data.get('invoice_date', purchase_invoice.invoice_date)
+        purchase_invoice.month = data.get('invoice_month',purchase_invoice.month)
+        purchase_invoice.invoice_type = data.get('invoice_type', purchase_invoice.invoice_type)
+        purchase_invoice.entry_type= data.get('entry_type',purchase_invoice.entry_type)
+        purchase_invoice.taxable_amount = safe_decimal(data.get('taxable_amount', purchase_invoice.taxable_amount))
+        purchase_invoice.total_gst = safe_decimal(data.get('total_gst', purchase_invoice.total_gst))
+        purchase_invoice.total_invoice_value = safe_decimal(data.get('total_invoice_value', purchase_invoice.total_invoice_value))
+        purchase_invoice.tds_tcs_rate = safe_decimal(data.get('tds_tcs_rate', purchase_invoice.tds_tcs_rate))
+        purchase_invoice.tds = safe_decimal(data.get('tds',purchase_invoice.tds))
+        purchase_invoice.tcs = safe_decimal(data.get('tcs', purchase_invoice.tcs))
+        purchase_invoice.amount_receivable = safe_decimal(data.get('amount_receivable', purchase_invoice.amount_receivable))
+
+
+        rows = data.get('rows',[])
+        product_summeries = []
+        for row in rows:
+            hsn_code = row.get('hsnCode')
+            gst_rate = safe_decimal(row.get('gstRate','0'))
+            product_name = row.get('product')
+            description_text = row.get('description')
+            unit_value = safe_decimal(row.get('unit','0'))
+            rate_value = safe_decimal(row.get('rate','0'))
+            amount = safe_decimal(row.get('product_amount','0'))
+            cgst = safe_decimal(row.get('cgst','0'))
+            sgst = safe_decimal(row.get('sgst','0'))
+            igst = safe_decimal(row.get('igst','0'))
+
+            hsn_code_obj, created = HSNCode.objects.get_or_create(
+                hsn_code = hsn_code,
+                defaults={'gst_rate': gst_rate}
+            )
+            if not created and hsn_code_obj.gst_rate != gst_rate:
+                hsn_code_obj.gst_rate = gst_rate
+                hsn_code_obj.save()
+
+            product_obj = Product.objects.filter(product_name=product_name, hsn=hsn_code_obj).first()
+            if not product_obj:
+                product_obj = Product.objects.create(
+                    product_name = product_name,
+                    hsn = hsn_code_obj,
+                    unit_of_measure = unit_value
+                )
+
+            product_description_obj, created = ProductDescription.objects.get_or_create(
+                product = product_obj,
+                description = description_text,
+                defaults={
+                    'unit': unit_value,
+                    'rate': rate_value,
+                    'product_amount' : amount,
+                    'cgst' : cgst,
+                    'sgst' : sgst,
+                    'igst' : igst,
+                }
+            )
+            if not created:
+                product_description_obj.unit = unit_value
+                product_description_obj.rate = rate_value
+                product_description_obj.product_amount = amount
+                product_description_obj.cgst = cgst
+                product_description_obj.sgst = sgst
+                product_description_obj.igst = igst
+                product_description_obj.save()
+            product_summary = ProductSummaryPurchase.objects.create(
+                hsn= hsn_code_obj,
+                product = product_obj,
+                prod_description = product_description_obj
+            )
+            product_summeries.append(product_summary)
+
+        if product_summeries:
+            purchase_invoice.product_summaries.set(product_summeries)
+        purchase_invoice.save()
+
+        update_serializer = PurchaseSerializer(purchase_invoice)
+        return Response(update_serializer.data, status=status.HTTP_200_OK)
+
+
+
+
 
 
 # ***********************************************Detail page API's*********************************************
@@ -3545,7 +3800,7 @@ def detail_client(request,pk):
     view_tdspayment = TDSPayment.objects.filter(client=client)
     view_tds = TDSReturn.objects.filter(client=client)
     view_sales = SalesInvoice.objects.filter(client=client)
-    
+
     # view_attachment = Attachment.objects.filter(client=client)
     # view_branchdoc = BranchDocument.objects.filter()
 
@@ -3563,13 +3818,13 @@ def detail_client(request,pk):
     sft_serializer = SFTSerializer(view_sft, many=True)
     tdspayment_serializer = TDSPaymentSerializer(view_tdspayment, many=True)
     tds_serializer = TDSReturnSerializer(view_tds, many=True)
-    
+
     view_sales = SalesInvoice.objects.filter(client=client).prefetch_related(
         'product_summaries__hsn',
         'product_summaries__product',
         'product_summaries__prod_description',
     )
-    sales_serializer = SalesSerializerList(view_sales, many=True)    
+    sales_serializer = SalesSerializerList(view_sales, many=True)
     print(sales_serializer,'llllllllllll')
     # sales_serializer = SalesSerializerList(view_sales, many=True)
     # attachment_serializer = AttachmentSerializer(view_attachment, many=True)

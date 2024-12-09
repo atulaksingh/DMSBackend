@@ -3,18 +3,6 @@ from api.models import *
 
 # Register your models here.
 
-# class FileInline(admin.StackedInline):
-#     model = File
-#     extra = 1
-
-# class FileAdmin(admin.ModelAdmin):
-#     inlines = [FileInline]
-#     # list_display = ('file_name', 'status', 'client')
-#     # search_fields = ('file_name', 'client_name')
-
-# admin.site.register(Client)
-# admin.site.register(Attachment, AttachmentAdmin)
-# admin.site.register(File)
 admin.site.register(CompanyDocument)
 admin.site.register(CustomUser)
 admin.site.register(Branch)
@@ -27,9 +15,9 @@ admin.site.register(AIR)
 admin.site.register(TDSPayment)
 admin.site.register(TDSReturn)
 # admin.site.register(SalesInvoice)
-admin.site.register(Product)
-admin.site.register(ProductDescription)
-admin.site.register(HSNCode)
+admin.site.register(Product) ##############
+admin.site.register(ProductDescription) ###############
+admin.site.register(HSNCode) ##################
 
 
 # Inline for File model to manage file uploads
@@ -61,9 +49,7 @@ class FileAdmin(admin.ModelAdmin):
     list_display = ['fileinfo', 'files']  # Displays associated FileInfo and file
 
 
-
-# admin.site.register(SalesInvoice, SalesInvoiceAdmin)
-class ProductSummaryInline(admin.TabularInline):
+class ProductSummaryInline(admin.TabularInline): ##############
     model = SalesInvoice.product_summaries.through  # Access the through model
     extra = 0
     readonly_fields = ['prod_description_display']
@@ -73,15 +59,15 @@ class ProductSummaryInline(admin.TabularInline):
 
     prod_description_display.short_description = "Product Description"
 
-@admin.register(SalesInvoice)
+@admin.register(SalesInvoice) ################
 class SalesInvoiceAdmin(admin.ModelAdmin):
     list_display = ['id', 'customer_name', 'invoice_no', 'invoice_date']
-    
+
     def customer_name(self, obj):
         return obj.customer.name if obj.customer else "No Customer"
     customer_name.short_description = "Customer"  # Optional: Set a custom column header
 
-@admin.register(ProductSummary)
+@admin.register(ProductSummary) #####################3
 class ProductSummaryAdmin(admin.ModelAdmin):
     list_display = ['id', 'hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
     readonly_fields = ['hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
