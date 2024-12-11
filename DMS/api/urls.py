@@ -114,6 +114,7 @@ urlpatterns = [
     path('create-sales-post/<int:client_pk>/<int:invoice_pk>', view=update_sales_invoice, name='create-sales-post'),
     path('get-sales-invoice/<int:client_pk>/<int:invoice_pk>', view=update_sales_invoice, name='get-sales-invoice'),
     path('create-sales-post2/<int:client_pk>', view=create_sales_invoice2, name='create-sales-post2'),
+    path('delete-sales-invoice/<int:client_pk>/<int:pk>', view=delete_sales_invoice, name='delete-sales-invoice'),
     path('sales-view/<int:client_pk>/<int:invoice_pk>', view=sales_invoice_detail_view, name='sales-view'),
 
     # hsn master
@@ -137,6 +138,14 @@ urlpatterns = [
     path('list-product-description', view=list_product_description, name='list-product-description'),
     path('edit-product-description/<int:pk>', view=edit_product_description, name='edit-product-description'),
     path('delete-product-description/<int:pk>', view=delete_product_description, name='delete-product-description'),
+    
+# purchase 
+    path('get-purchase/<int:pk>/', view=create_purchase_get, name='get-purchase'),  # Note the trailing slash
+    path('create-purchase/<int:pk>', view=create_purchase, name='create-purchase'),  # Note the trailing slash
+    path('create-purchase-post/<int:client_pk>/<int:invoice_pk>', view=update_purchase_invoice, name='create-purchase-post'),
+    path('get-purchase-invoice/<int:client_pk>/<int:invoice_pk>', view=update_purchase_invoice, name='get-purchase-invoice'),
+    path('create-purchase-post2/<int:client_pk>', view=create_purchase_invoice2, name='create-purchase-post2'),
+    path('purchase-view/<int:client_pk>/<int:invoice_pk>', view=purchase_invoice_detail_view, name='purchase-view'),
 
 
 ]

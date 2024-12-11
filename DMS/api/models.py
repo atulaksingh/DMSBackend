@@ -435,14 +435,14 @@ class PurchaseInvoice(models.Model):
     attach_invoice = models.FileField(null=True, blank=True)
     attach_e_way_bill = models.FileField(null=True, blank=True)
     month = models.DateField(null=True, blank=True)
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
+    vendor = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
     invoice_no = models.CharField(max_length=100, null=True, blank=True)
     invoice_date = models.DateField(null=True, blank=True)
     invoice_type = models.CharField(max_length=100, choices=invoice_type, null=True, blank=True)
     entry_type = models.CharField(max_length=100, choices=entry_type, null=True, blank=True)
 
     # Link to ProductSummary for each item in the invoice
-    product_summaries = models.ManyToManyField(ProductSummary, blank=True, related_name="sales_invoices")
+    product_summaries = models.ManyToManyField(ProductSummaryPurchase, blank=True, related_name="purchase_invoices")
 
     taxable_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     totalall_gst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -455,8 +455,8 @@ class PurchaseInvoice(models.Model):
     amount_receivable = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     def __str__(self):
         invoice_no = self.invoice_no or "No Invoice Number"
-        customer_name = self.customer.name if self.customer else "No Customer"
-        return f"Sales Invoice {invoice_no} - {customer_name}"
+        vendor_name = self.vendor.name if self.vendor else "No Vendor"
+        return f"Purchase Invoice {invoice_no} - {vendor_name}"
 
 
 

@@ -410,6 +410,7 @@ class SalesSerializerList(serializers.ModelSerializer):
             "invoice_type",
             "entry_type",
             'attach_e_way_bill',
+            'attach_invoice',
             "client_name",
             "customer_name",
             "customer_gst_no",
@@ -596,7 +597,7 @@ class PurchaseSerializerList(serializers.ModelSerializer):
     customer_vendor = serializers.CharField(source='customer.vendor', read_only=True)
     client_location_name = serializers.CharField(source='client_Location.location', read_only=True)
     contact = serializers.CharField(source='client_Location.contact', read_only=True)
-    address = serializers.CharField(source='client_Location.address', ready_only=True)
+    address = serializers.CharField(source='client_Location.address', read_only=True)
     city = serializers.CharField(source='client_Location.city',read_only=True)
     state = serializers.CharField(source='cliet_Location.state', read_only=True)
     country = serializers.CharField(source='client_Location.country', read_only=True)
@@ -643,6 +644,20 @@ class PurchaseSerializer2(serializers.ModelSerializer):
     class Meta:
         model = PurchaseInvoice
         fields = ['attach_e_way_bill','client']
+        
+class ProductSummaryPurchaseSerializer(serializers.ModelSerializer):
+    gst_rate = serializers.CharField(source='hsn.gst_rate', read_only=True)
+    hsn_code = serializers.CharField(source='hsn.hsn_code', read_only=True)
+    product_name = serializers.CharField(source='product.product_name', read_only=True)
+    product_amount = serializers.CharField(source='prod_description.product_amount', read_only=True)
+    description = serializers.CharField(source='prod_description.description', read_only=True)
+    unit = serializers.CharField(source='prod_description.unit', read_only=True)
+    rate = serializers.CharField(source='prod_description.rate', read_only=True)
+
+    class Meta:
+        model = ProductSummaryPurchase
+        fields = ['id', 'hsn', 'product', 'prod_description', 'hsn_code', 'gst_rate', 'product_name', 'product_amount','description', 'unit', 'rate']
+
 
 # class HSNSerializer(serializers.ModelSerializer):
 #     class Meta:

@@ -71,3 +71,31 @@ class SalesInvoiceAdmin(admin.ModelAdmin):
 class ProductSummaryAdmin(admin.ModelAdmin):
     list_display = ['id', 'hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
     readonly_fields = ['hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
+    
+    
+    
+# #############################
+
+class ProductPurchaseSummaryInline(admin.TabularInline): ##############
+    model = PurchaseInvoice.product_summaries.through  # Access the through model
+    extra = 0
+    readonly_fields = ['prod_description_display']
+
+    def prod_description_display(self, instance):
+        return instance.productsummary.prod_description.description if instance.productsummary.prod_description else "No Description"
+
+    prod_description_display.short_description = "Product Description"
+
+@admin.register(PurchaseInvoice) ################
+class PurchaseInvoiceAdmin(admin.ModelAdmin):
+    list_display = ['id', 'vendor_name', 'invoice_no', 'invoice_date']
+
+    def vendor_name(self, obj):
+        return obj.vendor.name if obj.vendor else "No Vendor"
+    vendor_name.short_description = "Vendor"  # Optional: Set a custom column header
+
+@admin.register(ProductSummaryPurchase) #####################3
+class ProductSummaryAdmin(admin.ModelAdmin):
+    list_display = ['id', 'hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
+    readonly_fields = ['hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
+
