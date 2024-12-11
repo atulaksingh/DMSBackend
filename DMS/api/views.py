@@ -4056,7 +4056,41 @@ def create_purchase_invoice2(request, client_pk):
                 state = form_data.get("state"),
                 country = form_data.get("country"),
                 branch = branch_instance
+        location_obj = None
+        if form_data["offLocID"]:
+            location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
+            if not location_obj:
+                return Response({"error":"Office Location not found"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            branch_instance = Branch.objects.filter(id=form_data["branchID"], client_id=client_pk).first()
+            if not branch_instance:
+                return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+                                status=status.HTTP_404_NOT_FOUND)
+            location_obj = OfficeLocation.objects.create(
+                location = form_data.get("location"),
+                contact = form_data.get("contact"),
+                address = form_data.get("address"),
+                city = form_data.get("city"),
+                state = form_data.get("state"),
+                country = form_data.get("country"),
+                branch = branch_instance
 
+            )
+        customer_obj = None
+        if customer_data.get('gst_no'):
+            existing_customer = Customer.objects.filter(client_id=client_pk, gst_no = customer_data["gst_no"]).first()
+            if existing_customer:
+                customer_serializer = CustomerVendorSerializer(existing_customer, data= customer_data, partial=True)
+                if customer_serializer.is_valid():
+                    customer_obj = customer_serializer.save(client_id=client_pk)
+                else:
+                    return Response({"customer_errors": customer_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                customer_serializer = CustomerVendorSerializer(data=customer_data)
+                if customer_serializer.is_valid():
+                    customer_obj = customer_serializer.save(client_id=client_pk)
+                else:
+                    return Response({"vendor_errors": customer_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
             )
         customer_obj = None
         if customer_data.get('gst_no'):
