@@ -4038,26 +4038,25 @@ def create_purchase_invoice2(request, client_pk):
         attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
         attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
 
+        # location_obj = None
+        # if form_data["offLocID"]:
+        #     location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
+        #     if not location_obj:
+        #         return Response({"error":"Office Location not found"}, status=status.HTTP_400_BAD_REQUEST)
+        # else:
+        #     branch_instance = Branch.objects.filter(id=form_data["branchID"], client_id=client_pk).first()
+        #     if not branch_instance:
+        #         return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},status=status.HTTP_404_NOT_FOUND)
+        #     location_obj = OfficeLocation.objects.create(
+        #         location = form_data.get("location"),
+        #         contact = form_data.get("contact"),
+        #         address = form_data.get("address"),
+        #         city = form_data.get("city"),
+        #         state = form_data.get("state"),
+        #         country = form_data.get("country"),
+        #         branch = branch_instance
         location_obj = None
-        if form_data["offLocID"]:
-            location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
-            if not location_obj:
-                return Response({"error":"Office Location not found"}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            branch_instance = Branch.objects.filter(id=form_data["branchID"], client_id=client_pk).first()
-            if not branch_instance:
-                return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
-                                status=status.HTTP_404_NOT_FOUND)
-            location_obj = OfficeLocation.objects.create(
-                location = form_data.get("location"),
-                contact = form_data.get("contact"),
-                address = form_data.get("address"),
-                city = form_data.get("city"),
-                state = form_data.get("state"),
-                country = form_data.get("country"),
-                branch = branch_instance
-        location_obj = None
-        if form_data["offLocID"]:
+        if form_data["offLocID"] :
             location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
             if not location_obj:
                 return Response({"error":"Office Location not found"}, status=status.HTTP_400_BAD_REQUEST)
@@ -4091,7 +4090,7 @@ def create_purchase_invoice2(request, client_pk):
                     customer_obj = customer_serializer.save(client_id=client_pk)
                 else:
                     return Response({"vendor_errors": customer_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-            )
+            
         customer_obj = None
         if customer_data.get('gst_no'):
             existing_customer = Customer.objects.filter(client_id=client_pk, gst_no = customer_data["gst_no"]).first()
