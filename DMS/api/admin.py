@@ -74,7 +74,7 @@ class ProductSummaryAdmin(admin.ModelAdmin):
     
     
     
-# #############################
+# ############################# Purchase
 
 class ProductPurchaseSummaryInline(admin.TabularInline): ##############
     model = PurchaseInvoice.product_summaries.through  # Access the through model
@@ -98,4 +98,31 @@ class PurchaseInvoiceAdmin(admin.ModelAdmin):
 class ProductSummaryAdmin(admin.ModelAdmin):
     list_display = ['id', 'hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
     readonly_fields = ['hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
+    
+
+# ############################Debit Note
+
+class DebitNotePurchaseSummaryInline(admin.TabularInline): ##############
+    model = PurchaseInvoice.product_summaries.through  # Access the through model
+    extra = 0
+    readonly_fields = ['prod_description_display']
+
+    def prod_description_display(self, instance):
+        return instance.productsummary.prod_description.description if instance.productsummary.prod_description else "No Description"
+
+    prod_description_display.short_description = "Product Description"
+
+@admin.register(DebitNote) ################
+class DebitNoteAdmin(admin.ModelAdmin):
+    list_display = ['id', 'customer_name', 'invoice_no', 'invoice_date']
+
+    def customer_name(self, obj):
+        return obj.customer.name if obj.customer else "No Customer"
+    customer_name.short_description = "Customer"  # Optional: Set a custom column header
+
+@admin.register(ProductSummaryDebitNote) #####################3
+class ProductSummaryAdmin(admin.ModelAdmin):
+    list_display = ['id', 'hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
+    readonly_fields = ['hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
+
 

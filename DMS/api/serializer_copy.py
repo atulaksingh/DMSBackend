@@ -162,10 +162,72 @@ class OfficeLocationSerializer(serializers.ModelSerializer):
         model = OfficeLocation
         fields = '__all__'
 
+    # def create(self, validated_data):
+    #     branch_id = validated_data.get('branchID')
+    #     if branch_id:
+    #         branch = Branch.objects.get(id=branch_id)
+    #         validated_data['branchID'] = branch  # Set the branch object
+
+    #     return super().create(validated_data)
 class FilesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Files
         fields = '__all__'
+#         fields = ['id', 'files']
+# from rest_framework import serializers
+
+# class FilesSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Files
+#         fields = ['id', 'files', 'branch_doc', 'tax_audit', 'air', 'sft','tds','bank']
+
+#     def to_representation(self, instance):
+#         # Get the original representation
+#         representation = super().to_representation(instance)
+
+#         # Check which model is being serialized and remove null fields
+#         if representation['tax_audit'] is not None:
+#             # If it's TaxAudit, remove AIR and SFT fields
+#             representation.pop('air', None)
+#             representation.pop('sft', None)
+#             representation.pop('tds', None)
+#             representation.pop('branch_doc', None)
+#             representation.pop('bank', None)
+#         elif representation['air'] is not None:
+#             # If it's AIR, remove TaxAudit and SFT fields
+#             representation.pop('tax_audit', None)
+#             representation.pop('sft', None)
+#             representation.pop('tds', None)
+#             representation.pop('branch_doc', None)
+#             representation.pop('bank', None)
+#         elif representation['sft'] is not None:
+#             # If it's SFT, remove TaxAudit and AIR fields
+#             representation.pop('tax_audit', None)
+#             representation.pop('air', None)
+#             representation.pop('tds', None)
+#             representation.pop('branch_doc', None)
+#             representation.pop('bank', None)
+#         elif representation['tds'] is not None:
+#             representation.pop('tax_audit', None)
+#             representation.pop('air', None)
+#             representation.pop('sft', None)
+#             representation.pop('branch_doc', None)
+#             representation.pop('bank', None)
+#         elif representation['branch_doc'] is not None:
+#             representation.pop('tax_audit', None)
+#             representation.pop('air', None)
+#             representation.pop('sft', None)
+#             representation.pop('tds', None)
+#             representation.pop('bank', None)
+#         elif representation['bank'] is not None:
+#             representation.pop('tax_audit', None)
+#             representation.pop('air', None)
+#             representation.pop('sft', None)
+#             representation.pop('tds', None)
+#             representation.pop('branch_doc', None)
+
+#         return representation
+
 
 # Branch Document
 class BranchDocSerailizer(serializers.ModelSerializer):
@@ -214,6 +276,18 @@ class PfSerializer(serializers.ModelSerializer):
             'advance', 'esic_employee', 'tds','total_deduction', 'net_pay', 'advance_esic_employer_cont'
             ]
 
+# # Tax Audit
+# class TaxAuditSerializer(serializers.ModelSerializer):
+#     files = serializers.SerializerMethodField()
+
+#     class Meta:
+#         model = TaxAudit
+#         fields = ['id','client','financial_year','month','files']
+
+#     def get_files(self, obj):
+#         files = Files.objects.filter(tax_audit=obj)
+#         return FilesSerializer(files, many=True).data
+
 # Tax Audit
 class TaxAuditSerializer(serializers.ModelSerializer):
     files = serializers.SerializerMethodField()
@@ -225,6 +299,7 @@ class TaxAuditSerializer(serializers.ModelSerializer):
     def get_files(self, obj):
         files = Files.objects.filter(tax_audit=obj)
         return FilesSerializer(files, many=True).data
+
 
 # AIR
 class AIRSerializer(serializers.ModelSerializer):
@@ -279,6 +354,8 @@ class SalesSerializer3(serializers.ModelSerializer):
     class Meta:
         model = SalesInvoice
         exclude = ['client','client_Location','customer','product_summaries']
+
+
 
 class ProductSummarySerializerList(serializers.ModelSerializer):
     hsn_code = serializers.CharField(source="hsn.hsn_code", read_only=True)
@@ -384,6 +461,50 @@ class SalesSerializerList(serializers.ModelSerializer):
             'product_summaries'
         ]
 
+# Sales Invoice
+    # def get_product_summaries(self, obj):
+    #     # Access related product summaries
+    #     product_summaries = obj.product_summaries.all()
+    #     # Serialize product summaries as needed, e.g., return a list of dictionaries
+    #     return [
+    #         {
+    #             "hsn": ps.hsn.hsn_code if ps.hsn else None,
+    #             "product_name": ps.product.product_name if ps.product else None,
+    #             "description": ps.prod_description,
+    #             # "quantity": ps.quantity,
+    #             # "rate": ps.rate,
+    #             # "amount": ps.amount,
+    #         }
+    #         for ps in product_summaries
+    #     ]
+
+    # def get_product_summaries_names(self, obj):
+    #     # Ensure this returns a list of product names as a serializable value
+    #     return [str(product.product_name) for product in obj.product_summaries.all()]
+
+# class SalesSerializer(serializers.ModelSerializer):
+#     product_summaries = serializers.PrimaryKeyRelatedField(queryset=ProductSummary.objects.all(), many=True)
+
+#     class Meta:
+#         model = SalesInvoice
+#         fields = [
+#             'client_Location',
+#             'customer',
+#             'invoice_no',
+#             'invoice_date',
+#             'invoice_type',
+#             'entry_type',
+#             'taxable_amount',
+#             'total_gst',
+#             'total_invoice_value',
+#             'tds_tcs_rate',
+#             'tds',
+#             'tcs',
+#             'amount_receivable',
+#             'product_summaries'
+#         ]
+
+
 class SalesSerializer2(serializers.ModelSerializer):
     class Meta:
         model = SalesInvoice
@@ -424,12 +545,49 @@ class ProductSerializer(serializers.ModelSerializer):
         return data
 
 
+
+# class ProductSerializer(serializers.ModelSerializer):
+#     hsn_code = serializers.CharField(source='hsn.hsn_code', read_only=True)
+#     class Meta:
+#         model = Product
+#         fields = ['id', 'product_name', 'hsn_code','hsn','unit_of_measure']
+
+# class ProductDescriptionSerializer2(serializers.ModelSerializer):
+
+#     class Meta:
+#         model = ProductDescription
+#         fields = ['id', 'description', 'unit', 'rate']
+
+# class ProductSerializer2(serializers.ModelSerializer):
+#     hsn_code = serializers.CharField(source='hsn.hsn_code', read_only=True)
+#     gst_rate = serializers.CharField(source='hsn.gst_rate', read_only=True)
+#     description_name = serializers.CharField(source='ProductDescription.description', read_only=True)
+#     class Meta:
+#         model = Product
+#         fields = ['id', 'product_name', 'hsn_code','gst_rate','hsn','description','description_name']
+
+
+
 class ProductDescriptionSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.product_name', read_only=True)
 
     class Meta:
         model = ProductDescription
         fields = ['id', 'description', 'unit', 'rate','product_name','product','product_amount','cgst','sgst','igst']
+
+
+
+# class ProductSummarySerializer(serializers.ModelSerializer):
+#     gst_rate = serializers.CharField(source='hsn.gst_rate', read_only=True)
+#     hsn_code = serializers.CharField(source='hsn.hsn_code', read_only=True)
+#     product_name = serializers.CharField(source='product.product_name', read_only=True)
+#     description = serializers.CharField(source='prod_description.description', read_only=True)
+#     unit = serializers.CharField(source='prod_description.unit', read_only=True)
+#     rate = serializers.CharField(source='prod_description.rate', read_only=True)
+
+#     class Meta:
+#         model = ProductSummary
+#         fields = ['id','hsn','product','prod_description','hsn_code','gst_rate','product_name','unit','rate','description']
 
 class ProductSummarySerializer(serializers.ModelSerializer):
     gst_rate = serializers.CharField(source='hsn.gst_rate', read_only=True)
@@ -534,120 +692,6 @@ class ProductSummaryPurchaseSerializer(serializers.ModelSerializer):
 
 
 #******************************************************Debit Note
-
-class DebitNoteSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = DebitNote
-        fields = '__all__'
-
-class DebitNoteSerializer3(serializers.ModelSerializer):
-    class Meta:
-        model = DebitNote
-        exclude = ['client','client_Location','customer','product_summaries']
-        
-class ProductSummaryDebitNoteSerializerList(serializers.ModelSerializer):
-    hsn_code = serializers.CharField(source="hsn.hsn_code", read_only=True)
-    gst_rate = serializers.DecimalField(source="hsn.gst_rate", max_digits=10, decimal_places=2, read_only=True)
-    product_name = serializers.CharField(source="product.product_name", read_only=True)
-    product_amount = serializers.CharField(source="prod_description.product_amount", read_only=True)
-    description_text = serializers.CharField(source="prod_description.description", read_only=True)
-    unit = serializers.DecimalField(source="prod_description.unit", max_digits=10, decimal_places=2, read_only=True)
-    rate = serializers.DecimalField(source="prod_description.rate", max_digits=10, decimal_places=2, read_only=True)
-    cgst = serializers.DecimalField(source="prod_description.cgst", max_digits=10, decimal_places=2, read_only=True)
-    sgst = serializers.DecimalField(source="prod_description.sgst", max_digits=10, decimal_places=2, read_only=True)
-    igst = serializers.DecimalField(source="prod_description.igst", max_digits=10, decimal_places=2, read_only=True)
-
-    class Meta:
-        model = ProductSummary
-        fields = [
-            "id",
-            "hsn_code",
-            "gst_rate",
-            "product_name",
-            "description_text",
-            "unit",
-            "rate",
-            'cgst',
-            'sgst',
-            'igst',
-            'product_amount'
-        ]
-        
-class DebitNoteSerializerList(serializers.ModelSerializer):
-    client_name = serializers.CharField(source="client.client_name", read_only=True)
-    customer_name = serializers.CharField(source="customer.name", read_only=True)
-    customer_gst_no = serializers.CharField(source="customer.gst_no", read_only=True)
-    customer_pan = serializers.CharField(source="customer.pan", read_only=True)
-    customer_address = serializers.CharField(source="customer.address", read_only=True)
-    customer_customer = serializers.CharField(source="customer.customer", read_only=True)
-    customer_vendor = serializers.CharField(source="customer.vendor", read_only=True)
-    client_location_name = serializers.CharField(source="client_Location.location", read_only=True)
-    contact = serializers.CharField(source="client_Location.contact", read_only=True)
-    address = serializers.CharField(source="client_Location.address", read_only=True)
-    city = serializers.CharField(source="client_Location.city", read_only=True)
-    state = serializers.CharField(source="client_Location.state", read_only=True)
-    country = serializers.CharField(source="client_Location.country", read_only=True)
-    product_summaries = ProductSummaryDebitNoteSerializerList(many=True, read_only=True)
-
-    class Meta:
-        model = SalesInvoice
-        fields = [
-            'id',
-            "invoice_no",
-            "invoice_date",
-            "invoice_type",
-            "entry_type",
-            'attach_e_way_bill',
-            'attach_invoice',
-            "client_name",
-            "customer_name",
-            "customer_gst_no",
-            "customer_pan",
-            "customer_address",
-            "customer_customer",
-            "customer_vendor",
-            "client_location_name",
-            "contact",
-            "address",
-            "city",
-            "state",
-            "country",
-            "taxable_amount",
-            "totalall_gst",
-            "total_invoice_value",
-            "amount_receivable",
-            'tcs',
-            'tds',
-            'tds_tcs_rate',
-            'product_summaries'
-        ]
-        
-class DebitNoteSerializer2(serializers.ModelSerializer):
-    class Meta:
-        model = DebitNote
-        fields = ['attach_e_way_bill','client']
-        
-class DebitNoteSerializer2(serializers.ModelSerializer):
-    attach_e_way_bill = serializers.FileField()
-
-    class Meta:
-        model = DebitNote  # Your model where the file should be saved
-        fields = ['attach_e_way_bill', 'client']
-
-class ProductSummaryDebitNoteSerializer(serializers.ModelSerializer):
-    gst_rate = serializers.CharField(source='hsn.gst_rate', read_only=True)
-    hsn_code = serializers.CharField(source='hsn.hsn_code', read_only=True)
-    product_name = serializers.CharField(source='product.product_name', read_only=True)
-    product_amount = serializers.CharField(source='prod_description.product_amount', read_only=True)
-    description = serializers.CharField(source='prod_description.description', read_only=True)
-    unit = serializers.CharField(source='prod_description.unit', read_only=True)
-    rate = serializers.CharField(source='prod_description.rate', read_only=True)
-
-    class Meta:
-        model = ProductSummaryDebitNote
-        fields = ['id', 'hsn', 'product', 'prod_description', 'hsn_code', 'gst_rate', 'product_name', 'product_amount','description', 'unit', 'rate']
-
 
 
 
