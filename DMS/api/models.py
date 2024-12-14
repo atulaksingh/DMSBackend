@@ -430,6 +430,8 @@ class PurchaseInvoice(models.Model):
         ('debit_note', 'Debit Note'),
         ('income', 'Income'),
     ]
+
+    # 
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
     client_Location = models.ForeignKey(OfficeLocation, on_delete=models.CASCADE, null=True, blank=True)
     attach_invoice = models.FileField(null=True, blank=True)
@@ -443,6 +445,7 @@ class PurchaseInvoice(models.Model):
 
     # Link to ProductSummary for each item in the invoice
     product_summaries = models.ManyToManyField(ProductSummaryPurchase, blank=True, related_name="purchase_invoices")
+    # product_summaries = models.ManyToManyField(ProductSummaryPurchase, blank=True, related_name="purchase_invoices")
 
     taxable_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     totalall_gst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -453,6 +456,9 @@ class PurchaseInvoice(models.Model):
     tcs = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     tds = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     amount_receivable = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    utilise_edit = models.BooleanField(null=True, blank=True)
+    utilise_month = models.DateField(null=True, blank=True)
+
     def __str__(self):
         invoice_no = self.invoice_no or "No Invoice Number"
         vendor_name = self.vendor.name if self.vendor else "No Vendor"
@@ -493,7 +499,7 @@ class PurchaseInvoice(models.Model):
 #    tcs = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 #    tds = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 #    amount_receivable = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#    product_summeries = models.ManyToManyField(ProductSummaryPurchase, blank=True, related_name="purchase_invoices" )
+#    product_summaries = models.ManyToManyField(ProductSummaryPurchase, blank=True, related_name="purchase_invoices" )
 
 
 # Income Tax Document

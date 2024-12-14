@@ -384,6 +384,33 @@ class ProductSummarySerializerList(serializers.ModelSerializer):
             'igst',
             'product_amount'
         ]
+class ProductSummaryPurchaseSerializerList(serializers.ModelSerializer):
+    hsn_code = serializers.CharField(source="hsn.hsn_code", read_only=True)
+    gst_rate = serializers.DecimalField(source="hsn.gst_rate", max_digits=10, decimal_places=2, read_only=True)
+    product_name = serializers.CharField(source="product.product_name", read_only=True)
+    product_amount = serializers.CharField(source="prod_description.product_amount", read_only=True)
+    description_text = serializers.CharField(source="prod_description.description", read_only=True)
+    unit = serializers.DecimalField(source="prod_description.unit", max_digits=10, decimal_places=2, read_only=True)
+    rate = serializers.DecimalField(source="prod_description.rate", max_digits=10, decimal_places=2, read_only=True)
+    cgst = serializers.DecimalField(source="prod_description.cgst", max_digits=10, decimal_places=2, read_only=True)
+    sgst = serializers.DecimalField(source="prod_description.sgst", max_digits=10, decimal_places=2, read_only=True)
+    igst = serializers.DecimalField(source="prod_description.igst", max_digits=10, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = ProductSummaryPurchase
+        fields = [
+            "id",
+            "hsn_code",
+            "gst_rate",
+            "product_name",
+            "description_text",
+            "unit",
+            "rate",
+            'cgst',
+            'sgst',
+            'igst',
+            'product_amount'
+        ]
 
 class SalesSerializerList(serializers.ModelSerializer):
     client_name = serializers.CharField(source="client.client_name", read_only=True)
@@ -585,32 +612,34 @@ class PurchaseSerializer(serializers.ModelSerializer):
 class PurchaseSerializer3(serializers.ModelSerializer):
     class Meta:
         model = PurchaseInvoice
-        exclude = ['client','client_Location','vendor','product_summeries']
+        exclude = ['client','client_Location','vendor','product_summaries']
 
 class PurchaseSerializerList(serializers.ModelSerializer):
-    client_name = serializers.CharField(source='client.client_name', read_only= True)
-    customer_name = serializers.CharField(source='customer.name', read_only= True)
-    customer_gst_no = serializers.CharField(source='customer.gst_no', read_only = True)
-    customer_pan = serializers.CharField(source= 'customer.pan', read_only=True)
-    customer_address = serializers.CharField(source='customer.address', read_only= True)
-    customer_customer = serializers.CharField(source='customer.customer', read_only=True)
-    customer_vendor = serializers.CharField(source='customer.vendor', read_only=True)
-    client_location_name = serializers.CharField(source='client_Location.location', read_only=True)
-    contact = serializers.CharField(source='client_Location.contact', read_only=True)
-    address = serializers.CharField(source='client_Location.address', read_only=True)
-    city = serializers.CharField(source='client_Location.city',read_only=True)
-    state = serializers.CharField(source='cliet_Location.state', read_only=True)
-    country = serializers.CharField(source='client_Location.country', read_only=True)
-    product_summaries = ProductSummarySerializerList(many=True, read_only= True)
+    client_name = serializers.CharField(source="client.client_name", read_only=True)
+    customer_name = serializers.CharField(source="vendor.name", read_only=True)
+    customer_gst_no = serializers.CharField(source="vendor.gst_no", read_only=True)
+    customer_pan = serializers.CharField(source="vendor.pan", read_only=True)
+    customer_address = serializers.CharField(source="vendor.address", read_only=True)
+    customer_customer = serializers.CharField(source="vendor.customer", read_only=True)
+    customer_vendor = serializers.CharField(source="vendor.vendor", read_only=True)
+    client_location_name = serializers.CharField(source="client_Location.location", read_only=True)
+    contact = serializers.CharField(source="client_Location.contact", read_only=True)
+    address = serializers.CharField(source="client_Location.address", read_only=True)
+    city = serializers.CharField(source="client_Location.city", read_only=True)
+    state = serializers.CharField(source="client_Location.state", read_only=True)
+    country = serializers.CharField(source="client_Location.country", read_only=True)
+    product_summaries = ProductSummaryPurchaseSerializerList(many=True, read_only=True)
+
     class Meta:
         model = PurchaseInvoice
         fields = [
-           'id',
+            'id',
             "invoice_no",
             "invoice_date",
             "invoice_type",
             "entry_type",
             'attach_e_way_bill',
+            'attach_invoice',
             "client_name",
             "customer_name",
             "customer_gst_no",
@@ -632,6 +661,9 @@ class PurchaseSerializerList(serializers.ModelSerializer):
             'tds',
             'tds_tcs_rate',
             'product_summaries',
+            'utilise_edit',
+            'utilise_month',
+
         ]
 
 class PurchaseSerializer2(serializers.ModelSerializer):
