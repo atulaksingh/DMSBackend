@@ -544,7 +544,7 @@ class DebitNoteSerializer(serializers.ModelSerializer):
 class DebitNoteSerializer3(serializers.ModelSerializer):
     class Meta:
         model = DebitNote
-        exclude = ['client','client_Location','customer','product_summaries']
+        exclude = ['client','client_Location','customer','product_summaries','sales_invoice']
         
 class ProductSummaryDebitNoteSerializerList(serializers.ModelSerializer):
     hsn_code = serializers.CharField(source="hsn.hsn_code", read_only=True)
@@ -591,9 +591,10 @@ class DebitNoteSerializerList(serializers.ModelSerializer):
     product_summaries = ProductSummaryDebitNoteSerializerList(many=True, read_only=True)
 
     class Meta:
-        model = SalesInvoice
+        model = DebitNote
         fields = [
             'id',
+            'sales_invoice',
             "invoice_no",
             "invoice_date",
             "invoice_type",
@@ -626,14 +627,14 @@ class DebitNoteSerializerList(serializers.ModelSerializer):
 class DebitNoteSerializer2(serializers.ModelSerializer):
     class Meta:
         model = DebitNote
-        fields = ['attach_e_way_bill','client']
+        fields = ['attach_e_way_bill','client','sales_invoice']
         
 class DebitNoteSerializer2(serializers.ModelSerializer):
     attach_e_way_bill = serializers.FileField()
 
     class Meta:
         model = DebitNote  # Your model where the file should be saved
-        fields = ['attach_e_way_bill', 'client']
+        fields = ['attach_e_way_bill', 'client','sales_invoice']
 
 class ProductSummaryDebitNoteSerializer(serializers.ModelSerializer):
     gst_rate = serializers.CharField(source='hsn.gst_rate', read_only=True)

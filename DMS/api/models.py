@@ -481,6 +481,7 @@ class DebitNote(models.Model):
         ('debit_note', 'Debit Note'),
         ('income', 'Income'),
     ]
+    sales_invoice = models.ForeignKey(SalesInvoice, null=True, blank=True,on_delete=models.CASCADE)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
     client_Location = models.ForeignKey(OfficeLocation, on_delete=models.CASCADE, null=True, blank=True)
     attach_invoice = models.FileField(null=True, blank=True)
