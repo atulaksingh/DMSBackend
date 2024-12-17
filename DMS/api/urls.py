@@ -166,6 +166,6 @@ urlpatterns = [
     path('create-creditnote-post2/<int:client_pk>/<int:invoice_pk>', view=create_credit_note2, name='create-credit_note2'),
     path('delete-creditnote-invoice/<int:client_pk>/<int:invoice_pk>/<int:credit_pk>', view=delete_credit_note, name='delete-credit_note'),
     path('creditnote-view/<int:client_pk>/<int:invoice_pk>/<int:credit_pk>', view=credit_note_detail_view, name='credit_note-view'),
-    path('creditnote-list/<int:client_pk>/<int:invoice_pk>', view=credit_list, name='debitnote-list'),   
+    path('creditnote-list/<int:client_pk>/<int:invoice_pk>', view=credit_list, name='creditnote-list'),   
 
 ]

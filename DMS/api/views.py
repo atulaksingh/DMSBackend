@@ -3785,6 +3785,62 @@ def create_debit_note2(request, client_pk, invoice_pk):
         )
 
         # Handle Product Summaries (same logic as before)
+        product_summaries = []  # To store created product summaries
+        for row in rows:
+            hsn_code = row.get('hsnCode')
+            gst_rate = safe_decimal(row.get('gstRate', '0'))
+            product_name = row.get('product')
+            product_id = row.get('product_id')  # Assuming the frontend sends this if selecting an existing product
+            description_text = row.get('description', '')
+            unit_value = safe_decimal(row.get('unit', '0'))
+            rate_value = safe_decimal(row.get('rate', '0'))
+            amount = safe_decimal(row.get('product_amount', '0'))
+            cgst = safe_decimal(row.get('cgst', '0'))
+            sgst = safe_decimal(row.get('sgst', '0'))
+            igst = safe_decimal(row.get('igst', '0'))
+
+            # Handle HSNCode
+            hsn_code_obj, _ = HSNCode.objects.get_or_create(
+                hsn_code=hsn_code, defaults={'gst_rate': gst_rate}
+            )
+
+            # Handle Product (existing or new)
+            if product_id:
+                # Use existing product
+                product_obj = Product.objects.filter(id=product_id).first()
+                if not product_obj:
+                    return Response({"error": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                # Create new product
+                product_obj, _ = Product.objects.get_or_create(
+                    product_name=product_name, hsn=hsn_code_obj, defaults={'unit_of_measure': unit_value}
+                )
+
+            # Handle ProductDescription
+            product_description_obj, _ = ProductDescription.objects.get_or_create(
+                product=product_obj,
+                description=description_text,
+                defaults={
+                    'unit': unit_value,
+                    'rate': rate_value,
+                    'product_amount': amount,
+                    'cgst': cgst,
+                    'sgst': sgst,
+                    'igst': igst,
+                }
+            )
+
+            # Create ProductSummary
+            product_summary = ProductSummaryDebitNote.objects.create(
+                hsn=hsn_code_obj,
+                product=product_obj,
+                prod_description=product_description_obj
+            )
+            product_summaries.append(product_summary)
+
+            # Link ProductSummary to the SalesInvoice
+            sales_invoice.product_summaries.add(product_summary)  # Add the product summary to the invoice
+
 
         return Response({"message": "Debit Note created successfully.", "invoice_id": debit_note.id}, status=status.HTTP_200_OK)
 
@@ -3922,6 +3978,9 @@ def create_credit_note2(request, client_pk, invoice_pk):
             "tcs": payload.get("invoiceData[0][tcs]"),
             "tds": payload.get("invoiceData[0][tds]"),
             "amount_receivable": payload.get("invoiceData[0][amount_receivable]"),
+            "utilise_edit": payload.get("invoiceData[0][utilise_edit]", "").lower() == "true", #nnnn
+            "utilise_month": payload.get("invoiceData[0][utilise_month]").lower(), #nnnnnn
+            
         }
         attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
         attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
@@ -3974,6 +4033,62 @@ def create_credit_note2(request, client_pk, invoice_pk):
             attach_e_way_bill=attach_e_way_bill,
             **invoice_data
         )
+        product_summaries = []  # To store created product summaries
+        for row in rows:
+            hsn_code = row.get('hsnCode')
+            gst_rate = safe_decimal(row.get('gstRate', '0'))
+            product_name = row.get('product')
+            product_id = row.get('product_id')  # Assuming the frontend sends this if selecting an existing product
+            description_text = row.get('description', '')
+            unit_value = safe_decimal(row.get('unit', '0'))
+            rate_value = safe_decimal(row.get('rate', '0'))
+            amount = safe_decimal(row.get('product_amount', '0'))
+            cgst = safe_decimal(row.get('cgst', '0'))
+            sgst = safe_decimal(row.get('sgst', '0'))
+            igst = safe_decimal(row.get('igst', '0'))
+
+            # Handle HSNCode
+            hsn_code_obj, _ = HSNCode.objects.get_or_create(
+                hsn_code=hsn_code, defaults={'gst_rate': gst_rate}
+            )
+
+            # Handle Product (existing or new)
+            if product_id:
+                # Use existing product
+                product_obj = Product.objects.filter(id=product_id).first()
+                if not product_obj:
+                    return Response({"error": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                # Create new product
+                product_obj, _ = Product.objects.get_or_create(
+                    product_name=product_name, hsn=hsn_code_obj, defaults={'unit_of_measure': unit_value}
+                )
+
+            # Handle ProductDescription
+            product_description_obj, _ = ProductDescription.objects.get_or_create(
+                product=product_obj,
+                description=description_text,
+                defaults={
+                    'unit': unit_value,
+                    'rate': rate_value,
+                    'product_amount': amount,
+                    'cgst': cgst,
+                    'sgst': sgst,
+                    'igst': igst,
+                }
+            )
+
+            # Create ProductSummary
+            product_summary = ProductSummaryCreditNote.objects.create(
+                hsn=hsn_code_obj,
+                product=product_obj,
+                prod_description=product_description_obj
+            )
+            product_summaries.append(product_summary)
+
+            # Link ProductSummary to the SalesInvoice
+            purchase_invoice.product_summaries.add(product_summary)  # Add the product summary to the invoice
+
 
         # Handle Product Summaries (same logic as before)
 
@@ -4141,6 +4256,9 @@ def update_credit_note(request, client_pk, invoice_pk, credit_pk):
                 "amount_receivable": request.data.get("invoiceData[0][amount_receivable]"),
                 "attach_invoice": request.data.get("invoiceData[0][attach_invoice]"),
                 "attach_e_way_bill": request.data.get("invoiceData[0][attach_e_way_bill]"),
+                "utilise_edit": payload.get("invoiceData[0][utilise_edit]", "").lower() == "true", #nnnn
+                "utilise_month": payload.get("invoiceData[0][utilise_month]"), #nnnnnn
+
             }
 
             attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
@@ -4426,6 +4544,9 @@ def credit_note_detail_view(request, client_pk, invoice_pk, credit_pk):
         credit_note.tds = safe_decimal(data.get('tds', credit_note.tds))
         credit_note.tcs = safe_decimal(data.get('tcs', credit_note.tcs))
         credit_note.amount_receivable = safe_decimal(data.get('amount_receivable', credit_note.amount_receivable))
+        credit_note.utilise_edit = data.get('utilise_edit', credit_note.utilise_edit)
+        credit_note.utilise_month = data.get('utilise_month', credit_note.utilise_month)
+
 
         # Update product summaries if provided
         rows = data.get('rows', [])

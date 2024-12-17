@@ -739,7 +739,9 @@ class CreditNoteSerializerList(serializers.ModelSerializer):
             'tcs',
             'tds',
             'tds_tcs_rate',
-            'product_summaries'
+            'product_summaries',
+            'utilise_edit',
+            'utilise_month',
         ]
         
 class CreditNoteSerializer2(serializers.ModelSerializer):
