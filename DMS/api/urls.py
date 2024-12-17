@@ -156,6 +156,16 @@ urlpatterns = [
     path('create-debitnote-post2/<int:client_pk>/<int:invoice_pk>', view=create_debit_note2, name='create-debit_note2'),
     path('delete-debitnote-invoice/<int:client_pk>/<int:invoice_pk>/<int:pk>', view=delete_debit_note, name='delete-debit_note'),
     path('debitnote-view/<int:client_pk>/<int:invoice_pk>/<int:debit_pk>', view=debit_note_detail_view, name='debit_note-view'),
-    path('debitnote-list/<int:client_pk>/<int:invoice_pk>', view=debit_list, name='debitnote-list'),
+    path('debitnote-list/<int:client_pk>/<int:invoice_pk>', view=debit_list, name='debitnote-list'),   
+    
+# Credit Note
+    path('get-creditnote/<int:pk>/', view=create_credit_note_get, name='get-creditnote'),  # Note the trailing slash
+    path('create-creditnote/<int:client_pk>/<int:invoice_pk>', view=create_credit_note, name='create-creditnote'),  # Note the trailing slash
+    path('update-creditnote-post/<int:client_pk>/<int:invoice_pk>/<int:credit_pk>', view=update_credit_note, name='create-credit_note'),
+    path('get-creditnote-invoice/<int:client_pk>/<int:invoice_pk>/<int:credit_pk>', view=update_credit_note, name='get-credit_note'),
+    path('create-creditnote-post2/<int:client_pk>/<int:invoice_pk>', view=create_credit_note2, name='create-credit_note2'),
+    path('delete-creditnote-invoice/<int:client_pk>/<int:invoice_pk>/<int:credit_pk>', view=delete_credit_note, name='delete-credit_note'),
+    path('creditnote-view/<int:client_pk>/<int:invoice_pk>/<int:credit_pk>', view=credit_note_detail_view, name='credit_note-view'),
+    path('creditnote-list/<int:client_pk>/<int:invoice_pk>', view=credit_list, name='debitnote-list'),   
 
 ]

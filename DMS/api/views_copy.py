@@ -4617,9 +4617,6 @@ def delete_product_description(request, pk):
     return Response({'Message':'Fail to delete Product Description Return'} ,status=status.HTTP_400_BAD_REQUEST)
 
 
-
-
-
 @api_view(['GET'])
 def sales_invoice_list(request):
     """
