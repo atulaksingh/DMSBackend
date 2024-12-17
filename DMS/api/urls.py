@@ -167,5 +167,16 @@ urlpatterns = [
     path('delete-creditnote-invoice/<int:client_pk>/<int:invoice_pk>/<int:credit_pk>', view=delete_credit_note, name='delete-credit_note'),
     path('creditnote-view/<int:client_pk>/<int:invoice_pk>/<int:credit_pk>', view=credit_note_detail_view, name='credit_note-view'),
     path('creditnote-list/<int:client_pk>/<int:invoice_pk>', view=credit_list, name='creditnote-list'),   
+    
+# Income
+    path('get-income/<int:pk>/', view=create_income_get, name='get-income'),  # Note the trailing slash
+    path('create-income/<int:client_pk>', view=create_income, name='create-income'),  # Note the trailing slash
+    path('update-income-post/<int:client_pk>/<int:invoice_pk>', view=update_income, name='create-income'),
+    path('get-income/<int:client_pk>/<int:invoice_pk>', view=update_income, name='get-income'),
+    path('create-income-post2/<int:client_pk>', view=create_income2, name='create-income2'),
+    path('delete-income/<int:client_pk>/<int:pk>', view=delete_income, name='delete-income'),
+    path('income-view/<int:client_pk>/<int:invoice_pk>', view=income_detail_view, name='income-view'),
+    # path('income-list/<int:client_pk>/<int:invoice_pk>', view=income_list, name='income-list'),   
+
 
 ]
