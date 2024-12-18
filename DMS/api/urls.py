@@ -170,7 +170,7 @@ urlpatterns = [
     
 # Income
     path('get-income/<int:pk>/', view=create_income_get, name='get-income'),  # Note the trailing slash
-    path('create-income/<int:client_pk>', view=create_income, name='create-income'),  # Note the trailing slash
+    path('create-income/<int:pk>', view=create_income, name='create-income'),  # Note the trailing slash
     path('update-income-post/<int:client_pk>/<int:invoice_pk>', view=update_income, name='create-income'),
     path('get-income/<int:client_pk>/<int:invoice_pk>', view=update_income, name='get-income'),
     path('create-income-post2/<int:client_pk>', view=create_income2, name='create-income2'),
@@ -178,5 +178,13 @@ urlpatterns = [
     path('income-view/<int:client_pk>/<int:invoice_pk>', view=income_detail_view, name='income-view'),
     # path('income-list/<int:client_pk>/<int:invoice_pk>', view=income_list, name='income-list'),   
 
+# Expenses
+    path('get-expenses/<int:pk>/', view=create_expenses_get, name='get-expenses'),  # Note the trailing slash
+    path('create-expenses/<int:pk>', view=create_expenses, name='create-expenses'),  # Note the trailing slash
+    path('update-expenses-post/<int:client_pk>/<int:invoice_pk>', view=update_expenses, name='create-expenses-post'),
+    path('get-expenses/<int:client_pk>/<int:invoice_pk>', view=update_expenses, name='get-expenses'),
+    path('create-expenses-post2/<int:client_pk>', view=create_expenses2, name='create-expenses-post2'),
+    path('expenses-view/<int:client_pk>/<int:invoice_pk>', view=expenses_detail_view, name='expenses-view'),
+    path('delete-expenses/<int:client_pk>/<int:pk>', view=delete_expenses, name='delete-expenses'),
 
 ]
