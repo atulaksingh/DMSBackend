@@ -186,7 +186,27 @@ urlpatterns = [
     path('create-expenses-post2/<int:client_pk>', view=create_expenses2, name='create-expenses-post2'),
     path('expenses-view/<int:client_pk>/<int:invoice_pk>', view=expenses_detail_view, name='expenses-view'),
     path('delete-expenses/<int:client_pk>/<int:pk>', view=delete_expenses, name='delete-expenses'),
-
+    
+# Income Debit Note
+    path('get-incomedebitnote/<int:pk>/', view=create_income_debit_note_get, name='get-income-debit-note'),  # Note the trailing slash
+    path('create-incomedebitnote/<int:client_pk>/<int:income_pk>', view=create_income_debit_note, name='create-income-debit-note'),  # Note the trailing slash
+    path('update-incomedebitnote-post/<int:client_pk>/<int:income_pk>/<int:debit_pk>', view=update_income_debit_note, name='create-income-debit-note'),
+    path('get-incomedebitnote/<int:client_pk>/<int:income_pk>/<int:debit_pk>', view=update_income_debit_note, name='get-income-debit-note'),
+    path('create-incomedebitnote-post2/<int:client_pk>/<int:income_pk>', view=create_income_debit_note2, name='create-income-debit-note2'),
+    path('delete-incomedebitnote/<int:client_pk>/<int:income_pk>/<int:pk>', view=delete_income_debit_note, name='delete-income-debit-note'),
+    path('incomedebitnote-view/<int:client_pk>/<int:income_pk>/<int:debit_pk>', view=income_debit_note_detail_view, name='income-debit-note-view'),
+    path('incomedebitnote-list/<int:client_pk>/<int:income_pk>', view=income_debit_list, name='income-debit-note-list'),   
+    
+# Expense Credit Note
+    path('get-expensescreditnote/<int:pk>/', view=create_expenses_credit_note_get, name='get-expenses-credit-note'),  # Note the trailing slash
+    path('create-expensescreditnote/<int:client_pk>/<int:expenses_pk>', view=create_expenses_credit_note, name='create-expenses-credit-note'),  # Note the trailing slash
+    path('update-expensescreditnote-post/<int:client_pk>/<int:expenses_pk>/<int:credit_pk>', view=update_expenses_credit_note, name='create-expenses-credit-note'),
+    path('get-expensescreditnote/<int:client_pk>/<int:expenses_pk>/<int:credit_pk>', view=update_expenses_credit_note, name='get-expenses-credit-note'),
+    path('create-expensescreditnote-post2/<int:client_pk>/<int:expenses_pk>', view=create_expenses_credit_note2, name='create-expenses-credit-note2'),
+    path('delete-expensescreditnote/<int:client_pk>/<int:expenses_pk>/<int:credit_pk>', view=delete_expenses_credit_note, name='delete-expenses-credit-note'),
+    path('expensescreditnote-view/<int:client_pk>/<int:expenses_pk>/<int:credit_pk>', view=expenses_credit_note_detail_view, name='expenses-credit-note-view'),
+    path('expensescreditnote-list/<int:client_pk>/<int:expenses_pk>', view=expenses_credit_list, name='expenses-credit-note-list'),   
+    
 # Zip Upload
     path('create-zipupload/<int:pk>', view=create_zipupload, name='create-zipupload'),
     path('delete-zipupload/<int:client_pk>/<int:pk>', view=delete_zipupload, name='delete-zipupload'),

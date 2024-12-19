@@ -1006,6 +1006,242 @@ class ProductSummaryExpensesSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductSummaryExpenses
         fields = ['id', 'hsn', 'product', 'prod_description', 'hsn_code', 'gst_rate', 'product_name', 'product_amount','description', 'unit', 'rate']
+    
+#******************************************************Income Debit Note
+
+class IncomeDebitNoteSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = IncomeDebitNote
+        fields = '__all__'
+
+class IncomeDebitNoteSerializer3(serializers.ModelSerializer):
+    class Meta:
+        model = IncomeDebitNote
+        exclude = ['client','client_Location','customer','product_summaries','income']
+        
+class ProductSummaryIncomeDebitNoteSerializerList(serializers.ModelSerializer):
+    hsn_code = serializers.CharField(source="hsn.hsn_code", read_only=True)
+    gst_rate = serializers.DecimalField(source="hsn.gst_rate", max_digits=10, decimal_places=2, read_only=True)
+    product_name = serializers.CharField(source="product.product_name", read_only=True)
+    product_amount = serializers.CharField(source="prod_description.product_amount", read_only=True)
+    description_text = serializers.CharField(source="prod_description.description", read_only=True)
+    unit = serializers.DecimalField(source="prod_description.unit", max_digits=10, decimal_places=2, read_only=True)
+    rate = serializers.DecimalField(source="prod_description.rate", max_digits=10, decimal_places=2, read_only=True)
+    cgst = serializers.DecimalField(source="prod_description.cgst", max_digits=10, decimal_places=2, read_only=True)
+    sgst = serializers.DecimalField(source="prod_description.sgst", max_digits=10, decimal_places=2, read_only=True)
+    igst = serializers.DecimalField(source="prod_description.igst", max_digits=10, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = ProductSummaryIncomeDebitNote
+        fields = [
+            "id",
+            "hsn_code",
+            "gst_rate",
+            "product_name",
+            "description_text",
+            "unit",
+            "rate",
+            'cgst',
+            'sgst',
+            'igst',
+            'product_amount',
+        ]
+        
+class IncomeDebitNoteSerializerList(serializers.ModelSerializer):
+    client_name = serializers.CharField(source="client.client_name", read_only=True)
+    customer_name = serializers.CharField(source="customer.name", read_only=True)
+    customer_gst_no = serializers.CharField(source="customer.gst_no", read_only=True)
+    customer_pan = serializers.CharField(source="customer.pan", read_only=True)
+    customer_address = serializers.CharField(source="customer.address", read_only=True)
+    customer_customer = serializers.CharField(source="customer.customer", read_only=True)
+    customer_vendor = serializers.CharField(source="customer.vendor", read_only=True)
+    client_location_name = serializers.CharField(source="client_Location.location", read_only=True)
+    contact = serializers.CharField(source="client_Location.contact", read_only=True)
+    address = serializers.CharField(source="client_Location.address", read_only=True)
+    city = serializers.CharField(source="client_Location.city", read_only=True)
+    state = serializers.CharField(source="client_Location.state", read_only=True)
+    country = serializers.CharField(source="client_Location.country", read_only=True)
+    product_summaries = ProductSummaryIncomeDebitNoteSerializerList(many=True, read_only=True)
+
+    class Meta:
+        model = IncomeDebitNote
+        fields = [
+            'id',
+            'income',
+            "invoice_no",
+            "invoice_date",
+            "invoice_type",
+            "entry_type",
+            'attach_e_way_bill',
+            'attach_invoice',
+            "client_name",
+            "customer_name",
+            "customer_gst_no",
+            "customer_pan",
+            "customer_address",
+            "customer_customer",
+            "customer_vendor",
+            "client_location_name",
+            "contact",
+            "address",
+            "city",
+            "state",
+            "country",
+            "taxable_amount",
+            "totalall_gst",
+            "total_invoice_value",
+            "amount_receivable",
+            'tcs',
+            'tds',
+            'tds_tcs_rate',
+            'product_summaries'
+        ]
+        
+class IncomeDebitNoteSerializer2(serializers.ModelSerializer):
+    class Meta:
+        model = IncomeDebitNote 
+        fields = ['attach_e_way_bill','client','income']
+        
+class IncomeDebitNoteSerializer2(serializers.ModelSerializer):
+    attach_e_way_bill = serializers.FileField()
+
+    class Meta:
+        model = IncomeDebitNote  # Your model where the file should be saved
+        fields = ['attach_e_way_bill', 'client','income']
+
+class ProductSummaryIncomeDebitNoteSerializer(serializers.ModelSerializer):
+    gst_rate = serializers.CharField(source='hsn.gst_rate', read_only=True)
+    hsn_code = serializers.CharField(source='hsn.hsn_code', read_only=True)
+    product_name = serializers.CharField(source='product.product_name', read_only=True)
+    product_amount = serializers.CharField(source='prod_description.product_amount', read_only=True)
+    description = serializers.CharField(source='prod_description.description', read_only=True)
+    unit = serializers.CharField(source='prod_description.unit', read_only=True)
+    rate = serializers.CharField(source='prod_description.rate', read_only=True)
+
+    class Meta:
+        model = ProductSummaryIncomeDebitNote
+        fields = ['id', 'hsn', 'product', 'prod_description', 'hsn_code', 'gst_rate', 'product_name', 'product_amount','description', 'unit', 'rate']
+
+
+
+#******************************************************Expenses Credit Note
+
+class ExpensesCreditNoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExpensesCreditNote
+        fields = '__all__'
+
+class ExpensesCreditNoteSerializer3(serializers.ModelSerializer):
+    class Meta:
+        model = ExpensesCreditNote
+        exclude = ['client','client_Location','vendor','product_summaries','expenses']
+        
+class ProductSummaryExpensesCreditNoteSerializerList(serializers.ModelSerializer):
+    hsn_code = serializers.CharField(source="hsn.hsn_code", read_only=True)
+    gst_rate = serializers.DecimalField(source="hsn.gst_rate", max_digits=10, decimal_places=2, read_only=True)
+    product_name = serializers.CharField(source="product.product_name", read_only=True)
+    product_amount = serializers.CharField(source="prod_description.product_amount", read_only=True)
+    description_text = serializers.CharField(source="prod_description.description", read_only=True)
+    unit = serializers.DecimalField(source="prod_description.unit", max_digits=10, decimal_places=2, read_only=True)
+    rate = serializers.DecimalField(source="prod_description.rate", max_digits=10, decimal_places=2, read_only=True)
+    cgst = serializers.DecimalField(source="prod_description.cgst", max_digits=10, decimal_places=2, read_only=True)
+    sgst = serializers.DecimalField(source="prod_description.sgst", max_digits=10, decimal_places=2, read_only=True)
+    igst = serializers.DecimalField(source="prod_description.igst", max_digits=10, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = ProductSummaryExpensesCreditNote
+        fields = [
+            "id",
+            "hsn_code",
+            "gst_rate",
+            "product_name",
+            "description_text",
+            "unit",
+            "rate",
+            'cgst',
+            'sgst',
+            'igst',
+            'product_amount'
+        ]
+        
+class ExpensesCreditNoteSerializerList(serializers.ModelSerializer):
+    client_name = serializers.CharField(source="client.client_name", read_only=True)
+    customer_name = serializers.CharField(source="vendor.name", read_only=True)
+    customer_gst_no = serializers.CharField(source="vendor.gst_no", read_only=True)
+    customer_pan = serializers.CharField(source="vendor.pan", read_only=True)
+    customer_address = serializers.CharField(source="vendor.address", read_only=True)
+    customer_customer = serializers.CharField(source="vendor.customer", read_only=True)
+    customer_vendor = serializers.CharField(source="vendor.vendor", read_only=True)
+    client_location_name = serializers.CharField(source="client_Location.location", read_only=True)
+    contact = serializers.CharField(source="client_Location.contact", read_only=True)
+    address = serializers.CharField(source="client_Location.address", read_only=True)
+    city = serializers.CharField(source="client_Location.city", read_only=True)
+    state = serializers.CharField(source="client_Location.state", read_only=True)
+    country = serializers.CharField(source="client_Location.country", read_only=True)
+    product_summaries = ProductSummaryExpensesCreditNoteSerializerList(many=True, read_only=True)
+
+    class Meta:
+        model = ExpensesCreditNote
+        fields = [
+            'id',
+            'expenses',
+            "invoice_no",
+            "invoice_date",
+            "invoice_type",
+            "entry_type",
+            'attach_e_way_bill',
+            'attach_invoice',
+            "client_name",
+            "customer_name",
+            "customer_gst_no",
+            "customer_pan",
+            "customer_address",
+            "customer_customer",
+            "customer_vendor",
+            "client_location_name",
+            "contact",
+            "address",
+            "city",
+            "state",
+            "country",
+            "taxable_amount",
+            "totalall_gst",
+            "total_invoice_value",
+            "amount_receivable",
+            'tcs',
+            'tds',
+            'tds_tcs_rate',
+            'product_summaries',
+            'utilise_edit',
+            'utilise_month',
+        ]
+        
+class ExpensesCreditNoteSerializer2(serializers.ModelSerializer):
+    class Meta:
+        model = ExpensesCreditNote 
+        fields = ['attach_e_way_bill','client','expenses']
+        
+class ExpensesCreditNoteSerializer2(serializers.ModelSerializer):
+    attach_e_way_bill = serializers.FileField()
+
+    class Meta:
+        model = ExpensesCreditNote  # Your model where the file should be saved
+        fields = ['attach_e_way_bill', 'client','expenses']
+
+class ProductSummaryExpensesCreditNoteSerializer(serializers.ModelSerializer):
+    gst_rate = serializers.CharField(source='hsn.gst_rate', read_only=True)
+    hsn_code = serializers.CharField(source='hsn.hsn_code', read_only=True)
+    product_name = serializers.CharField(source='product.product_name', read_only=True)
+    product_amount = serializers.CharField(source='prod_description.product_amount', read_only=True)
+    description = serializers.CharField(source='prod_description.description', read_only=True)
+    unit = serializers.CharField(source='prod_description.unit', read_only=True)
+    rate = serializers.CharField(source='prod_description.rate', read_only=True)
+
+    class Meta:
+        model = ProductSummaryExpensesCreditNote
+        fields = ['id', 'hsn', 'product', 'prod_description', 'hsn_code', 'gst_rate', 'product_name', 'product_amount','description', 'unit', 'rate']
+        
         
 
 #************************************************************Zip Upload
