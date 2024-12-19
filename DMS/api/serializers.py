@@ -939,7 +939,13 @@ class ExpensesSerializerList(serializers.ModelSerializer):
     city = serializers.CharField(source="client_Location.city", read_only=True)
     state = serializers.CharField(source="client_Location.state", read_only=True)
     country = serializers.CharField(source="client_Location.country", read_only=True)
-    product_summaries = ProductSummaryExpensesSerializerList(many=True, read_only=True)
+    # product_summaries = ProductSummaryExpensesSerializerList(many=True, read_only=True)
+    product_summaries = serializers.SerializerMethodField()
+    def get_product_summaries(self, obj):
+        # Ensure you're returning a queryset or iterable
+        summaries = obj.product_summaries.all()
+        return ProductSummaryExpensesSerializer(summaries, many=True).data
+
 
     class Meta:
         model = Expenses

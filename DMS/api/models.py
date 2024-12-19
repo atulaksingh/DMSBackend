@@ -666,7 +666,7 @@ class Income(models.Model):
     entry_type = models.CharField(max_length=100, choices=entry_type, null=True, blank=True)
 
     # Link to ProductSummary for each item in the invoice
-    product_summaries = models.ManyToManyField(ProductSummaryIncome, blank=True, related_name="sales_invoices")
+    product_summaries = models.ManyToManyField(ProductSummaryIncome, blank=True, related_name="income")
 
     taxable_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     totalall_gst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -752,7 +752,7 @@ class Expenses(models.Model):
     entry_type = models.CharField(max_length=100, choices=entry_type, null=True, blank=True)
 
     # Link to ProductSummary for each item in the invoice
-    product_summaries = models.ManyToManyField(ProductSummaryExpenses, blank=True, related_name="purchase_invoices")
+    product_summaries = models.ManyToManyField(ProductSummaryExpenses, blank=True, related_name="expenses")
     # product_summaries = models.ManyToManyField(ProductSummaryPurchase, blank=True, related_name="purchase_invoices")
 
     taxable_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
