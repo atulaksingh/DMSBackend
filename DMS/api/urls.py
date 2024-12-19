@@ -158,56 +158,56 @@ urlpatterns = [
     path('debitnote-view/<int:client_pk>/<int:invoice_pk>/<int:debit_pk>', view=debit_note_detail_view, name='debit_note-view'),
     path('debitnote-list/<int:client_pk>/<int:invoice_pk>', view=debit_list, name='debitnote-list'),   
     
-# Credit Note
-    path('get-creditnote/<int:pk>/', view=create_credit_note_get, name='get-creditnote'),  # Note the trailing slash
-    path('create-creditnote/<int:client_pk>/<int:invoice_pk>', view=create_credit_note, name='create-creditnote'),  # Note the trailing slash
-    path('update-creditnote-post/<int:client_pk>/<int:invoice_pk>/<int:credit_pk>', view=update_credit_note, name='create-credit_note'),
-    path('get-creditnote-invoice/<int:client_pk>/<int:invoice_pk>/<int:credit_pk>', view=update_credit_note, name='get-credit_note'),
-    path('create-creditnote-post2/<int:client_pk>/<int:invoice_pk>', view=create_credit_note2, name='create-credit_note2'),
-    path('delete-creditnote-invoice/<int:client_pk>/<int:invoice_pk>/<int:credit_pk>', view=delete_credit_note, name='delete-credit_note'),
-    path('creditnote-view/<int:client_pk>/<int:invoice_pk>/<int:credit_pk>', view=credit_note_detail_view, name='credit_note-view'),
-    path('creditnote-list/<int:client_pk>/<int:invoice_pk>', view=credit_list, name='creditnote-list'),   
+# # Credit Note
+#     path('get-creditnote/<int:pk>/', view=create_credit_note_get, name='get-creditnote'),  # Note the trailing slash
+#     path('create-creditnote/<int:client_pk>/<int:invoice_pk>', view=create_credit_note, name='create-creditnote'),  # Note the trailing slash
+#     path('update-creditnote-post/<int:client_pk>/<int:invoice_pk>/<int:credit_pk>', view=update_credit_note, name='create-credit_note'),
+#     path('get-creditnote-invoice/<int:client_pk>/<int:invoice_pk>/<int:credit_pk>', view=update_credit_note, name='get-credit_note'),
+#     path('create-creditnote-post2/<int:client_pk>/<int:invoice_pk>', view=create_credit_note2, name='create-credit_note2'),
+#     path('delete-creditnote-invoice/<int:client_pk>/<int:invoice_pk>/<int:credit_pk>', view=delete_credit_note, name='delete-credit_note'),
+#     path('creditnote-view/<int:client_pk>/<int:invoice_pk>/<int:credit_pk>', view=credit_note_detail_view, name='credit_note-view'),
+#     path('creditnote-list/<int:client_pk>/<int:invoice_pk>', view=credit_list, name='creditnote-list'),   
     
-# Income
-    path('get-income/<int:pk>/', view=create_income_get, name='get-income'),  # Note the trailing slash
-    path('create-income/<int:pk>', view=create_income, name='create-income'),  # Note the trailing slash
-    path('update-income-post/<int:client_pk>/<int:invoice_pk>', view=update_income, name='create-income'),
-    path('get-income/<int:client_pk>/<int:invoice_pk>', view=update_income, name='get-income'),
-    path('create-income-post2/<int:client_pk>', view=create_income2, name='create-income2'),
-    path('delete-income/<int:client_pk>/<int:pk>', view=delete_income, name='delete-income'),
-    path('income-view/<int:client_pk>/<int:invoice_pk>', view=income_detail_view, name='income-view'),
-    # path('income-list/<int:client_pk>/<int:invoice_pk>', view=income_list, name='income-list'),   
+# # Income
+#     path('get-income/<int:pk>/', view=create_income_get, name='get-income'),  # Note the trailing slash
+#     path('create-income/<int:pk>', view=create_income, name='create-income'),  # Note the trailing slash
+#     path('update-income-post/<int:client_pk>/<int:invoice_pk>', view=update_income, name='create-income'),
+#     path('get-income/<int:client_pk>/<int:invoice_pk>', view=update_income, name='get-income'),
+#     path('create-income-post2/<int:client_pk>', view=create_income2, name='create-income2'),
+#     path('delete-income/<int:client_pk>/<int:pk>', view=delete_income, name='delete-income'),
+#     path('income-view/<int:client_pk>/<int:invoice_pk>', view=income_detail_view, name='income-view'),
+#     # path('income-list/<int:client_pk>/<int:invoice_pk>', view=income_list, name='income-list'),   
 
-# Expenses
-    path('get-expenses/<int:pk>/', view=create_expenses_get, name='get-expenses'),  # Note the trailing slash
-    path('create-expenses/<int:pk>', view=create_expenses, name='create-expenses'),  # Note the trailing slash
-    path('update-expenses-post/<int:client_pk>/<int:invoice_pk>', view=update_expenses, name='create-expenses-post'),
-    path('get-expenses/<int:client_pk>/<int:invoice_pk>', view=update_expenses, name='get-expenses'),
-    path('create-expenses-post2/<int:client_pk>', view=create_expenses2, name='create-expenses-post2'),
-    path('expenses-view/<int:client_pk>/<int:invoice_pk>', view=expenses_detail_view, name='expenses-view'),
-    path('delete-expenses/<int:client_pk>/<int:pk>', view=delete_expenses, name='delete-expenses'),
+# # Expenses
+#     path('get-expenses/<int:pk>/', view=create_expenses_get, name='get-expenses'),  # Note the trailing slash
+#     path('create-expenses/<int:pk>', view=create_expenses, name='create-expenses'),  # Note the trailing slash
+#     path('update-expenses-post/<int:client_pk>/<int:invoice_pk>', view=update_expenses, name='create-expenses-post'),
+#     path('get-expenses/<int:client_pk>/<int:invoice_pk>', view=update_expenses, name='get-expenses'),
+#     path('create-expenses-post2/<int:client_pk>', view=create_expenses2, name='create-expenses-post2'),
+#     path('expenses-view/<int:client_pk>/<int:invoice_pk>', view=expenses_detail_view, name='expenses-view'),
+#     path('delete-expenses/<int:client_pk>/<int:pk>', view=delete_expenses, name='delete-expenses'),
     
-# Income Debit Note
-    path('get-incomedebitnote/<int:pk>/', view=create_income_debit_note_get, name='get-income-debit-note'),  # Note the trailing slash
-    path('create-incomedebitnote/<int:client_pk>/<int:income_pk>', view=create_income_debit_note, name='create-income-debit-note'),  # Note the trailing slash
-    path('update-incomedebitnote-post/<int:client_pk>/<int:income_pk>/<int:debit_pk>', view=update_income_debit_note, name='create-income-debit-note'),
-    path('get-incomedebitnote/<int:client_pk>/<int:income_pk>/<int:debit_pk>', view=update_income_debit_note, name='get-income-debit-note'),
-    path('create-incomedebitnote-post2/<int:client_pk>/<int:income_pk>', view=create_income_debit_note2, name='create-income-debit-note2'),
-    path('delete-incomedebitnote/<int:client_pk>/<int:income_pk>/<int:pk>', view=delete_income_debit_note, name='delete-income-debit-note'),
-    path('incomedebitnote-view/<int:client_pk>/<int:income_pk>/<int:debit_pk>', view=income_debit_note_detail_view, name='income-debit-note-view'),
-    path('incomedebitnote-list/<int:client_pk>/<int:income_pk>', view=income_debit_list, name='income-debit-note-list'),   
+# # Income Debit Note
+#     path('get-incomedebitnote/<int:pk>/', view=create_income_debit_note_get, name='get-income-debit-note'),  # Note the trailing slash
+#     path('create-incomedebitnote/<int:client_pk>/<int:income_pk>', view=create_income_debit_note, name='create-income-debit-note'),  # Note the trailing slash
+#     path('update-incomedebitnote-post/<int:client_pk>/<int:income_pk>/<int:debit_pk>', view=update_income_debit_note, name='create-income-debit-note'),
+#     path('get-incomedebitnote/<int:client_pk>/<int:income_pk>/<int:debit_pk>', view=update_income_debit_note, name='get-income-debit-note'),
+#     path('create-incomedebitnote-post2/<int:client_pk>/<int:income_pk>', view=create_income_debit_note2, name='create-income-debit-note2'),
+#     path('delete-incomedebitnote/<int:client_pk>/<int:income_pk>/<int:pk>', view=delete_income_debit_note, name='delete-income-debit-note'),
+#     path('incomedebitnote-view/<int:client_pk>/<int:income_pk>/<int:debit_pk>', view=income_debit_note_detail_view, name='income-debit-note-view'),
+#     path('incomedebitnote-list/<int:client_pk>/<int:income_pk>', view=income_debit_list, name='income-debit-note-list'),   
     
-# Expense Credit Note
-    path('get-expensescreditnote/<int:pk>/', view=create_expenses_credit_note_get, name='get-expenses-credit-note'),  # Note the trailing slash
-    path('create-expensescreditnote/<int:client_pk>/<int:expenses_pk>', view=create_expenses_credit_note, name='create-expenses-credit-note'),  # Note the trailing slash
-    path('update-expensescreditnote-post/<int:client_pk>/<int:expenses_pk>/<int:credit_pk>', view=update_expenses_credit_note, name='create-expenses-credit-note'),
-    path('get-expensescreditnote/<int:client_pk>/<int:expenses_pk>/<int:credit_pk>', view=update_expenses_credit_note, name='get-expenses-credit-note'),
-    path('create-expensescreditnote-post2/<int:client_pk>/<int:expenses_pk>', view=create_expenses_credit_note2, name='create-expenses-credit-note2'),
-    path('delete-expensescreditnote/<int:client_pk>/<int:expenses_pk>/<int:credit_pk>', view=delete_expenses_credit_note, name='delete-expenses-credit-note'),
-    path('expensescreditnote-view/<int:client_pk>/<int:expenses_pk>/<int:credit_pk>', view=expenses_credit_note_detail_view, name='expenses-credit-note-view'),
-    path('expensescreditnote-list/<int:client_pk>/<int:expenses_pk>', view=expenses_credit_list, name='expenses-credit-note-list'),   
+# # Expense Credit Note
+#     path('get-expensescreditnote/<int:pk>/', view=create_expenses_credit_note_get, name='get-expenses-credit-note'),  # Note the trailing slash
+#     path('create-expensescreditnote/<int:client_pk>/<int:expenses_pk>', view=create_expenses_credit_note, name='create-expenses-credit-note'),  # Note the trailing slash
+#     path('update-expensescreditnote-post/<int:client_pk>/<int:expenses_pk>/<int:credit_pk>', view=update_expenses_credit_note, name='create-expenses-credit-note'),
+#     path('get-expensescreditnote/<int:client_pk>/<int:expenses_pk>/<int:credit_pk>', view=update_expenses_credit_note, name='get-expenses-credit-note'),
+#     path('create-expensescreditnote-post2/<int:client_pk>/<int:expenses_pk>', view=create_expenses_credit_note2, name='create-expenses-credit-note2'),
+#     path('delete-expensescreditnote/<int:client_pk>/<int:expenses_pk>/<int:credit_pk>', view=delete_expenses_credit_note, name='delete-expenses-credit-note'),
+#     path('expensescreditnote-view/<int:client_pk>/<int:expenses_pk>/<int:credit_pk>', view=expenses_credit_note_detail_view, name='expenses-credit-note-view'),
+#     path('expensescreditnote-list/<int:client_pk>/<int:expenses_pk>', view=expenses_credit_list, name='expenses-credit-note-list'),   
     
-# Zip Upload
-    path('create-zipupload/<int:pk>', view=create_zipupload, name='create-zipupload'),
-    path('delete-zipupload/<int:client_pk>/<int:pk>', view=delete_zipupload, name='delete-zipupload'),
+# # Zip Upload
+#     path('create-zipupload/<int:pk>', view=create_zipupload, name='create-zipupload'),
+    # path('delete-zipupload/<int:client_pk>/<int:pk>', view=delete_zipupload, name='delete-zipupload'),
 ]
