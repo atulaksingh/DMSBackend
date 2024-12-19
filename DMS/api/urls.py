@@ -187,4 +187,7 @@ urlpatterns = [
     path('expenses-view/<int:client_pk>/<int:invoice_pk>', view=expenses_detail_view, name='expenses-view'),
     path('delete-expenses/<int:client_pk>/<int:pk>', view=delete_expenses, name='delete-expenses'),
 
+# Zip Upload
+    path('create-zipupload/<int:pk>', view=create_zipupload, name='create-zipupload'),
+    path('delete-zipupload/<int:client_pk>/<int:pk>', view=delete_zipupload, name='delete-zipupload'),
 ]

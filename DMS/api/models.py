@@ -771,9 +771,13 @@ class Expenses(models.Model):
         invoice_no = self.invoice_no or "No Invoice Number"
         vendor_name = self.vendor.name if self.vendor else "No Vendor"
         return f"Expenses {invoice_no} - {vendor_name}"
+    
+# Zip Upload 
+class ZipUpload(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+    files = models.FileField(null=True, blank=True)
+    date = models.DateTimeField(auto_now=True)
         
-
-
     
 # Income Tax Document
 class IncomeTaxDocument(models.Model):

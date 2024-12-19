@@ -1002,6 +1002,22 @@ class ProductSummaryExpensesSerializer(serializers.ModelSerializer):
         fields = ['id', 'hsn', 'product', 'prod_description', 'hsn_code', 'gst_rate', 'product_name', 'product_amount','description', 'unit', 'rate']
         
 
+#************************************************************Zip Upload
+
+class ZipUploadSerializer(serializers.ModelSerializer):
+    class Meta:
+        models = ZipUpload
+        fields = ['client', 'files', 'date']
+    
+class ZipUploadSerializer2(serializers.ModelSerializer):
+    files = serializers.FileField()
+    
+    class Meta:
+        model = ZipUpload
+        fields = ['client', 'files', 'date']    
+        
+
+
 
 
 

@@ -18,6 +18,12 @@ admin.site.register(TDSReturn)
 admin.site.register(Product) ##############
 admin.site.register(ProductDescription) ###############
 admin.site.register(HSNCode) ##################
+# admin.site.register(ZipUpload) ##################
+class ZipUploadAdmin(admin.ModelAdmin):
+    readonly_fields = ('date',)  # Makes the date field read-only in the admin
+
+admin.site.register(ZipUpload, ZipUploadAdmin)
+
 
 
 # Inline for File model to manage file uploads

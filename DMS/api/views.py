@@ -6024,6 +6024,70 @@ def delete_expenses(request, client_pk, pk):
 
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+# ************************************************Zip Upload*********************************************************
+
+@api_view(['POST'])
+def create_zipupload(request, pk):
+    client = Client.objects.get(id=pk)
+
+    # Check if 'attach_e_way_bill' is in the request files
+    if 'files' in request.FILES:
+        # Iterate through each file in the 'attach_e_way_bill' field
+        for file in request.FILES.getlist('files'):
+            # Prepare data for each file
+            zipupload_data = {
+                'files': file,  # The file being uploaded
+                'client': client.id,  # Associate the file with the client
+            }
+
+            # Initialize the serializer for each file
+            serializer = ZipUploadSerializer2(data=zipupload_data)
+
+            # Check if the serializer is valid
+            if serializer.is_valid():
+                # Save each file as a separate object
+                serializer.save()
+            else:
+                return Response({'Error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        # If all files are processed, return success response
+        return Response({'Message': 'Zip Files uploaded successfully.'}, status=status.HTTP_201_CREATED)
+    else:
+        return Response({'Error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+@api_view(['DELETE'])
+def delete_zipupload(request, client_pk, pk):
+    """
+    Deletes a PurchaseInvoice by its primary key (ID) along with its associated product summaries.
+    """
+    try:
+        # Retrieve the Client instance
+        client = Client.objects.filter(id=client_pk).first()
+
+        if not client:
+            return Response({"error": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Retrieve the SalesInvoice instance
+        zipupload = ZipUpload.objects.filter(id=pk, client=client).first()
+
+        if not zipupload:
+            return Response({"error": "Zip Uploaded not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Handle deletion of associated ProductSummary instances
+        # product_summaries = expenses.product_summaries.all()
+        # for product_summary in product_summaries:
+        #     product_summary.delete()
+
+        # Delete the SalesInvoice instance
+        zipupload.delete()
+
+        return Response({"message": "File deleted successfully."}, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    
 
 
 
@@ -6054,6 +6118,7 @@ def detail_client(request,pk):
     view_purchase = PurchaseInvoice.objects.filter(client=client)
     view_income = Income.objects.filter(client=client)
     view_expenses = Expenses.objects.filter(client=client)
+    view_zipupload  = ZipUpload.objects.filter(client=client)
     
 
     # view_attachment = Attachment.objects.filter(client=client)
@@ -6098,6 +6163,7 @@ def detail_client(request,pk):
     purchase_serializer = PurchaseSerializerList(view_purchase, many=True)
     income_serializer = IncomeSerializerList(view_income, many=True)
     expenses_serializer = ExpensesSerializerList(view_expenses, many=True)
+    zipupload_serializer = ZipUploadSerializer(view_zipupload, many=True)
     print(sales_serializer,'llllllllllll')
     # sales_serializer = SalesSerializerList(view_sales, many=True)
     # attachment_serializer = AttachmentSerializer(view_attachment, many=True)
@@ -6121,6 +6187,7 @@ def detail_client(request,pk):
         'purchase_invoice' : purchase_serializer.data,
         'income' : income_serializer.data,
         'expenses' : expenses_serializer.data,
+        'zipupload' : zipupload_serializer.data
         # 'Attachment' : attachment_serializer.data
     }
     return Response(data)
