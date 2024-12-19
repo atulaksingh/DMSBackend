@@ -1012,8 +1012,9 @@ class ProductSummaryExpensesSerializer(serializers.ModelSerializer):
 
 class ZipUploadSerializer(serializers.ModelSerializer):
     class Meta:
-        models = ZipUpload
-        fields = ['client', 'files', 'date']
+        model = ZipUpload
+        # fields = ['client', 'files', 'date']
+        fields = '__all__'
     
 class ZipUploadSerializer2(serializers.ModelSerializer):
     files = serializers.FileField()
