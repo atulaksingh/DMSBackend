@@ -2151,7 +2151,7 @@ def create_sales_invoice2(request, client_pk):
             # Link ProductSummary to the SalesInvoice
             sales_invoice.product_summaries.add(product_summary)  # Add the product summary to the invoice
 
-        return Response({"message": "Sales Invoice created successfully.", "invoice_id": sales_invoice.id}, status=status.HTTP_201_CREATED)
+        return Response({"message": "Sales Invoice created successfully.", "invoice_id": sales_invoice.id}, status=status.HTTP_200_OK)
 
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -3839,7 +3839,7 @@ def create_debit_note2(request, client_pk, invoice_pk):
             product_summaries.append(product_summary)
 
             # Link ProductSummary to the SalesInvoice
-            sales_invoice.product_summaries.add(product_summary)  # Add the product summary to the invoice
+            debit_note.product_summaries.add(product_summary)  # Add the product summary to the invoice
 
 
         return Response({"message": "Debit Note created successfully.", "invoice_id": debit_note.id}, status=status.HTTP_200_OK)
@@ -4087,7 +4087,7 @@ def create_credit_note2(request, client_pk, invoice_pk):
             product_summaries.append(product_summary)
 
             # Link ProductSummary to the SalesInvoice
-            purchase_invoice.product_summaries.add(product_summary)  # Add the product summary to the invoice
+            credit_note.product_summaries.add(product_summary)  # Add the product summary to the invoice
 
 
         # Handle Product Summaries (same logic as before)
@@ -5455,7 +5455,7 @@ def create_expenses(request, pk):
     
 @api_view(['GET','PUT'])
 def update_expenses(request, client_pk, invoice_pk):
-    try:
+    # try:
         print('my payload',request.data)
         if request.method == 'GET':
             expenses = Expenses.objects.filter(client_id=client_pk, id= invoice_pk).first()
@@ -5638,7 +5638,7 @@ def update_expenses(request, client_pk, invoice_pk):
                     vendor_data['address'] = vendor_data.pop('vendor_address')
                     
                 vendor_id = request.data.get("vendorData[vendorID]")
-                
+
                 if vendor_id:
                     vendor_obj = Customer.objects.filter(id=vendor_id).first()
                     if vendor_obj:
@@ -5658,21 +5658,60 @@ def update_expenses(request, client_pk, invoice_pk):
                     else:
                         return Response({"error": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
                 else:
-                    existing_vendor = Customer.objects.filter(client=expenses.client,  gst_no=vendor_data.get("gst_no")).first()
+                    existing_vendor = Customer.objects.filter(client=expenses.client, gst_no=vendor_data.get("gst_no")).first()
                     if existing_vendor:
                         vendor_obj = existing_vendor
-                        vendor_serializer = CustomerVendorSerializer(vendor_obj, data= vendor_data, partial = True)
+                        vendor_serializer = CustomerVendorSerializer(vendor_obj, data=vendor_data, partial=True)
                         if vendor_serializer.is_valid():
                             vendor_serializer.save()
-                        else: 
+                        else:
                             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
                     else:
                         vendor_serializer = CustomerVendorSerializer(data=vendor_data)
                         if vendor_serializer.is_valid():
-                            vendor_serializer.save()
-                        else: 
+                            vendor_obj = vendor_serializer.save(client=expenses.client)
+                        else:
                             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-                expenses.vendor = vendor_obj
+                
+                # Assign vendor_obj to expenses.vendor if defined
+                if vendor_obj:
+                    expenses.vendor = vendor_obj
+                        
+
+                # if vendor_id:
+                #     vendor_obj = Customer.objects.filter(id=vendor_id).first()
+                #     if vendor_obj:
+                #         if vendor_obj.gst_no == vendor_data.get("gst_no"):
+                #             vendor_serializer = CustomerVendorSerializer(vendor_obj, data=vendor_data, partial=True)
+                #             if vendor_serializer.is_valid():
+                #                 vendor_serializer.save()
+                #             else:
+                #                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                #         else:
+                #             # Create a new vendor if gst_no is changed
+                #             vendor_serializer = CustomerVendorSerializer(data=vendor_data)
+                #             if vendor_serializer.is_valid():
+                #                 vendor_obj = vendor_serializer.save(client=expenses.client)
+                #             else:
+                #                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                #     else:
+                #         return Response({"error": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                # else:
+                #     existing_vendor = Customer.objects.filter(client=expenses.client,  gst_no=vendor_data.get("gst_no")).first()
+                #     if existing_vendor:
+                #         vendor_obj = existing_vendor
+                #         vendor_serializer = CustomerVendorSerializer(vendor_obj, data= vendor_data, partial = True)
+                #         if vendor_serializer.is_valid():
+                #             vendor_serializer.save()
+                #         else: 
+                #             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                #     else:
+                #         vendor_serializer = CustomerVendorSerializer(data=vendor_data)
+                #         if vendor_serializer.is_valid():
+                #             vendor_serializer.save()
+                #         else: 
+                #             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                # expenses.vendor = vendor_obj
             
             product_summaries = []
             for row in rows:
@@ -5741,9 +5780,9 @@ def update_expenses(request, client_pk, invoice_pk):
                 'product_summaries' : [{'id': summary.id, 'product_name': summary.product.product_name} for summary in product_summaries]
             }
             return Response(response_data, status=status.HTTP_200_OK)
-    except Exception as e:
-        print("Error in update_expenses:", str(e))
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    # except Exception as e:
+        # print("Error in update_expenses:", str(e))
+        # return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
 def create_expenses2(request, client_pk):
@@ -5980,7 +6019,8 @@ def expenses_detail_view(request, client_pk, invoice_pk):
                 product_description_obj.sgst = sgst
                 product_description_obj.igst = igst
                 product_description_obj.save()
-                product_summary = ProductSummaryExpenses.objects.create(
+
+            product_summary = ProductSummaryExpenses.objects.create(
                 hsn= hsn_code_obj,
                 product = product_obj,
                 prod_description = product_description_obj
@@ -6913,7 +6953,7 @@ def create_income_debit_note2(request, client_pk, income_pk):
             product_summaries.append(product_summary)
 
             # Link ProductSummary to the SalesInvoice
-            income.product_summaries.add(product_summary)  # Add the product summary to the invoice
+            debit_note.product_summaries.add(product_summary)  # Add the product summary to the invoice
 
 
         return Response({"message": "Debit Note created successfully.", "invoice_id": debit_note.id}, status=status.HTTP_200_OK)
@@ -7161,7 +7201,7 @@ def create_expenses_credit_note2(request, client_pk, expenses_pk):
             product_summaries.append(product_summary)
 
             # Link ProductSummary to the SalesInvoice
-            expenses.product_summaries.add(product_summary)  # Add the product summary to the invoice
+            credit_note.product_summaries.add(product_summary)  # Add the product summary to the invoice
 
 
         # Handle Product Summaries (same logic as before)
@@ -7184,7 +7224,7 @@ def create_expenses_credit_note(request, client_pk, expenses_pk):
             creditnote_data = {
                 'attach_e_way_bill': e_way_bill,  # The file being uploaded
                 'client': client.id,  # Associate the file with the client
-                'purchase_invoice' : expenses.id,
+                'expenses' : expenses.id,
             }
 
             # Initialize the serializer for each file
@@ -7762,7 +7802,7 @@ def detail_client(request,pk):
     income_serializer = IncomeSerializerList(view_income, many=True)
     expenses_serializer = ExpensesSerializerList(view_expenses, many=True)
     zipupload_serializer = ZipUploadSerializer(view_zipupload, many=True)
-    print(sales_serializer,'llllllllllll')
+    # print(sales_serializer,'llllllllllll')
     # sales_serializer = SalesSerializerList(view_sales, many=True)
     # attachment_serializer = AttachmentSerializer(view_attachment, many=True)
 

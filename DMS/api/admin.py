@@ -279,6 +279,10 @@ admin.site.register(TDSReturn)
 admin.site.register(Product) ##############
 admin.site.register(ProductDescription) ###############
 admin.site.register(HSNCode) ##################
+class ZipUploadAdmin(admin.ModelAdmin):
+    readonly_fields = ('date',)  # Makes the date field read-only in the admin
+
+admin.site.register(ZipUpload, ZipUploadAdmin)
 
 
 # Inline for File model to manage file uploads
@@ -364,7 +368,7 @@ class ProductSummaryAdmin(admin.ModelAdmin):
 # ############################Debit Note
 
 class DebitNotePurchaseSummaryInline(admin.TabularInline): ##############
-    model = PurchaseInvoice.product_summaries.through  # Access the through model
+    model = DebitNote.product_summaries.through  # Access the through model
     extra = 0
     readonly_fields = ['prod_description_display']
 
@@ -382,8 +386,133 @@ class DebitNoteAdmin(admin.ModelAdmin):
     customer_name.short_description = "Customer"  # Optional: Set a custom column header
 
 @admin.register(ProductSummaryDebitNote) #####################3
-class ProductSummaryAdmin(admin.ModelAdmin):
+class ProductSummaryDebitNoteAdmin(admin.ModelAdmin):
     list_display = ['id', 'hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
     readonly_fields = ['hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
 
+    
+# #########################################Credit Note
 
+class CreditNotePurchaseSummaryInline(admin.TabularInline): ##############
+    model = CreditNote.product_summaries.through  # Access the through model
+    extra = 0
+    readonly_fields = ['prod_description_display']
+
+    def prod_description_display(self, instance):
+        return instance.productsummary.prod_description.description if instance.productsummary.prod_description else "No Description"
+
+    prod_description_display.short_description = "Product Description"
+
+@admin.register(CreditNote) ################
+class CreditNoteAdmin(admin.ModelAdmin):
+    list_display = ['id', 'vendor_name', 'invoice_no', 'invoice_date']
+
+    def vendor_name(self, obj):
+        return obj.vendor.name if obj.vendor else "No Vendor"
+    vendor_name.short_description = "Vendor"  # Optional: Set a custom column header
+
+@admin.register(ProductSummaryCreditNote) #####################3
+class ProductSummaryCreditNoteAdmin(admin.ModelAdmin):
+    list_display = ['id', 'hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
+    readonly_fields = ['hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
+
+# #########################################Income
+
+class ProductSummaryIncomeInline(admin.TabularInline): ##############
+    model = Income.product_summaries.through  # Access the through model
+    extra = 0
+    readonly_fields = ['prod_description_display']
+
+    def prod_description_display(self, instance):
+        return instance.productsummary.prod_description.description if instance.productsummary.prod_description else "No Description"
+
+    prod_description_display.short_description = "Product Description"
+
+@admin.register(Income) ################
+class IncomeAdmin(admin.ModelAdmin):
+    list_display = ['id', 'customer_name', 'invoice_no', 'invoice_date']
+
+    def customer_name(self, obj):
+        return obj.customer.name if obj.customer else "No Customer"
+    customer_name.short_description = "Customer"  # Optional: Set a custom column header
+
+@admin.register(ProductSummaryIncome) #####################3
+class ProductSummaryIncomeAdmin(admin.ModelAdmin):
+    list_display = ['id', 'hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
+    readonly_fields = ['hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
+    
+# ############################# Expenses
+
+class ProductSummaryExpensesInline(admin.TabularInline): ##############
+    model = Expenses.product_summaries.through  # Access the through model
+    extra = 0
+    readonly_fields = ['prod_description_display']
+
+    def prod_description_display(self, instance):
+        return instance.productsummary.prod_description.description if instance.productsummary.prod_description else "No Description"
+
+    prod_description_display.short_description = "Product Description"
+
+@admin.register(Expenses) ################
+class ExpensesAdmin(admin.ModelAdmin):
+    list_display = ['id', 'vendor_name', 'invoice_no', 'invoice_date']
+
+    def vendor_name(self, obj):
+        return obj.vendor.name if obj.vendor else "No Vendor"
+    vendor_name.short_description = "Vendor"  # Optional: Set a custom column header
+
+@admin.register(ProductSummaryExpenses) #####################3
+class ProductSummaryExpensesAdmin(admin.ModelAdmin):
+    list_display = ['id', 'hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
+    readonly_fields = ['hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
+    
+
+# ############################Income Debit Note
+
+class IncomeDebitNotePurchaseSummaryInline(admin.TabularInline): ##############
+    model = IncomeDebitNote.product_summaries.through  # Access the through model
+    extra = 0
+    readonly_fields = ['prod_description_display']
+
+    def prod_description_display(self, instance):
+        return instance.productsummary.prod_description.description if instance.productsummary.prod_description else "No Description"
+
+    prod_description_display.short_description = "Product Description"
+
+@admin.register(IncomeDebitNote) ################
+class IncomeDebitNoteAdmin(admin.ModelAdmin):
+    list_display = ['id', 'customer_name', 'invoice_no', 'invoice_date']
+
+    def customer_name(self, obj):
+        return obj.customer.name if obj.customer else "No Customer"
+    customer_name.short_description = "Customer"  # Optional: Set a custom column header
+
+@admin.register(ProductSummaryIncomeDebitNote) #####################3
+class ProductSummaryIncomeDebitNoteAdmin(admin.ModelAdmin):
+    list_display = ['id', 'hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
+    readonly_fields = ['hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
+    
+# #########################################Expenses Credit Note
+
+class ExpensesCreditNotePurchaseSummaryInline(admin.TabularInline): ##############
+    model = ExpensesCreditNote.product_summaries.through  # Access the through model
+    extra = 0
+    readonly_fields = ['prod_description_display']
+
+    def prod_description_display(self, instance):
+        return instance.productsummary.prod_description.description if instance.productsummary.prod_description else "No Description"
+
+    prod_description_display.short_description = "Product Description"
+
+@admin.register(ExpensesCreditNote) ################
+class ExpensesCreditNoteAdmin(admin.ModelAdmin):
+    list_display = ['id', 'vendor_name', 'invoice_no', 'invoice_date']
+
+    def vendor_name(self, obj):
+        return obj.vendor.name if obj.vendor else "No Vendor"
+    vendor_name.short_description = "Vendor"  # Optional: Set a custom column header
+
+@admin.register(ProductSummaryExpensesCreditNote) #####################3
+class ProductSummaryExpensesCreditNoteAdmin(admin.ModelAdmin):
+    list_display = ['id', 'hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
+    readonly_fields = ['hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']

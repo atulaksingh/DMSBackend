@@ -186,33 +186,6 @@ class Customer(models.Model):
    def __str__(self):
        return self.name if self.name else "No Name"
 
-
-# HSN Code Model
-# class HSNCode(models.Model):
-#     hsn_code = models.IntegerField(null=True, blank=True)
-#     gst_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-
-# # Product Model
-# class Product(models.Model):
-#     hsn = models.ForeignKey(HSNCode, on_delete=models.CASCADE,null=True, blank=True)
-#     product_name = models.CharField(max_length=100, null=True, blank=True)
-#     unit_of_measure = models.DecimalField(null=True, blank=True, decimal_places=2, max_digits=10)
-
-
-# class ProductList(models.Model):
-#     hsn = models.ForeignKey(HSNCode, on_delete=models.CASCADE,null=True, blank=True)
-#     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
-#     product_description = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
-#     # unit_of_measure = models.DecimalField(null=True, blank=True, decimal_places=2, max_digits=10)
-
-
-# # Description Model
-# class ProductDescription(models.Model):
-#     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
-#     description = models.TextField(null=True, blank=True)
-#     unit = models.DecimalField(null=True, blank=True, max_digits=10, decimal_places=2)
-#     rate = models.DecimalField(null=True, blank=True, max_digits=10, decimal_places=2)
-
 class HSNCode(models.Model):
     hsn_code = models.IntegerField(null=True, blank=True)
     gst_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -231,7 +204,6 @@ class Product(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['product_name', 'hsn'], name='unique_product_hsn')
         ]
-
 
 class ProductDescription(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
@@ -483,6 +455,7 @@ class DebitNote(models.Model):
         ('debit_note', 'Debit Note'),
         ('income', 'Income'),
     ]
+    sales_invoice = models.ForeignKey(SalesInvoice, on_delete=models.CASCADE, null=True, blank=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
     client_Location = models.ForeignKey(OfficeLocation, on_delete=models.CASCADE, null=True, blank=True)
     attach_invoice = models.FileField(null=True, blank=True)
@@ -510,544 +483,453 @@ class DebitNote(models.Model):
         customer_name = self.customer.name if self.customer else "No Customer"
         return f"Debit Note {invoice_no} - {customer_name}"
     
+# Credit Note
+class ProductSummaryCreditNote(models.Model):
+        hsn = models.ForeignKey(HSNCode,on_delete=models.SET_NULL, null=True, blank=True)
+        product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
+        prod_description = models.ForeignKey('ProductDescription', on_delete=models.SET_NULL, null=True, blank=True)
 
-# # Debit Note
+        def __str__(self):
+            return self.prod_description.description if self.prod_description else self.product.name if self.product else "Unnames Product"
 
-# class ProductSummaryDebitNote(models.Model): #new
-#     hsn = models.ForeignKey(HSNCode, on_delete=models.SET_NULL, null=True, blank=True)
-#     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
-#     prod_description = models.ForeignKey('ProductDescription', on_delete=models.SET_NULL, null=True, blank=True)
+        def gst_rate(self):
+            return self.hsn.gst_rate if self.hsn else None
+        gst_rate.short_description = 'GST Rate'
 
-#     # def __str__(self):
-#     #     product_name = self.product.product_name if self.product else "No Product"
-#     #     return f"Summary for {product_name}"
-#     def __str__(self):
-#         # Display the product description if available, otherwise fallback to product name
-#         return self.prod_description.description if self.prod_description else self.product.name if self.product else "Unnamed Product"
+        def hsn_code(self):
+            return self.hsn.hsn_code if self.hsn else None
+        hsn_code.short_descrition = 'HSN Code'
 
-#     def gst_rate(self):
-#         return self.hsn.gst_rate if self.hsn else None
-#     gst_rate.short_description = 'GST Rate'
+        def product_name(self):
+            return self.product.product_name if self.product else None
+        product_name.short_description = 'Product Name'
 
-#     def hsn_code(self):
-#         return self.hsn.hsn_code if self.hsn else None
-#     hsn_code.short_description = 'HSN Code'
+        def description_text(self):
+            return self.prod_description.description if self.prod_description else None
+        description_text.short_description = 'Description Text'
 
-#     def product_name(self):
-#         return self.product.product_name if self.product else None
-#     product_name.short_description = 'Product Name'
+        def unit(self):
+            return self.prod_description.unit if self.prod_description else None
+        unit.short_description = "Unit"
 
-#     def description_text(self):
-#         return self.prod_description.description if self.prod_description else None
-#     description_text.short_description = 'Description'
+        def rate(self):
+            return self.prod_description.rate if self.prod_description else None
+        rate.short_description = "rate"
 
-#     def unit(self):
-#         return self.prod_description.unit if self.prod_description else None
-#     unit.short_description = 'Unit'  #010218210004398
-
-#     def rate(self):
-#         return self.prod_description.rate if self.prod_description else None
-#     rate.short_description = 'Rate'
-
-#     def __str__(self):
-#         return f"Summary for {self.product_name()}"
-
-
-# class DebitNote(models.Model):
-#     invoice_type = [
-#         ('b2b', 'B2B'),
-#         ('b2c-l', 'B2C-L'),
-#         ('bsc-o', 'BSC-O'),
-#         ('nil rated', 'Nil Rated'),
-#         ('advance received', 'Advance Received'),
-#         ('export', 'Export'),
-#         ('unregistered local', 'Unregistered Local'),
-#         ('unregistered non-local', 'Unregistered non-Local'),
-#         ('sez', 'SEZ')
-#     ]
-
-#     entry_type = [
-#         ('sales_invoice', 'Sales_Invoice'),
-#         ('debit_note', 'Debit Note'),
-#         ('income', 'Income'),
-#     ]
-#     sales_invoice = models.ForeignKey(SalesInvoice, null=True, blank=True,on_delete=models.CASCADE)
-#     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
-#     client_Location = models.ForeignKey(OfficeLocation, on_delete=models.CASCADE, null=True, blank=True)
-#     attach_invoice = models.FileField(null=True, blank=True)
-#     attach_e_way_bill = models.FileField(null=True, blank=True)
-#     month = models.DateField(null=True, blank=True)
-#     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
-#     invoice_no = models.CharField(max_length=100, null=True, blank=True)
-#     invoice_date = models.DateField(null=True, blank=True)
-#     invoice_type = models.CharField(max_length=100, choices=invoice_type, null=True, blank=True)
-#     entry_type = models.CharField(max_length=100, choices=entry_type, null=True, blank=True)
-
-#     # Link to ProductSummary for each item in the invoice
-#     product_summaries = models.ManyToManyField(ProductSummaryDebitNote, blank=True, related_name="debit_note")
-
-#     taxable_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     totalall_gst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     total_invoice_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tds_tcs_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tds_tcs_section = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tcs = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tds = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     amount_receivable = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     def __str__(self):
-#         invoice_no = self.invoice_no or "No Invoice Number"
-#         customer_name = self.customer.name if self.customer else "No Customer"
-#         return f"Debit Note {invoice_no} - {customer_name}"
-    
-# # Credit Note
-# class ProductSummaryCreditNote(models.Model):
-#         hsn = models.ForeignKey(HSNCode,on_delete=models.SET_NULL, null=True, blank=True)
-#         product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
-#         prod_description = models.ForeignKey('ProductDescription', on_delete=models.SET_NULL, null=True, blank=True)
-
-#         def __str__(self):
-#             return self.prod_description.description if self.prod_description else self.product.name if self.product else "Unnames Product"
-
-#         def gst_rate(self):
-#             return self.hsn.gst_rate if self.hsn else None
-#         gst_rate.short_description = 'GST Rate'
-
-#         def hsn_code(self):
-#             return self.hsn.hsn_code if self.hsn else None
-#         hsn_code.short_descrition = 'HSN Code'
-
-#         def product_name(self):
-#             return self.product.product_name if self.product else None
-#         product_name.short_description = 'Product Name'
-
-#         def description_text(self):
-#             return self.prod_description.description if self.prod_description else None
-#         description_text.short_description = 'Description Text'
-
-#         def unit(self):
-#             return self.prod_description.unit if self.prod_description else None
-#         unit.short_description = "Unit"
-
-#         def rate(self):
-#             return self.prod_description.rate if self.prod_description else None
-#         rate.short_description = "rate"
-
-#         def __str__(self):
-#             return f'Summary for {self.product_name()}'
-
-
-# # Credit Note Model
-# class CreditNote(models.Model):
-#     invoice_type = [
-#         ('b2b', 'B2B'),
-#         ('b2c-l', 'B2C-L'),
-#         ('bsc-o', 'BSC-O'),
-#         ('nil rated', 'Nil Rated'),
-#         ('advance received', 'Advance Received'),
-#         ('export', 'Export'),
-#         ('unregistered local', 'Unregistered Local'),
-#         ('unregistered non-local', 'Unregistered non-Local'),
-#         ('sez', 'SEZ')
-#     ]
-
-#     entry_type = [
-#         ('sales_invoice', 'Sales_Invoice'),
-#         ('debit_note', 'Debit Note'),
-#         ('income', 'Income'),
-#     ]
-
-#     # 
-#     purchase_invoice = models.ForeignKey(PurchaseInvoice, on_delete=models.CASCADE, null=True, blank=True)
-#     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
-#     client_Location = models.ForeignKey(OfficeLocation, on_delete=models.CASCADE, null=True, blank=True)
-#     attach_invoice = models.FileField(null=True, blank=True)
-#     attach_e_way_bill = models.FileField(null=True, blank=True)
-#     month = models.DateField(null=True, blank=True)
-#     vendor = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
-#     invoice_no = models.CharField(max_length=100, null=True, blank=True)
-#     invoice_date = models.DateField(null=True, blank=True)
-#     invoice_type = models.CharField(max_length=100, choices=invoice_type, null=True, blank=True)
-#     entry_type = models.CharField(max_length=100, choices=entry_type, null=True, blank=True)
-
-#     # Link to ProductSummary for each item in the invoice
-#     product_summaries = models.ManyToManyField(ProductSummaryCreditNote, blank=True, related_name="credit_note")
-#     # product_summaries = models.ManyToManyField(ProductSummaryPurchase, blank=True, related_name="purchase_invoices")
-#     taxable_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     totalall_gst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     # total_gst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     total_invoice_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tds_tcs_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tds_tcs_section = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tcs = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tds = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     amount_receivable = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     utilise_edit = models.BooleanField(null=True, blank=True)
-#     utilise_month = models.DateField(null=True, blank=True)
-
-#     def __str__(self):
-#         invoice_no = self.invoice_no or "No Invoice Number"
-#         vendor_name = self.vendor.name if self.vendor else "No Vendor"
-#         return f"Credit Note {invoice_no} - {vendor_name}"
-    
-
-# # Income 
-# class ProductSummaryIncome(models.Model):
-#         hsn = models.ForeignKey(HSNCode,on_delete=models.SET_NULL, null=True, blank=True)
-#         product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
-#         prod_description = models.ForeignKey('ProductDescription', on_delete=models.SET_NULL, null=True, blank=True)
-
-#         def __str__(self):
-#             return self.prod_description.description if self.prod_description else self.product.name if self.product else "Unnames Product"
-
-#         def gst_rate(self):
-#             return self.hsn.gst_rate if self.hsn else None
-#         gst_rate.short_description = 'GST Rate'
-
-#         def hsn_code(self):
-#             return self.hsn.hsn_code if self.hsn else None
-#         hsn_code.short_descrition = 'HSN Code'
-
-#         def product_name(self):
-#             return self.product.product_name if self.product else None
-#         product_name.short_description = 'Product Name'
-
-#         def description_text(self):
-#             return self.prod_description.description if self.prod_description else None
-#         description_text.short_description = 'Description Text'
-
-#         def unit(self):
-#             return self.prod_description.unit if self.prod_description else None
-#         unit.short_description = "Unit"
-
-#         def rate(self):
-#             return self.prod_description.rate if self.prod_description else None
-#         rate.short_description = "rate"
-
-#         def __str__(self):
-#             return f'Summary for {self.product_name()}'
+        def __str__(self):
+            return f'Summary for {self.product_name()}'
         
-# class Income(models.Model):
-#     invoice_type = [
-#         ('b2b', 'B2B'),
-#         ('b2c-l', 'B2C-L'),
-#         ('bsc-o', 'BSC-O'),
-#         ('nil rated', 'Nil Rated'),
-#         ('advance received', 'Advance Received'),
-#         ('export', 'Export'),
-#         ('unregistered local', 'Unregistered Local'),
-#         ('unregistered non-local', 'Unregistered non-Local'),
-#         ('sez', 'SEZ')
-#     ]
+# Credit Note Model
+class CreditNote(models.Model):
+    invoice_type = [
+        ('b2b', 'B2B'),
+        ('b2c-l', 'B2C-L'),
+        ('bsc-o', 'BSC-O'),
+        ('nil rated', 'Nil Rated'),
+        ('advance received', 'Advance Received'),
+        ('export', 'Export'),
+        ('unregistered local', 'Unregistered Local'),
+        ('unregistered non-local', 'Unregistered non-Local'),
+        ('sez', 'SEZ')
+    ]
 
-#     entry_type = [
-#         ('sales_invoice', 'Sales_Invoice'),
-#         ('debit_note', 'Debit Note'),
-#         ('income', 'Income'),
-#     ]
-#     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
-#     client_Location = models.ForeignKey(OfficeLocation, on_delete=models.CASCADE, null=True, blank=True)
-#     attach_invoice = models.FileField(null=True, blank=True)
-#     attach_e_way_bill = models.FileField(null=True, blank=True)
-#     month = models.DateField(null=True, blank=True)
-#     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
-#     invoice_no = models.CharField(max_length=100, null=True, blank=True)
-#     invoice_date = models.DateField(null=True, blank=True)
-#     invoice_type = models.CharField(max_length=100, choices=invoice_type, null=True, blank=True)
-#     entry_type = models.CharField(max_length=100, choices=entry_type, null=True, blank=True)
+    entry_type = [
+        ('sales_invoice', 'Sales_Invoice'),
+        ('debit_note', 'Debit Note'),
+        ('income', 'Income'),
+    ]
 
-#     # Link to ProductSummary for each item in the invoice
-#     product_summaries = models.ManyToManyField(ProductSummaryIncome, blank=True, related_name="income")
+    # 
+    purchase_invoice = models.ForeignKey(PurchaseInvoice, on_delete=models.CASCADE, null=True, blank=True)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+    client_Location = models.ForeignKey(OfficeLocation, on_delete=models.CASCADE, null=True, blank=True)
+    attach_invoice = models.FileField(null=True, blank=True)
+    attach_e_way_bill = models.FileField(null=True, blank=True)
+    month = models.DateField(null=True, blank=True)
+    vendor = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
+    invoice_no = models.CharField(max_length=100, null=True, blank=True)
+    invoice_date = models.DateField(null=True, blank=True)
+    invoice_type = models.CharField(max_length=100, choices=invoice_type, null=True, blank=True)
+    entry_type = models.CharField(max_length=100, choices=entry_type, null=True, blank=True)
 
-#     taxable_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     totalall_gst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     total_invoice_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tds_tcs_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tds_tcs_section = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tcs = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tds = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     amount_receivable = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     def __str__(self):
-#         invoice_no = self.invoice_no or "No Invoice Number"
-#         customer_name = self.customer.name if self.customer else "No Customer"
-#         return f"Income {invoice_no} - {customer_name}" 
+    # Link to ProductSummary for each item in the invoice
+    product_summaries = models.ManyToManyField(ProductSummaryCreditNote, blank=True, related_name="credit_note")
+    # product_summaries = models.ManyToManyField(ProductSummaryPurchase, blank=True, related_name="purchase_invoices")
+    taxable_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    totalall_gst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    # total_gst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    total_invoice_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tds_tcs_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tds_tcs_section = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tcs = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tds = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    amount_receivable = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    utilise_edit = models.BooleanField(null=True, blank=True)
+    utilise_month = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        invoice_no = self.invoice_no or "No Invoice Number"
+        vendor_name = self.vendor.name if self.vendor else "No Vendor"
+        return f"Credit Note {invoice_no} - {vendor_name}"   
+
+# Income 
+class ProductSummaryIncome(models.Model):
+        hsn = models.ForeignKey(HSNCode,on_delete=models.SET_NULL, null=True, blank=True)
+        product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
+        prod_description = models.ForeignKey('ProductDescription', on_delete=models.SET_NULL, null=True, blank=True)
+
+        def __str__(self):
+            return self.prod_description.description if self.prod_description else self.product.name if self.product else "Unnames Product"
+
+        def gst_rate(self):
+            return self.hsn.gst_rate if self.hsn else None
+        gst_rate.short_description = 'GST Rate'
+
+        def hsn_code(self):
+            return self.hsn.hsn_code if self.hsn else None
+        hsn_code.short_descrition = 'HSN Code'
+
+        def product_name(self):
+            return self.product.product_name if self.product else None
+        product_name.short_description = 'Product Name'
+
+        def description_text(self):
+            return self.prod_description.description if self.prod_description else None
+        description_text.short_description = 'Description Text'
+
+        def unit(self):
+            return self.prod_description.unit if self.prod_description else None
+        unit.short_description = "Unit"
+
+        def rate(self):
+            return self.prod_description.rate if self.prod_description else None
+        rate.short_description = "rate"
+
+        def __str__(self):
+            return f'Summary for {self.product_name()}'
+        
+class Income(models.Model):
+    invoice_type = [
+        ('b2b', 'B2B'),
+        ('b2c-l', 'B2C-L'),
+        ('bsc-o', 'BSC-O'),
+        ('nil rated', 'Nil Rated'),
+        ('advance received', 'Advance Received'),
+        ('export', 'Export'),
+        ('unregistered local', 'Unregistered Local'),
+        ('unregistered non-local', 'Unregistered non-Local'),
+        ('sez', 'SEZ')
+    ]
+
+    entry_type = [
+        ('sales_invoice', 'Sales_Invoice'),
+        ('debit_note', 'Debit Note'),
+        ('income', 'Income'),
+    ]
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+    client_Location = models.ForeignKey(OfficeLocation, on_delete=models.CASCADE, null=True, blank=True)
+    attach_invoice = models.FileField(null=True, blank=True)
+    attach_e_way_bill = models.FileField(null=True, blank=True)
+    month = models.DateField(null=True, blank=True)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
+    invoice_no = models.CharField(max_length=100, null=True, blank=True)
+    invoice_date = models.DateField(null=True, blank=True)
+    invoice_type = models.CharField(max_length=100, choices=invoice_type, null=True, blank=True)
+    entry_type = models.CharField(max_length=100, choices=entry_type, null=True, blank=True)
+
+    # Link to ProductSummary for each item in the invoice
+    product_summaries = models.ManyToManyField(ProductSummaryIncome, blank=True, related_name="income")
+
+    taxable_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    totalall_gst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    total_invoice_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tds_tcs_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tds_tcs_section = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tcs = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tds = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    amount_receivable = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    def __str__(self):
+        invoice_no = self.invoice_no or "No Invoice Number"
+        customer_name = self.customer.name if self.customer else "No Customer"
+        return f"Income {invoice_no} - {customer_name}" 
     
 
-# # Expenses
-# class ProductSummaryExpenses(models.Model):
-#         hsn = models.ForeignKey(HSNCode,on_delete=models.SET_NULL, null=True, blank=True)
-#         product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
-#         prod_description = models.ForeignKey('ProductDescription', on_delete=models.SET_NULL, null=True, blank=True)
+# Expenses
+class ProductSummaryExpenses(models.Model):
+        hsn = models.ForeignKey(HSNCode,on_delete=models.SET_NULL, null=True, blank=True)
+        product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
+        prod_description = models.ForeignKey('ProductDescription', on_delete=models.SET_NULL, null=True, blank=True)
 
-#         def __str__(self):
-#             return self.prod_description.description if self.prod_description else self.product.name if self.product else "Unnames Product"
+        def __str__(self):
+            return self.prod_description.description if self.prod_description else self.product.name if self.product else "Unnames Product"
 
-#         def gst_rate(self):
-#             return self.hsn.gst_rate if self.hsn else None
-#         gst_rate.short_description = 'GST Rate'
+        def gst_rate(self):
+            return self.hsn.gst_rate if self.hsn else None
+        gst_rate.short_description = 'GST Rate'
 
-#         def hsn_code(self):
-#             return self.hsn.hsn_code if self.hsn else None
-#         hsn_code.short_descrition = 'HSN Code'
+        def hsn_code(self):
+            return self.hsn.hsn_code if self.hsn else None
+        hsn_code.short_descrition = 'HSN Code'
 
-#         def product_name(self):
-#             return self.product.product_name if self.product else None
-#         product_name.short_description = 'Product Name'
+        def product_name(self):
+            return self.product.product_name if self.product else None
+        product_name.short_description = 'Product Name'
 
-#         def description_text(self):
-#             return self.prod_description.description if self.prod_description else None
-#         description_text.short_description = 'Description Text'
+        def description_text(self):
+            return self.prod_description.description if self.prod_description else None
+        description_text.short_description = 'Description Text'
 
-#         def unit(self):
-#             return self.prod_description.unit if self.prod_description else None
-#         unit.short_description = "Unit"
+        def unit(self):
+            return self.prod_description.unit if self.prod_description else None
+        unit.short_description = "Unit"
 
-#         def rate(self):
-#             return self.prod_description.rate if self.prod_description else None
-#         rate.short_description = "rate"
+        def rate(self):
+            return self.prod_description.rate if self.prod_description else None
+        rate.short_description = "rate"
 
-#         def __str__(self):
-#             return f'Summary for {self.product_name()}'
+        def __str__(self):
+            return f'Summary for {self.product_name()}'
 
 
-# # Expenses Model
-# class Expenses(models.Model):
-#     invoice_type = [
-#         ('b2b', 'B2B'),
-#         ('b2c-l', 'B2C-L'),
-#         ('bsc-o', 'BSC-O'),
-#         ('nil rated', 'Nil Rated'),
-#         ('advance received', 'Advance Received'),
-#         ('export', 'Export'),
-#         ('unregistered local', 'Unregistered Local'),
-#         ('unregistered non-local', 'Unregistered non-Local'),
-#         ('sez', 'SEZ')
-#     ]
+# Expenses Model
+class Expenses(models.Model):
+    invoice_type = [
+        ('b2b', 'B2B'),
+        ('b2c-l', 'B2C-L'),
+        ('bsc-o', 'BSC-O'),
+        ('nil rated', 'Nil Rated'),
+        ('advance received', 'Advance Received'),
+        ('export', 'Export'),
+        ('unregistered local', 'Unregistered Local'),
+        ('unregistered non-local', 'Unregistered non-Local'),
+        ('sez', 'SEZ')
+    ]
 
-#     entry_type = [
-#         ('sales_invoice', 'Sales_Invoice'),
-#         ('debit_note', 'Debit Note'),
-#         ('income', 'Income'),
-#     ]
+    entry_type = [
+        ('sales_invoice', 'Sales_Invoice'),
+        ('debit_note', 'Debit Note'),
+        ('income', 'Income'),
+    ]
 
-#     # 
-#     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
-#     client_Location = models.ForeignKey(OfficeLocation, on_delete=models.CASCADE, null=True, blank=True)
-#     attach_invoice = models.FileField(null=True, blank=True)
-#     attach_e_way_bill = models.FileField(null=True, blank=True)
-#     month = models.DateField(null=True, blank=True)
-#     vendor = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
-#     invoice_no = models.CharField(max_length=100, null=True, blank=True)
-#     invoice_date = models.DateField(null=True, blank=True)
-#     invoice_type = models.CharField(max_length=100, choices=invoice_type, null=True, blank=True)
-#     entry_type = models.CharField(max_length=100, choices=entry_type, null=True, blank=True)
+    # 
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+    client_Location = models.ForeignKey(OfficeLocation, on_delete=models.CASCADE, null=True, blank=True)
+    attach_invoice = models.FileField(null=True, blank=True)
+    attach_e_way_bill = models.FileField(null=True, blank=True)
+    month = models.DateField(null=True, blank=True)
+    vendor = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
+    invoice_no = models.CharField(max_length=100, null=True, blank=True)
+    invoice_date = models.DateField(null=True, blank=True)
+    invoice_type = models.CharField(max_length=100, choices=invoice_type, null=True, blank=True)
+    entry_type = models.CharField(max_length=100, choices=entry_type, null=True, blank=True)
 
-#     # Link to ProductSummary for each item in the invoice
-#     product_summaries = models.ManyToManyField(ProductSummaryExpenses, blank=True, related_name="expenses")
-#     # product_summaries = models.ManyToManyField(ProductSummaryPurchase, blank=True, related_name="purchase_invoices")
+    # Link to ProductSummary for each item in the invoice
+    product_summaries = models.ManyToManyField(ProductSummaryExpenses, blank=True, related_name="expenses")
+    # product_summaries = models.ManyToManyField(ProductSummaryPurchase, blank=True, related_name="purchase_invoices")
 
-#     taxable_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     totalall_gst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     # total_gst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     total_invoice_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tds_tcs_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tds_tcs_section = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tcs = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tds = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     amount_receivable = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     utilise_edit = models.BooleanField(null=True, blank=True)
-#     utilise_month = models.DateField(null=True, blank=True)
+    taxable_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    totalall_gst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    # total_gst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    total_invoice_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tds_tcs_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tds_tcs_section = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tcs = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tds = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    amount_receivable = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    utilise_edit = models.BooleanField(null=True, blank=True)
+    utilise_month = models.DateField(null=True, blank=True)
 
-#     def __str__(self):
-#         invoice_no = self.invoice_no or "No Invoice Number"
-#         vendor_name = self.vendor.name if self.vendor else "No Vendor"
-#         return f"Expenses {invoice_no} - {vendor_name}"
+    def __str__(self):
+        invoice_no = self.invoice_no or "No Invoice Number"
+        vendor_name = self.vendor.name if self.vendor else "No Vendor"
+        return f"Expenses {invoice_no} - {vendor_name}"
     
-# # Income Debit Note
+# Income Debit Note
 
-# class ProductSummaryIncomeDebitNote(models.Model): #new
-#     hsn = models.ForeignKey(HSNCode, on_delete=models.SET_NULL, null=True, blank=True)
-#     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
-#     prod_description = models.ForeignKey('ProductDescription', on_delete=models.SET_NULL, null=True, blank=True)
+class ProductSummaryIncomeDebitNote(models.Model): #new
+    hsn = models.ForeignKey(HSNCode, on_delete=models.SET_NULL, null=True, blank=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
+    prod_description = models.ForeignKey('ProductDescription', on_delete=models.SET_NULL, null=True, blank=True)
 
-#     # def __str__(self):
-#     #     product_name = self.product.product_name if self.product else "No Product"
-#     #     return f"Summary for {product_name}"
-#     def __str__(self):
-#         # Display the product description if available, otherwise fallback to product name
-#         return self.prod_description.description if self.prod_description else self.product.name if self.product else "Unnamed Product"
+    # def __str__(self):
+    #     product_name = self.product.product_name if self.product else "No Product"
+    #     return f"Summary for {product_name}"
+    def __str__(self):
+        # Display the product description if available, otherwise fallback to product name
+        return self.prod_description.description if self.prod_description else self.product.name if self.product else "Unnamed Product"
 
-#     def gst_rate(self):
-#         return self.hsn.gst_rate if self.hsn else None
-#     gst_rate.short_description = 'GST Rate'
+    def gst_rate(self):
+        return self.hsn.gst_rate if self.hsn else None
+    gst_rate.short_description = 'GST Rate'
 
-#     def hsn_code(self):
-#         return self.hsn.hsn_code if self.hsn else None
-#     hsn_code.short_description = 'HSN Code'
+    def hsn_code(self):
+        return self.hsn.hsn_code if self.hsn else None
+    hsn_code.short_description = 'HSN Code'
 
-#     def product_name(self):
-#         return self.product.product_name if self.product else None
-#     product_name.short_description = 'Product Name'
+    def product_name(self):
+        return self.product.product_name if self.product else None
+    product_name.short_description = 'Product Name'
 
-#     def description_text(self):
-#         return self.prod_description.description if self.prod_description else None
-#     description_text.short_description = 'Description'
+    def description_text(self):
+        return self.prod_description.description if self.prod_description else None
+    description_text.short_description = 'Description'
 
-#     def unit(self):
-#         return self.prod_description.unit if self.prod_description else None
-#     unit.short_description = 'Unit'  #010218210004398
+    def unit(self):
+        return self.prod_description.unit if self.prod_description else None
+    unit.short_description = 'Unit'  #010218210004398
 
-#     def rate(self):
-#         return self.prod_description.rate if self.prod_description else None
-#     rate.short_description = 'Rate'
+    def rate(self):
+        return self.prod_description.rate if self.prod_description else None
+    rate.short_description = 'Rate'
 
-#     def __str__(self):
-#         return f"Summary for {self.product_name()}"
+    def __str__(self):
+        return f"Summary for {self.product_name()}"
 
 
-# class IncomeDebitNote(models.Model):
-#     invoice_type = [
-#         ('b2b', 'B2B'),
-#         ('b2c-l', 'B2C-L'),
-#         ('bsc-o', 'BSC-O'),
-#         ('nil rated', 'Nil Rated'),
-#         ('advance received', 'Advance Received'),
-#         ('export', 'Export'),
-#         ('unregistered local', 'Unregistered Local'),
-#         ('unregistered non-local', 'Unregistered non-Local'),
-#         ('sez', 'SEZ')
-#     ]
+class IncomeDebitNote(models.Model):
+    invoice_type = [
+        ('b2b', 'B2B'),
+        ('b2c-l', 'B2C-L'),
+        ('bsc-o', 'BSC-O'),
+        ('nil rated', 'Nil Rated'),
+        ('advance received', 'Advance Received'),
+        ('export', 'Export'),
+        ('unregistered local', 'Unregistered Local'),
+        ('unregistered non-local', 'Unregistered non-Local'),
+        ('sez', 'SEZ')
+    ]
 
-#     entry_type = [
-#         ('sales_invoice', 'Sales_Invoice'),
-#         ('debit_note', 'Debit Note'),
-#         ('income', 'Income'),
-#     ]
-#     # sales_invoice = models.ForeignKey(SalesInvoice, null=True, blank=True,on_delete=models.CASCADE)
-#     income = models.ForeignKey(Income, on_delete=models.CASCADE, null= True, blank=True)
-#     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
-#     client_Location = models.ForeignKey(OfficeLocation, on_delete=models.CASCADE, null=True, blank=True)
-#     attach_invoice = models.FileField(null=True, blank=True)
-#     attach_e_way_bill = models.FileField(null=True, blank=True)
-#     month = models.DateField(null=True, blank=True)
-#     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
-#     invoice_no = models.CharField(max_length=100, null=True, blank=True)
-#     invoice_date = models.DateField(null=True, blank=True)
-#     invoice_type = models.CharField(max_length=100, choices=invoice_type, null=True, blank=True)
-#     entry_type = models.CharField(max_length=100, choices=entry_type, null=True, blank=True)
+    entry_type = [
+        ('sales_invoice', 'Sales_Invoice'),
+        ('debit_note', 'Debit Note'),
+        ('income', 'Income'),
+    ]
+    # sales_invoice = models.ForeignKey(SalesInvoice, null=True, blank=True,on_delete=models.CASCADE)
+    income = models.ForeignKey(Income, on_delete=models.CASCADE, null= True, blank=True)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+    client_Location = models.ForeignKey(OfficeLocation, on_delete=models.CASCADE, null=True, blank=True)
+    attach_invoice = models.FileField(null=True, blank=True)
+    attach_e_way_bill = models.FileField(null=True, blank=True)
+    month = models.DateField(null=True, blank=True)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
+    invoice_no = models.CharField(max_length=100, null=True, blank=True)
+    invoice_date = models.DateField(null=True, blank=True)
+    invoice_type = models.CharField(max_length=100, choices=invoice_type, null=True, blank=True)
+    entry_type = models.CharField(max_length=100, choices=entry_type, null=True, blank=True)
 
-#     # Link to ProductSummary for each item in the invoice
-#     product_summaries = models.ManyToManyField(ProductSummaryIncomeDebitNote, blank=True, related_name="income_debit_note")
+    # Link to ProductSummary for each item in the invoice
+    product_summaries = models.ManyToManyField(ProductSummaryIncomeDebitNote, blank=True, related_name="income_debit_note")
 
-#     taxable_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     totalall_gst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     total_invoice_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tds_tcs_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tds_tcs_section = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tcs = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tds = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     amount_receivable = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     def __str__(self):
-#         invoice_no = self.invoice_no or "No Invoice Number"
-#         customer_name = self.customer.name if self.customer else "No Customer"
-#         return f"Income Debit Note {invoice_no} - {customer_name}"
+    taxable_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    totalall_gst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    total_invoice_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tds_tcs_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tds_tcs_section = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tcs = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tds = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    amount_receivable = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    def __str__(self):
+        invoice_no = self.invoice_no or "No Invoice Number"
+        customer_name = self.customer.name if self.customer else "No Customer"
+        return f"Income Debit Note {invoice_no} - {customer_name}"
     
-# # Credit Note
-# class ProductSummaryExpensesCreditNote(models.Model):
-#         hsn = models.ForeignKey(HSNCode,on_delete=models.SET_NULL, null=True, blank=True)
-#         product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
-#         prod_description = models.ForeignKey('ProductDescription', on_delete=models.SET_NULL, null=True, blank=True)
+# Expenses Credit Note
+class ProductSummaryExpensesCreditNote(models.Model):
+        hsn = models.ForeignKey(HSNCode,on_delete=models.SET_NULL, null=True, blank=True)
+        product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
+        prod_description = models.ForeignKey('ProductDescription', on_delete=models.SET_NULL, null=True, blank=True)
 
-#         def __str__(self):
-#             return self.prod_description.description if self.prod_description else self.product.name if self.product else "Unnames Product"
+        def __str__(self):
+            return self.prod_description.description if self.prod_description else self.product.name if self.product else "Unnames Product"
 
-#         def gst_rate(self):
-#             return self.hsn.gst_rate if self.hsn else None
-#         gst_rate.short_description = 'GST Rate'
+        def gst_rate(self):
+            return self.hsn.gst_rate if self.hsn else None
+        gst_rate.short_description = 'GST Rate'
 
-#         def hsn_code(self):
-#             return self.hsn.hsn_code if self.hsn else None
-#         hsn_code.short_descrition = 'HSN Code'
+        def hsn_code(self):
+            return self.hsn.hsn_code if self.hsn else None
+        hsn_code.short_descrition = 'HSN Code'
 
-#         def product_name(self):
-#             return self.product.product_name if self.product else None
-#         product_name.short_description = 'Product Name'
+        def product_name(self):
+            return self.product.product_name if self.product else None
+        product_name.short_description = 'Product Name'
 
-#         def description_text(self):
-#             return self.prod_description.description if self.prod_description else None
-#         description_text.short_description = 'Description Text'
+        def description_text(self):
+            return self.prod_description.description if self.prod_description else None
+        description_text.short_description = 'Description Text'
 
-#         def unit(self):
-#             return self.prod_description.unit if self.prod_description else None
-#         unit.short_description = "Unit"
+        def unit(self):
+            return self.prod_description.unit if self.prod_description else None
+        unit.short_description = "Unit"
 
-#         def rate(self):
-#             return self.prod_description.rate if self.prod_description else None
-#         rate.short_description = "rate"
+        def rate(self):
+            return self.prod_description.rate if self.prod_description else None
+        rate.short_description = "rate"
 
-#         def __str__(self):
-#             return f'Summary for {self.product_name()}'
+        def __str__(self):
+            return f'Summary for {self.product_name()}'
 
 
-# # Credit Note Model
-# class ExpensesCreditNote(models.Model):
-#     invoice_type = [
-#         ('b2b', 'B2B'),
-#         ('b2c-l', 'B2C-L'),
-#         ('bsc-o', 'BSC-O'),
-#         ('nil rated', 'Nil Rated'),
-#         ('advance received', 'Advance Received'),
-#         ('export', 'Export'),
-#         ('unregistered local', 'Unregistered Local'),
-#         ('unregistered non-local', 'Unregistered non-Local'),
-#         ('sez', 'SEZ')
-#     ]
+# Credit Note Model
+class ExpensesCreditNote(models.Model):
+    invoice_type = [
+        ('b2b', 'B2B'),
+        ('b2c-l', 'B2C-L'),
+        ('bsc-o', 'BSC-O'),
+        ('nil rated', 'Nil Rated'),
+        ('advance received', 'Advance Received'),
+        ('export', 'Export'),
+        ('unregistered local', 'Unregistered Local'),
+        ('unregistered non-local', 'Unregistered non-Local'),
+        ('sez', 'SEZ')
+    ]
 
-#     entry_type = [
-#         ('sales_invoice', 'Sales_Invoice'),
-#         ('debit_note', 'Debit Note'),
-#         ('income', 'Income'),
-#     ]
+    entry_type = [
+        ('sales_invoice', 'Sales_Invoice'),
+        ('debit_note', 'Debit Note'),
+        ('income', 'Income'),
+    ]
 
-#     # 
-#     expenses = models.ForeignKey(Expenses, on_delete=models.CASCADE, null=True, blank=True)
-#     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
-#     client_Location = models.ForeignKey(OfficeLocation, on_delete=models.CASCADE, null=True, blank=True)
-#     attach_invoice = models.FileField(null=True, blank=True)
-#     attach_e_way_bill = models.FileField(null=True, blank=True)
-#     month = models.DateField(null=True, blank=True)
-#     vendor = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
-#     invoice_no = models.CharField(max_length=100, null=True, blank=True)
-#     invoice_date = models.DateField(null=True, blank=True)
-#     invoice_type = models.CharField(max_length=100, choices=invoice_type, null=True, blank=True)
-#     entry_type = models.CharField(max_length=100, choices=entry_type, null=True, blank=True)
+    # 
+    expenses = models.ForeignKey(Expenses, on_delete=models.CASCADE, null=True, blank=True)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+    client_Location = models.ForeignKey(OfficeLocation, on_delete=models.CASCADE, null=True, blank=True)
+    attach_invoice = models.FileField(null=True, blank=True)
+    attach_e_way_bill = models.FileField(null=True, blank=True)
+    month = models.DateField(null=True, blank=True)
+    vendor = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
+    invoice_no = models.CharField(max_length=100, null=True, blank=True)
+    invoice_date = models.DateField(null=True, blank=True)
+    invoice_type = models.CharField(max_length=100, choices=invoice_type, null=True, blank=True)
+    entry_type = models.CharField(max_length=100, choices=entry_type, null=True, blank=True)
 
-#     # Link to ProductSummary for each item in the invoice
-#     product_summaries = models.ManyToManyField(ProductSummaryExpensesCreditNote, blank=True, related_name="expenses_credit_note")
-#     # product_summaries = models.ManyToManyField(ProductSummaryPurchase, blank=True, related_name="purchase_invoices")
-#     taxable_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     totalall_gst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     # total_gst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     total_invoice_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tds_tcs_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tds_tcs_section = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tcs = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     tds = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     amount_receivable = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     utilise_edit = models.BooleanField(null=True, blank=True)
-#     utilise_month = models.DateField(null=True, blank=True)
+    # Link to ProductSummary for each item in the invoice
+    product_summaries = models.ManyToManyField(ProductSummaryExpensesCreditNote, blank=True, related_name="expenses_credit_note")
+    # product_summaries = models.ManyToManyField(ProductSummaryPurchase, blank=True, related_name="purchase_invoices")
+    taxable_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    totalall_gst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    # total_gst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    total_invoice_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tds_tcs_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tds_tcs_section = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tcs = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tds = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    amount_receivable = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    utilise_edit = models.BooleanField(null=True, blank=True)
+    utilise_month = models.DateField(null=True, blank=True)
 
-#     def __str__(self):
-#         invoice_no = self.invoice_no or "No Invoice Number"
-#         vendor_name = self.vendor.name if self.vendor else "No Vendor"
-#         return f"Expenses Credit Note {invoice_no} - {vendor_name}"
+    def __str__(self):
+        invoice_no = self.invoice_no or "No Invoice Number"
+        vendor_name = self.vendor.name if self.vendor else "No Vendor"
+        return f"Expenses Credit Note {invoice_no} - {vendor_name}"
     
 
     
-# # Zip Upload 
-# class ZipUpload(models.Model):
-#     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
-#     files = models.FileField(null=True, blank=True)
-#     date = models.DateTimeField(auto_now=True)
+# Zip Upload 
+class ZipUpload(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+    files = models.FileField(null=True, blank=True)
+    date = models.DateTimeField(auto_now=True)
         
     
 # Income Tax Document
