@@ -1,0 +1,727 @@
+import React, { useState } from "react";
+import {
+  Button,
+  Input,
+  Typography,
+  Dialog,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
+  Select,
+  Textarea,
+  Switch,
+  Option,
+} from "@material-tailwind/react";
+import ControlPointIcon from "@mui/icons-material/ControlPoint";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import PhoneAndroidIcon from "@mui/icons-material/PhoneAndroid";
+import { Formik, Form, ErrorMessage } from "formik";
+import * as Yup from "yup";
+const FILE_SIZE = 2 * 1024 * 1024; // 2 MB
+const SUPPORTED_FORMATS = ["application/pdf", "image/jpeg", "image/png"];
+const validationSchema = Yup.object().shape({
+  client_name: Yup.string()
+    .required("Client Name is required")
+    .min(3, "Client Name must be at least 3 characters"),
+  entity_type: Yup.string().required("Entity type is required"),
+  date_of_incorporation: Yup.date().required(
+    "Date of Incorporation is required"
+  ),
+  contact_person: Yup.string().required("Contact Person is required"),
+  designation: Yup.string().required("Designation is required"),
+  email: Yup.string().email("Invalid email").required("Email is required"),
+  contact_no_1: Yup.string().required("Contact number is required"),
+  contact_no_2: Yup.string().required("Contact number is required"),
+  business_detail: Yup.string().required("Business Detail is required"),
+  status: Yup.string().required("Status is required"),
+  attachments: Yup.array()
+  .of(
+    Yup.object().shape({
+      fileName: Yup.string().required("File name is required"),
+      file: Yup.mixed()
+        .required("A file is required")
+        .test("fileSize", "File too large (max 2MB)", (value) => value && value.size <= FILE_SIZE)
+        .test("fileFormat", "Unsupported Format (PDF, JPG, PNG only)", (value) => value && SUPPORTED_FORMATS.includes(value.type)),
+    })
+  )
+  .required("At least one file is required"),
+});
+
+function ClientCreation() {
+  const [filesList, setFilesList] = useState([]);
+  const [open, setOpen] = React.useState(false);
+  const [fileName, setFileName] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
+// console.log("dj",filesList)
+  const handleOpen = () => setOpen(!open);
+
+  const notify = (fileType) => {
+    toast.success(`${fileType} file uploaded successfully!`, {
+      position: "top-right",
+      autoClose: 1000,
+    });
+  };
+
+  const handleFileNameChange = (event) => {
+    setFileName(event.target.value);
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    setSelectedFile(file);
+  };
+
+  const handleFileSave = () => {
+    if (fileName && selectedFile) {
+      setFilesList((prevFiles) => [
+        ...prevFiles,
+        { id: Date.now(), fileName: fileName, file: selectedFile.name },
+      ]);
+      notify("File");
+      setFileName(""); // Reset file name
+      setSelectedFile(null); // Reset selected file
+      handleOpen(); // Close the modal
+    } else {
+      toast.error("Please provide a file name and select a file!", {
+        position: "top-right",
+        autoClose: 1000,
+      });
+    }
+  };
+
+  const handleFileDelete = (id) => {
+    setFilesList((prevFiles) => {
+      const updatedFiles = prevFiles.filter((file) => file.id !== id);
+
+      toast.success("File deleted successfully!", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+
+      return updatedFiles;
+    });
+  };
+  const handleSubmit = (values) => {
+    // Log the form values to the console
+    console.log("Submitted form values:", values);
+
+    // Perform your API request here or display a success message
+    toast.success("Form submitted successfully!", {
+      position: "top-right",
+      autoClose: 1000,
+    });
+  };
+  return (
+    <>
+      <Dialog open={open} size="xs" handler={handleOpen}>
+        <div className="flex items-center justify-between">
+          <DialogHeader className="flex flex-col items-start">
+            <Typography className="mb-1 text-[#366FA1]" variant="h4">
+              Add File
+            </Typography>
+          </DialogHeader>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className="mr-3 h-5 w-5"
+            onClick={handleOpen}
+          >
+            <path
+              fillRule="evenodd"
+              d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </div>
+        <DialogBody>
+          <div className="grid gap-6">
+            <Typography
+              variant="small"
+              color="blue-gray"
+              className="block font-semibold -mb-3"
+            >
+              File Name
+            </Typography>
+            <Input
+              type="text"
+              size="lg"
+              name="file_name"
+              value={fileName}
+              onChange={handleFileNameChange}
+              placeholder="File Name"
+              className="!border !border-[#cecece] bg-white py-1 text-gray-900 ring-4 ring-transparent placeholder:text-gray-500 placeholder:opacity-100 focus:!border-[#366FA1] focus:!border-t-[#366FA1]"
+              labelProps={{ className: "hidden" }}
+              containerProps={{ className: "min-w-[100px]" }}
+            />
+            <Typography
+              variant="small"
+              color="blue-gray"
+              className="block font-semibold -mb-3"
+            >
+              File Select
+            </Typography>
+            <div className="">
+              <div className="flex items-center justify-center bg-grey-lighter">
+                <label className="w-52 flex flex-col items-center px-2 py-4 bg-white text-[#366FA1] rounded-lg shadow-lg tracking-wide uppercase border border-[#366FA1] cursor-pointer hover:bg-[#366FA1] hover:text-white">
+                  <svg
+                    className="w-6 h-6"
+                    fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M16.88 9.1A4 4 0 0 1 16 17H5a5 5 0 0 1-1-9.9V7a3 3 0 0 1 4.52-2.59A4.98 4.98 0 0 1 17 8c0 .38-.04.74-.12 1.1zM11 11h3l-4-4-4 4h3v3h2v-3z" />
+                  </svg>
+                  <span className="mt-2 text-base leading-normal">
+                    Select a file
+                  </span>
+                  <input
+                    name="gfile"
+                    type="file"
+                    className="hidden"
+                    multiple
+                    onChange={handleFileChange}
+                  />
+                </label>
+              </div>
+              {selectedFile && (
+                <Typography className="text-sm mt-2 text-blue-gray">
+                  {selectedFile.name}
+                </Typography>
+              )}
+            </div>
+          </div>
+        </DialogBody>
+        <DialogFooter className="space-x-2">
+          <Button variant="text" color="gray" onClick={handleOpen}>
+            cancel
+          </Button>
+          <Button className="bg-[#366FA1]" onClick={handleFileSave}>
+            Upload
+          </Button>
+        </DialogFooter>
+      </Dialog>
+      <Formik
+        initialValues={{
+          client_name: "",
+          entity_type: "",
+          date_of_incorporation: "",
+          contact_person: "",
+          designation: "",
+          email: "",
+          contact_no_1: "",
+          contact_no_2: "",
+          business_detail: "",
+          status: "",
+          attachment: [],
+        }}
+        validationSchema={validationSchema}
+        onSubmit={(values, { setSubmitting }) => {
+          handleSubmit(values);
+          setSubmitting(false);
+        }}
+      >
+        {({
+          values,
+          touched,
+          errors,
+          handleChange,
+          handleBlur,
+          handleSubmit,
+          isSubmitting,
+          setFieldValue
+          
+        }) => (
+          <Form onSubmit={handleSubmit}>
+            <div className="p-8 bg-[#fefeff] max-w-6xl mx-auto my-10">
+              <div className="text-[1.5rem] font-semibold">Client Creation</div>
+              <div className="text-gray-600 text-sm my-0.5">
+                Create Client details here
+              </div>
+
+              <div className="grid grid-cols-3 gap-x-6">
+                <div className="col-span-2 my-3">
+                  <label htmlFor="client name">
+                    <Typography
+                      variant="small"
+                      color="blue-gray"
+                      className="block font-semibold mb-2"
+                    >
+                      Client Name
+                    </Typography>
+                  </label>
+
+                  <div className="">
+                    <Input
+                      type="text"
+                      size="lg"
+                      name="client_name"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.client_name}
+                      placeholder="Name"
+                      className="!border !border-[#cecece] bg-white py-1 text-gray-900   ring-4 ring-transparent placeholder:text-gray-500 placeholder:opacity-100 focus:!border-[#366FA1] focus:!border-t-[#366FA1] "
+                      labelProps={{
+                        className: "hidden",
+                      }}
+                      containerProps={{ className: "min-w-[100px]" }}
+                    />
+                    <ErrorMessage
+                      name="client_name"
+                      component="div"
+                      className="text-red-500 text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="my-3">
+                  <label htmlFor="entity_type">
+                    <Typography
+                      variant="small"
+                      color="blue-gray"
+                      className="block text-gray-600 font-semibold  mb-2"
+                    >
+                      Select Entity Type
+                    </Typography>
+                  </label>
+
+                  <div className="">
+                    <Select
+                      label="Select Entity Type"
+                      name="entity_type"
+                      size="lg"
+                      animate={{
+                        mount: { y: 0 },
+                        unmount: { y: 25 },
+                      }}
+                      className="!border !border-[#cecece] bg-white py-1 text-gray-900   ring-4 ring-transparent placeholder:text-gray-500 placeholder:opacity-100 focus:!border-[#366FA1] focus:!border-t-[#366FA1] "
+                      labelProps={{
+                        className: "hidden",
+                      }}
+                      containerProps={{ className: "min-w-[100px]" }}
+                      value={values.entity_type}
+                      onChange={(value) =>
+                        handleChange({ target: { name: "entity_type", value } })
+                      }
+                      onBlur={handleBlur}
+                    >
+                      <Option value="proprietorship">Proprietorship</Option>
+                      <Option value="partnership">Partnership</Option>
+                      <Option value="llp">LLP</Option>
+                      <Option value="opc">OPC</Option>
+                      <Option value="huf">HUF</Option>
+                      <Option value="private ltd">Private Ltd</Option>
+                      <Option value="public limited">Public limited</Option>
+                      <Option value="trust">Trust</Option>
+                    </Select>
+                    {touched.entity_type && errors.entity_type && (
+                      <div className="text-red-500 text-sm">
+                        {errors.entity_type}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="my-3">
+                  <label htmlFor="date_of_incorporation">
+                    <Typography
+                      variant="small"
+                      color="blue-gray"
+                      className="block font-semibold mb-2"
+                    >
+                      Date of Incorporation
+                    </Typography>
+                  </label>
+
+                  <div className="">
+                    <Input
+                      type="date"
+                      size="lg"
+                      name="date_of_incorporation"
+                      placeholder="Contact Person"
+                      className="!border !border-[#cecece] bg-white py-1 text-gray-900   ring-4 ring-transparent placeholder:text-gray-500 placeholder:opacity-100 focus:!border-[#366FA1] focus:!border-t-[#366FA1] "
+                      labelProps={{
+                        className: "hidden",
+                      }}
+                      containerProps={{ className: "min-w-[100px]" }}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.date_of_incorporation}
+                      error={
+                        touched.date_of_incorporation &&
+                        !!errors.date_of_incorporation
+                      }
+                    />
+                    <ErrorMessage
+                      name="date_of_incorporation"
+                      component="div"
+                      className="text-red-500 text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="my-3">
+                  <label htmlFor="contact_person">
+                    <Typography
+                      variant="small"
+                      color="blue-gray"
+                      className="block font-semibold mb-2"
+                    >
+                      Contact Person
+                    </Typography>
+                  </label>
+
+                  <div className="">
+                    <Input
+                      type="text"
+                      size="lg"
+                      name="contact_person"
+                      placeholder="Contact Person"
+                      className="!border !border-[#cecece] bg-white py-1 text-gray-900   ring-4 ring-transparent placeholder:text-gray-500 placeholder:opacity-100 focus:!border-[#366FA1] focus:!border-t-[#366FA1] "
+                      labelProps={{
+                        className: "hidden",
+                      }}
+                      containerProps={{ className: "min-w-[100px]" }}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.contact_person}
+                      error={touched.contact_person && !!errors.contact_person}
+                    />
+                    <ErrorMessage
+                      name="contact_person"
+                      component="div"
+                      className="text-red-500 text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="my-3">
+                  <label htmlFor="designation">
+                    <Typography
+                      variant="small"
+                      color="blue-gray"
+                      className="block font-semibold mb-2"
+                    >
+                      Designation
+                    </Typography>
+                  </label>
+
+                  <div className="">
+                    <Input
+                      type="text"
+                      size="lg"
+                      name="designation"
+                      placeholder="Designation"
+                      className="!border !border-[#cecece] bg-white py-1 text-gray-900   ring-4 ring-transparent placeholder:text-gray-500 placeholder:opacity-100 focus:!border-[#366FA1] focus:!border-t-[#366FA1] "
+                      labelProps={{
+                        className: "hidden",
+                      }}
+                      containerProps={{ className: "min-w-[100px]" }}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.designation}
+                      error={touched.designation && !!errors.designation}
+                    />
+                    <ErrorMessage
+                      name="designation"
+                      component="div"
+                      className="text-red-500 text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="my-3">
+                  <label htmlFor="email">
+                    <Typography
+                      variant="small"
+                      color="blue-gray"
+                      className="block font-semibold mb-2"
+                    >
+                      Your Email
+                    </Typography>
+                  </label>
+
+                  <div className="">
+                    <Input
+                      type="email"
+                      size="lg"
+                      name="email"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.email}
+                      placeholder="Email Address"
+                      className="!border !border-[#cecece] bg-white py-1 text-gray-900   ring-4 ring-transparent placeholder:text-gray-500 placeholder:opacity-100 focus:!border-[#366FA1] focus:!border-t-[#366FA1] "
+                      labelProps={{
+                        className: "hidden",
+                      }}
+                      containerProps={{ className: "min-w-[100px]" }}
+                    />
+                    <ErrorMessage
+                      name="email"
+                      component="div"
+                      className="text-red-500 text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="my-3">
+                  <label htmlFor="contact_no_1">
+                    <Typography
+                      variant="small"
+                      color="blue-gray"
+                      className="block font-semibold mb-2"
+                    >
+                      Contact No
+                    </Typography>
+                  </label>
+
+                  <div className="">
+                    <Input
+                      type="number"
+                      size="lg"
+                      name="contact_no_1"
+                      icon={
+                        <PhoneAndroidIcon className="h-5 w-5 text-gray-500" />
+                      }
+                      placeholder="Contact No"
+                      className="!border !border-[#cecece] bg-white py-1 text-gray-900   ring-4 ring-transparent placeholder:text-gray-500 placeholder:opacity-100 focus:!border-[#366FA1] focus:!border-t-[#366FA1] "
+                      labelProps={{
+                        className: "hidden",
+                      }}
+                      containerProps={{ className: "min-w-[100px]" }}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.contact_no_1}
+                      error={touched.contact_no_1 && !!errors.contact_no_1}
+                    />
+                    <ErrorMessage
+                      name="contact_no_1"
+                      component="div"
+                      className="text-red-500 text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="my-3">
+                  <label htmlFor="contact_no_2">
+                    <Typography
+                      variant="small"
+                      color="blue-gray"
+                      className="block font-semibold mb-2"
+                    >
+                      Another Contact No
+                    </Typography>
+                  </label>
+
+                  <div className="">
+                    <Input
+                      type="number"
+                      size="lg"
+                      name="contact_no_2"
+                      icon={
+                        <PhoneAndroidIcon className="h-5 w-5 text-gray-500" />
+                      }
+                      placeholder="Another Contact No"
+                      className="!border !border-[#cecece] bg-white py-1 text-gray-900   ring-4 ring-transparent placeholder:text-gray-500 placeholder:opacity-100 focus:!border-[#366FA1] focus:!border-t-[#366FA1] "
+                      labelProps={{
+                        className: "hidden",
+                      }}
+                      containerProps={{ className: "min-w-[100px]" }}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.contact_no_2}
+                      error={touched.contact_no_2 && !!errors.contact_no_2}
+                    />
+                    <ErrorMessage
+                      name="contact_no_2"
+                      component="div"
+                      className="text-red-500 text-sm"
+                    />
+                  </div>
+                </div>
+                <div className=" col-span-3 my-3">
+                  <label htmlFor="business_detail">
+                    <Typography
+                      variant="small"
+                      color="blue-gray"
+                      className="block font-semibold mb-2"
+                    >
+                      Business Detail
+                    </Typography>
+                  </label>
+
+                  <div className="">
+                    <Textarea
+                      type="text"
+                      size="lg"
+                      name="business_detail"
+                      placeholder="Business Detail"
+                      className="!border !border-[#cecece] bg-white py-1 text-gray-900   ring-4 ring-transparent placeholder:text-gray-500 placeholder:opacity-100 focus:!border-[#366FA1] focus:!border-t-[#366FA1] "
+                      labelProps={{
+                        className: "hidden",
+                      }}
+                      containerProps={{ className: "min-w-[100px]" }}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.business_detail}
+                      error={
+                        touched.business_detail && !!errors.business_detail
+                      }
+                    />
+                    <ErrorMessage
+                      name="business_detail"
+                      component="div"
+                      className="text-red-500 text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <ToastContainer />
+              <div className="grid grid-cols-2 gap-x-28">
+                <div>
+                  <div className="my-3">
+                    <label htmlFor="status">
+                      <Typography
+                        variant="small"
+                        color="blue-gray"
+                        className="block  font-semibold  mb-2"
+                      >
+                        Select Status
+                      </Typography>
+                    </label>
+
+                    <div className="">
+                      <Select
+                        label="Status"
+                        name="status"
+                        size="lg"
+                        animate={{
+                          mount: { y: 0 },
+                          unmount: { y: 25 },
+                        }}
+                        className="!border !border-[#cecece] bg-white py-1 text-gray-900   ring-4 ring-transparent placeholder:text-gray-500 placeholder:opacity-100 focus:!border-[#366FA1] focus:!border-t-[#366FA1] "
+                        labelProps={{
+                          className: "hidden",
+                        }}
+                        containerProps={{ className: "min-w-[100px]" }}
+                        value={values.status}
+                        onChange={(value) =>
+                          handleChange({
+                            target: { name: "status", value },
+                          })
+                        }
+                        onBlur={handleBlur}
+                      >
+                        <Option value="active">Active</Option>
+                        <Option value="inactive">Inactive</Option>
+                      </Select>
+                      {touched.status && errors.status && (
+                        <div className="text-red-500 text-sm">
+                          {errors.status}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 mb-3">
+                  <div className="">
+                    <label htmlFor="status">
+                      <Typography
+                        variant="small"
+                        color="blue-gray"
+                        className="block  font-semibold  pb-1"
+                      >
+                        Attchments
+                      </Typography>
+                    </label>
+                    {filesList.length === 0 ? (
+                      <div className="mt-2">
+                        <label
+                          htmlFor="mom-file"
+                          className="cursor-pointer   bg-white text-blue-500 hover:text-white border border-[#366FA1] px-4 py-3  rounded-md hover:bg-[#366FA1]"
+                        >
+                          Select PDF/image file.
+                        </label>
+                        <input
+                          id="mom-file"
+                          name="mom"
+                          className="hidden"
+                          
+                          accept=".pdf, .jpg, .jpeg, .png"
+                          onChange={(event) => {
+                            setFieldValue(
+                              "attachment",
+                              event.currentTarget.files[0]
+                            );
+                          }}
+                          onClick={handleOpen}
+                          required
+                        />
+                        {touched.attachment && errors.attachment && (
+                          <div className="text-red-500 text-sm">
+                            {errors.attachment}
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                  {/* <div className="mt-4">
+                    {filesList.length > 0 && (
+                      <div className="flex align-middle">
+                        <ul className="list-disc mr-5 w-full">
+                          {filesList.map((file) => (
+                            <li
+                              key={file.id}
+                              className="flex items-center justify-between mb-2 bg-[#366FA1] p-2 rounded-md text-white"
+                            >
+                              <span>{file.fileName}</span>
+                              <div className="flex items-center space-x-2">
+                                <DeleteIcon
+                                  color="white"
+                                  className="cursor-pointer"
+                                  onClick={() => handleFileDelete(file.id)}
+                                />
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                        {filesList.length > 0 && (
+                          <div className="flex items-end mb-4">
+                            <ControlPointIcon
+                              className="cursor-pointer text-[#366FA1]"
+                              onClick={handleOpen}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div> */}
+                            <div className="mt-6">
+                {values.attachments.length > 0 && (
+                  <div className="flex flex-col">
+                    {values.attachments.map((attachment, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 border-b border-gray-300">
+                        <span>{attachment.fileName}</span>
+                        <DeleteIcon
+                          className="cursor-pointer text-red-500"
+                          onClick={() => handleFileDelete(index, setFieldValue, values.attachments)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+                </div>
+              </div>
+              <div className="mt-5">
+                <Button type="submit" color="blue" disabled={isSubmitting}>
+                  {isSubmitting ? "Submitting..." : "Submit"}
+                </Button>
+              </div>
+              {/* Check values as the user types */}
+              <pre>{JSON.stringify(values, null, 2)}</pre>
+            </div>
+          </Form>
+        )}
+      </Formik>
+    </>
+  );
+}
+
+export default ClientCreation;

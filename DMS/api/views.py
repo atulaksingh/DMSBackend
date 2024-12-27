@@ -95,7 +95,8 @@ def create_client(request):
                 for file in entry['files']:
                     File.objects.create(fileinfo=fileinfo, files=file)
 
-            return Response(client_serializer.data, status=201)
+            # return Response(client_serializer.data, status=201)
+            return Response({'Message': 'Client created successfully','Data': client_serializer.data, 'Status': status.HTTP_201_CREATED})
 
         return Response(client_serializer.errors, status=400)
 
@@ -225,7 +226,9 @@ def edit_client(request, pk):
 
                 index += 1
 
-            return Response(client_serializer.data, status=200)
+            # return Response(client_serializer.data, status=200)
+            return Response({'Message': 'Client updated successfully','Data': client_serializer.data, 'Status': status.HTTP_200_OK})
+
 
         return Response(client_serializer.errors, status=400)
 
@@ -322,7 +325,7 @@ def edit_bank(request, pk, bank_pk):
                     else:
                         return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response({'Message': 'TDS Return and Files updated successfully'}, status=status.HTTP_200_OK)
+            return Response({'Message': 'Bank updated successfully'}, status=status.HTTP_200_OK)
         else:
             return Response(bank_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -363,42 +366,177 @@ def delete_bank(request,pk, bank_pk):
 
 # **********************************************Owners View's*******************************************
 
-@api_view(['POST'])
+# @api_view(['POST'])
+# def create_owner(request, pk):
+#     client = get_object_or_404(Client, id=pk)
+#     print('pkkkkk',pk)
+#     if request.method == 'POST':
+#         owner_serializer = OwnerSerializer(data=request.data)
+#         if owner_serializer.is_valid():
+#             # sum of a for loop values of share of all the owners created
+#             total_shares = Owner.objects.filter(client=client).aggregate(
+#             total_share=Coalesce(Sum(F('share')), 0))['total_share']
+#             # total_shares = sum([owner.share for owner in Owner.objects.all()])
+#             # calculating remaining shares by subtracting total shares by 100
+#             remaining_shares = 100 - total_shares
+#             # new share means the value of share while creating this owner
+#             new_share = owner_serializer.validated_data['share']
+
+#             if new_share > remaining_shares:
+#                 # if enterd shares are greater then remaining share send a message of remaining shares
+#                 return Response ({
+#                     'error': f'Cannot assign {new_share}%. Only {remaining_shares}% is left for assigning'
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+#             # save the all the data
+#             owner_serializer.save(client=client)
+#             return Response({'Message': 'Owner Created successfully','Data': owner_serializer.data, 'Status': status.HTTP_200_OK})
+
+#         # show error if given data is not valid
+#         return Response(owner_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# @api_view(['POST','GET'])
+# def create_owner(request, pk):
+#     client = get_object_or_404(Client, id=pk)
+#     if request.method == 'POST':
+#         owner_serializer = OwnerSerializer(data=request.data)
+#         if owner_serializer.is_valid():
+#             # Calculate total shares assigned to the client so far
+#             total_shares = Owner.objects.filter(client=client).aggregate(
+#                 total_share=Coalesce(Sum(F('share')), 0)
+#             )['total_share']
+            
+#             # Calculate remaining shares
+#             remaining_shares = 100 - total_shares
+            
+#             # New share value from the current request
+#             new_share = owner_serializer.validated_data['share']
+
+#             if new_share > remaining_shares:
+#                 # If entered shares are greater than the remaining shares, return an error
+#                 return Response({
+#                     'error': f'Cannot assign {new_share}%. Only {remaining_shares}% is left for assigning.'
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+            
+#             # Save the new owner
+#             owner_serializer.save(client=client)
+            
+#             # Recalculate remaining shares after saving
+#             total_shares += new_share
+#             remaining_shares = 100 - total_shares
+
+#             return Response({
+#                 'Message': 'Owner Created',
+#                 'data': owner_serializer.data,
+#                 'remaining_shares': remaining_shares
+#             }, status=status.HTTP_201_CREATED)
+#     else:
+ 
+#         # Show errors if the data is not valid
+#         return Response(owner_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST', 'GET'])
 def create_owner(request, pk):
     client = get_object_or_404(Client, id=pk)
-    print('pkkkkk',pk)
+    
     if request.method == 'POST':
         owner_serializer = OwnerSerializer(data=request.data)
         if owner_serializer.is_valid():
-            # sum of a for loop values of share of all the owners created
+            # Calculate total shares assigned to the client so far
             total_shares = Owner.objects.filter(client=client).aggregate(
-            total_share=Coalesce(Sum(F('share')), 0))['total_share']
-            # total_shares = sum([owner.share for owner in Owner.objects.all()])
-            # calculating remaining shares by subtracting total shares by 100
+                total_share=Coalesce(Sum(F('share')), 0)
+            )['total_share']
+            
+            # Calculate remaining shares
             remaining_shares = 100 - total_shares
-            # new share means the value of share while creating this owner
+            
+            # New share value from the current request
             new_share = owner_serializer.validated_data['share']
 
             if new_share > remaining_shares:
-                # if enterd shares are greater then remaining share send a message of remaining shares
-                return Response ({
-                    'error': f'Cannot assign {new_share}%. Only {remaining_shares}% is left for assigning'
+                # If entered shares are greater than the remaining shares, return an error
+                return Response({
+                    'error': f'Cannot assign {new_share}%. Only {remaining_shares}% is left for assigning.'
                 }, status=status.HTTP_400_BAD_REQUEST)
-            # save the all the data
+            
+            # Save the new owner
             owner_serializer.save(client=client)
-            return Response({'Message':'Owner Created',"data":owner_serializer.data}, status=status.HTTP_201_CREATED)
-        # show error if given data is not valid
+            
+            # Recalculate remaining shares after saving
+            total_shares += new_share
+            remaining_shares = 100 - total_shares
+
+            return Response({
+                'Message': 'Owner Created Successfully',
+                'data': owner_serializer.data,
+                'remaining_shares': remaining_shares
+            }, status=status.HTTP_201_CREATED)
+
+        # Show errors if the data is not valid
         return Response(owner_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'GET':
+        # Calculate total shares and remaining shares
+        total_shares = Owner.objects.filter(client=client).aggregate(
+            total_share=Coalesce(Sum(F('share')), 0)
+        )['total_share']
+        remaining_shares = 100 - total_shares
+
+        return Response({
+            'total_shares': total_shares,
+            'remaining_shares': remaining_shares
+        }, status=status.HTTP_200_OK)
+
+
+# @api_view(['POST','GET'])
+# def edit_owner(request, pk, owner_pk):
+#     client = get_object_or_404(Client, id= pk)
+#     owner = Owner.objects.get(id = owner_pk)
+#     if request.method == 'POST':
+#         owner_serializer = OwnerSerializer(data=request.data, instance=owner)
+#         if owner_serializer.is_valid():
+#             owner_serializer.save(client=client)
+#             return Response({'Message':'Owner Updated Successfully', 'Status': status.HTTP_200_OK})
+#         return Response(owner_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+#     elif request.method == 'GET':
+#         owner_serializer1 =OwnerSerializer(owner)
+#         return Response(owner_serializer1.data)
+
+
 
 @api_view(['POST','GET'])
 def edit_owner(request, pk, owner_pk):
     client = get_object_or_404(Client, id= pk)
     owner = Owner.objects.get(id = owner_pk)
     if request.method == 'POST':
-        owner_serializer = OwnerSerializer(data=request.data, instance=owner)
+        owner_serializer = OwnerSerializer(data=request.data, instance = owner)
         if owner_serializer.is_valid():
+            # Calculate total shares assigned to the client so far
+            total_shares = Owner.objects.filter(client=client).aggregate(
+                total_share=Coalesce(Sum(F('share')), 0)
+            )['total_share']
+            
+            # Calculate remaining shares
+            remaining_shares = 100 - total_shares
+
+            input_share = owner.share
+            
+            a = input_share + remaining_shares
+            # New share value from the current request
+            new_share = owner_serializer.validated_data['share']
+            # new_share = 0
+
+            if new_share > a:
+                # If entered shares are greater than the remaining shares, return an error
+                return Response({
+                    'error': f'Cannot assign {new_share}%. Only {a}% is left for assigning.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Save the new owner
             owner_serializer.save(client=client)
-            return Response({'Message':'Owner Updated'})
+
+            remaining_shares = a - new_share
+            return Response({'Message':'Owner Updated Successfully', 'remaining_shares': remaining_shares}, status=status.HTTP_200_OK)
+            # return Response({'Message':'Owner Updated Successfully', 'Status': status.HTTP_200_OK, 'remaining shares' : c})
         return Response(owner_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
     elif request.method == 'GET':
         owner_serializer1 =OwnerSerializer(owner)
@@ -432,7 +570,7 @@ def delete_owner(request, pk, owner_pk):
         # for loop for providing the remainig shares left
         total_shares = sum([owner.share for owner in Owner.objects.all()])
         remaining_shares = 100 - total_shares
-        return Response({'message': f'Owner is deleted.{owner_share}% share is added back. Avaliable shares: {remaining_shares}%'}, status=status.HTTP_200_OK)
+        return Response({'Message': f'Owner is deleted.{owner_share}% share is added back. Avaliable shares: {remaining_shares}%'}, status=status.HTTP_200_OK)
     except :
         return Response('Owner not found',status=status.HTTP_400_BAD_REQUEST )
 
@@ -2778,8 +2916,8 @@ def create_purchase_invoice2(request, client_pk):
             "tcs": payload.get("invoiceData[0][tcs]"),
             "tds": payload.get("invoiceData[0][tds]"),
             "amount_receivable": payload.get("invoiceData[0][amount_receivable]"),
-            "utilise_edit": payload.get("invoiceData[0][utilise_edit]", "").lower() == "true", #nnnn
-            "utilise_month": payload.get("invoiceData[0][utilise_month]").lower(), #nnnnnn
+            # "utilise_edit": payload.get("invoiceData[0][utilise_edit]", "").lower() == "true", #nnnn
+            # "utilise_month": payload.get("invoiceData[0][utilise_month]").lower(), #nnnnnn
             
         }
         attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
@@ -3186,6 +3324,350 @@ def get_debit_note_data(request, client_pk, invoice_pk, debit_pk):
     }
 
     return Response(response_data, status=status.HTTP_200_OK)
+
+# @api_view(['GET', 'PUT'])
+# def update_debit_note(request, client_pk, invoice_pk):
+
+#     try:
+#         # Handle GET request
+#         if request.method == 'GET':
+#             debit_note = SalesInvoice.objects.filter(client_id=client_pk,  id=invoice_pk).first()
+#             if not debit_note:
+#                 return Response({"error": "Debit Note not found."}, status=status.HTTP_404_NOT_FOUND)
+
+#             debit_note_data = SalesSerializer3(debit_note).data
+            
+#             print('debitnote',debit_note_data)
+
+#             product_summaries = debit_note.product_summaries.all()
+#             product_summary_data = [
+#                 {
+#                     "id": summary.id,
+#                     "hsnCode": summary.hsn.hsn_code,
+#                     "gstRate": summary.hsn.gst_rate,
+#                     "product": summary.product.product_name,
+#                     "description": summary.prod_description.description,
+#                     # "unit": summary.prod_description.unit,
+#                     "rate": summary.prod_description.rate,
+#                     "product_amount": summary.prod_description.product_amount,
+#                     "cgst": summary.prod_description.cgst,
+#                     "sgst": summary.prod_description.sgst,
+#                     "igst": summary.prod_description.igst,
+#                 }
+#                 for summary in product_summaries
+#             ]
+
+#             response_data = {
+#                 "debit_note": debit_note_data,
+#                 "product_summaries": product_summary_data,
+#                 "client_location": {
+#                     "id": debit_note.client_Location.id if debit_note.client_Location else None,
+#                     "location": debit_note.client_Location.location if debit_note.client_Location else None,
+#                     "contact": debit_note.client_Location.contact if debit_note.client_Location else None,
+#                     "address": debit_note.client_Location.address if debit_note.client_Location else None,
+#                     "city": debit_note.client_Location.city if debit_note.client_Location else None,
+#                     "state": debit_note.client_Location.state if debit_note.client_Location else None,
+#                     "country": debit_note.client_Location.country if debit_note.client_Location else None,
+#                     "branchID": debit_note.client_Location.branch.id if debit_note.client_Location else None,
+#                 },
+#                 "customer": {
+#                     "id": debit_note.customer.id if debit_note.customer else None,
+#                     "name": debit_note.customer.name if debit_note.customer else None,
+#                     "gst_no": debit_note.customer.gst_no if debit_note.customer else None,
+#                     "pan": debit_note.customer.pan if debit_note.customer else None,
+#                     "customer_address": debit_note.customer.address if debit_note.customer else None,
+#                     "customer": debit_note.customer.customer if debit_note.customer else None,
+#                     "vendor": debit_note.customer.vendor if debit_note.customer else None,
+#                 },
+#             }
+#             # print('bbbbbbbbbbbbbbbbbbbbbbb',response_data["debit_note"])
+#             return Response(response_data, status=status.HTTP_200_OK)
+
+#         # Handle PUT request
+#         elif request.method == 'PUT':
+#             print('youuuuuuuuu',request.FILES)
+#             debit_note = DebitNote.objects.filter(client_id=client_pk, id=invoice_pk).first()
+#             if not debit_note:
+#                 return Response({"error": "Debit Note not found."}, status=status.HTTP_404_NOT_FOUND)
+
+#             # Extract data from the request
+#             # form_data = request.data.get('formData', {})
+#             # vendor_data = request.data.get('vendorData', {})
+#             # rows = request.data.get('rows', [])
+#             payload = request.data
+
+#             # Container to hold rows
+#             rows_data = defaultdict(dict)
+
+#             # Iterate over keys dynamically
+#             for key, value in payload.items():
+#                 if key.startswith("rows["):  # Check if the key corresponds to rows
+#                     # Extract the row index and field name
+#                     row_index = key.split('[')[1].split(']')[0]  # Get the index (e.g., '0', '1', '2')
+#                     field_name = key.split('[')[2].split(']')[0]  # Get the field name (e.g., 'product')
+
+#                     # Store the value in the corresponding row and field
+#                     rows_data[int(row_index)][field_name] = value
+
+#             # Convert defaultdict to a regular list for easier use
+#             rows = [rows_data[index] for index in sorted(rows_data.keys())]
+
+#             # Output the rows data
+#             print(rows)
+
+#             invoice_data = request.data.get('invoiceData', [{}])[0]  # Extract the first item
+#             invoice_file = request.data.get('invoice_file')
+#             print('invoice_file',invoice_data)
+#             form_data = {
+#                 "offLocID": request.data.get("formData[offLocID]"),
+#                 "location": request.data.get("formData[location]"),
+#                 "contact": request.data.get("formData[contact]"),
+#                 "address": request.data.get("formData[address]"),
+#                 "city": request.data.get("formData[city]"),
+#                 "state": request.data.get("formData[state]"),
+#                 "country": request.data.get("formData[country]"),
+#                 "branchID": request.data.get("formData[branchID]"),
+#             }
+#             vendor_data = {
+#                 "name": request.data.get("vendorData[name]"),
+#                 "gst_no": request.data.get("vendorData[gst_no]"),
+#                 "pan": request.data.get("vendorData[pan]"),
+#                 "customer_address": request.data.get("vendorData[customer_address]"),
+#                 "customer": request.data.get("vendorData[customer]").lower() == "true" if request.data.get("vendorData[customer]") else None,
+#                 "vendor": request.data.get("vendorData[vendor]").lower() == "true" if request.data.get("vendorData[vendor]") else None,
+#             }
+#             # Access invoice_data in a similar way
+#             invoice_data = {
+#                 "invoice_no": request.data.get("invoiceData[0][invoice_no]"),
+#                 "invoice_date": request.data.get("invoiceData[0][invoice_date]"),
+#                 "month": request.data.get("invoiceData[0][month]"),
+#                 "invoice_type": request.data.get("invoiceData[0][invoice_type]"),
+#                 "entry_type": request.data.get("invoiceData[0][entry_type]"),
+#                 "taxable_amount": request.data.get("invoiceData[0][taxable_amount]"),
+#                 "totalall_gst": request.data.get("invoiceData[0][totalall_gst]"),
+#                 "total_invoice_value": request.data.get("invoiceData[0][total_invoice_value]"),
+#                 "tds_tcs_rate": request.data.get("invoiceData[0][tds_tcs_rate]"),
+#                 "tcs": request.data.get("invoiceData[0][tcs]"),
+#                 "tds": request.data.get("invoiceData[0][tds]"),
+#                 "amount_receivable": request.data.get("invoiceData[0][amount_receivable]"),
+#                 "attach_invoice": request.data.get("invoiceData[0][attach_invoice]"),
+#                 "attach_e_way_bill": request.data.get("invoiceData[0][attach_e_way_bill]"),
+#             }
+
+#             attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
+#             attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
+#                         # Update the sales_invoice instance fields
+#             if attach_invoice:
+#                 debit_note.attach_invoice = attach_invoice
+
+#             if attach_e_way_bill:
+#                 debit_note.attach_e_way_bill = attach_e_way_bill
+
+#             for field, value in invoice_data.items():
+#                 if field not in ['attach_invoice', 'attach_e_way_bill']:  # Skip file fields
+#                     if hasattr(debit_note, field):
+#                         setattr(
+#                             debit_note,
+#                             field,
+#                             safe_decimal(value) if field in [
+#                                 'taxable_amount', 'totalall_gst', 'total_invoice_value',
+#                                 'tds_tcs_rate', 'tds', 'tcs', 'amount_receivable'
+#                             ] else value
+#                         )
+
+
+#             attach_invoice = invoice_data.get('attach_invoice')
+#             print('uoiuoiuiuiuiuio',attach_invoice)
+#              # Log the flattened data
+#             # print("Flattened form_data:", form_data)
+#             print("Flattened invoice_data:", invoice_data)
+
+#             print('request payload',request.data)
+#             # print('form_data',form_data)
+#             # Update invoice file
+#             if invoice_file:
+#                 debit_note.invoice_file = invoice_file
+#                 debit_note.save()
+#                 return Response({"message": "Invoice file uploaded successfully."}, status=status.HTTP_200_OK)
+
+#             # Update or create client location
+#             # Update or create client location
+#             # Update or create client location
+#             # Update or create client location
+#             # Handle Office Location updates or creation
+#             location_data = form_data.get('location')  # Location name entered by user
+#             location_id = form_data.get('offLocID')   # Existing location ID, if provided
+#             branch_id = form_data.get('branchID')     # Branch ID selected for new location
+
+#             if location_id:  # Update existing location
+#                 # Fetch the existing location
+#                 location_obj = OfficeLocation.objects.filter(id=location_id).first()
+#                 if not location_obj:
+#                     return Response({"error": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+
+#                 # Update the location details
+#                 location_obj.location = location_data
+#                 location_obj.contact = form_data.get('contact')
+#                 location_obj.address = form_data.get('address')
+#                 location_obj.city = form_data.get('city')
+#                 location_obj.state = form_data.get('state')
+#                 location_obj.country = form_data.get('country')
+#                 location_obj.save()
+
+#             else:  # Create a new location
+#                 # Validate branch selection
+#                 if not branch_id:
+#                     return Response({"error": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
+
+#                 branch_instance = Branch.objects.filter(id=branch_id, client_id=debit_note.client.id).first()
+#                 if not branch_instance:
+#                     return Response({"error": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
+#                                     status=status.HTTP_404_NOT_FOUND)
+
+#                 # Create the new location
+#                 location_obj = OfficeLocation.objects.create(
+#                     location=location_data,
+#                     contact=form_data.get('contact'),
+#                     address=form_data.get('address'),
+#                     city=form_data.get('city'),
+#                     state=form_data.get('state'),
+#                     country=form_data.get('country'),
+#                     branch=branch_instance  # Associate with the selected branch
+#                 )
+
+#             # Associate the updated or newly created location with the sales invoice
+#             debit_note.client_Location = location_obj
+#             debit_note.save()
+#                         # Update or create vendor
+#             # Update or create vendor
+#             # Update or create vendor (Customer)
+#             if vendor_data:
+#                 # Check for 'customer_address' in vendor data and map it to 'address'
+#                 if 'customer_address' in vendor_data:
+#                     vendor_data['address'] = vendor_data.pop('customer_address')  # Replace 'customer_address' with 'address'
+
+#                 vendor_id = request.data.get("vendorData[vendorID]")  # Retrieve vendorID if provided
+
+#                 if vendor_id:  # If vendorID is provided
+#                     # Fetch the existing vendor
+#                     vendor_obj = Customer.objects.filter(id=vendor_id).first()
+#                     if vendor_obj:
+#                         # Check if the gst_no is being changed
+#                         if vendor_obj.gst_no == vendor_data.get("gst_no"):
+#                             # Update the vendor if gst_no is unchanged
+#                             vendor_serializer = CustomerVendorSerializer(vendor_obj, data=vendor_data, partial=True)
+#                             if vendor_serializer.is_valid():
+#                                 vendor_serializer.save()
+#                             else:
+#                                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+#                         else:
+#                             # Create a new vendor if gst_no is changed
+#                             vendor_serializer = CustomerVendorSerializer(data=vendor_data)
+#                             if vendor_serializer.is_valid():
+#                                 vendor_obj = vendor_serializer.save(client=debit_note.client)
+#                             else:
+#                                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+#                     else:
+#                         return Response({"error": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+#                 else:
+#                     # If no vendorID is provided, check if a vendor exists with the same gst_no for this client
+#                     existing_vendor = Customer.objects.filter(client=debit_note.client, gst_no=vendor_data.get("gst_no")).first()
+#                     if existing_vendor:
+#                         # Update the existing vendor with the same gst_no
+#                         vendor_obj = existing_vendor
+#                         vendor_serializer = CustomerVendorSerializer(vendor_obj, data=vendor_data, partial=True)
+#                         if vendor_serializer.is_valid():
+#                             vendor_serializer.save()
+#                         else:
+#                             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+#                     else:
+#                         # Create a new vendor since no existing vendor with this gst_no is found
+#                         vendor_serializer = CustomerVendorSerializer(data=vendor_data)
+#                         if vendor_serializer.is_valid():
+#                             vendor_obj = vendor_serializer.save(client=debit_note.client)
+#                         else:
+#                             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+#                 # Assign the updated/created vendor to the sales invoice
+#                 debit_note.customer = vendor_obj
+
+
+#             # Process rows for product summaries
+#             product_summaries = []
+#             for row in rows:
+#                 hsn_code = row.get('hsnCode')
+#                 gst_rate = safe_decimal(row.get('gstRate', '0'))
+#                 product_name = row.get('product')
+#                 description_text = row.get('description')
+#                 unit_value = safe_decimal(row.get('unit', '0'))
+#                 rate_value = safe_decimal(row.get('rate', '0'))
+#                 amount = safe_decimal(row.get('product_amount', '0'))
+#                 cgst = safe_decimal(row.get('cgst', '0'))
+#                 sgst = safe_decimal(row.get('sgst', '0'))
+#                 igst = safe_decimal(row.get('igst', '0'))
+
+#                 # Update or create HSNCode
+#                 hsn_code_obj, _ = HSNCode.objects.update_or_create(
+#                     hsn_code=hsn_code,
+#                     defaults={'gst_rate': gst_rate}
+#                 )
+
+#                 # Update or create Product
+#                 product_obj, _ = Product.objects.update_or_create(
+#                     product_name=product_name,
+#                     hsn=hsn_code_obj,
+#                     defaults={'unit_of_measure': unit_value}
+#                 )
+
+#                 # Update or create ProductDescription
+#                 product_description_obj, _ = ProductDescription.objects.update_or_create(
+#                     product=product_obj,
+#                     description=description_text,
+#                     defaults={
+#                         'unit': unit_value,
+#                         'rate': rate_value,
+#                         'product_amount': amount,
+#                         'cgst': cgst,
+#                         'sgst': sgst,
+#                         'igst': igst
+#                     }
+#                 )
+
+#                 # Update or create ProductSummary
+#                 product_summary, _ = ProductSummaryDebitNote.objects.update_or_create(
+#                     hsn=hsn_code_obj,
+#                     product=product_obj,
+#                     prod_description=product_description_obj
+#                 )
+#                 product_summaries.append(product_summary)
+
+#             # Update sales invoice data
+#             # if invoice_data:
+#             #     for field, value in invoice_data.items():
+#             #         if field != 'client':  # Skip the client field
+#             #             setattr(
+#             #                 sales_invoice,
+#             #                 field,
+#             #                 safe_decimal(value) if field in [
+#             #                     'taxable_amount', 'totalall_gst', 'total_invoice_value',
+#             #                     'tds_tcs_rate', 'tds', 'tcs', 'amount_receivable'
+#             #                 ] else value
+#             #             )
+
+#             debit_note.product_summaries.set(product_summaries)
+#             debit_note.save()
+
+#             response_data = {
+#                 'message': 'Debit Note updated successfully.',
+#                 'debit_note_data': DebitNoteSerializer(debit_note).data,
+#                 'product_summaries': [{'id': summary.id, 'product_name': summary.product.product_name} for summary in product_summaries]
+#             }
+#             return Response(response_data, status=status.HTTP_200_OK)
+
+#     except Exception as e:
+#         print("Error in update_debit_note:", str(e))
+#         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 @api_view(['GET', 'PUT'])
 def update_debit_note(request, client_pk, invoice_pk, debit_pk):
