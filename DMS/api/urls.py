@@ -151,10 +151,10 @@ urlpatterns = [
 # Debit Note
     path('get-debitnote/<int:pk>/', view=create_debit_note_get, name='get-debitnote'),  # Note the trailing slash
     path('create-debitnote/<int:client_pk>/<int:invoice_pk>', view=create_debit_note, name='create-debitnote'),  # Note the trailing slash
-    # path('update-debitnote-post/<int:client_pk>/<int:invoice_pk>', view=update_debit_note, name='create-debit_note'),
-    # path('get-debitnote-invoice/<int:client_pk>/<int:invoice_pk>', view=update_debit_note, name='get-debit_note'),
-    path('update-debitnote-post/<int:client_pk>/<int:invoice_pk>/<int:debit_pk>', view=update_debit_note, name='create-debit_note'),
-    path('get-debitnote-invoice/<int:client_pk>/<int:invoice_pk>/<int:debit_pk>', view=update_debit_note, name='get-debit_note'),
+    path('update-debitnote-post/<int:client_pk>/<int:invoice_pk>', view=create_debit_note2, name='create-debit_note'),
+    path('get-debitnote-invoice/<int:client_pk>/<int:invoice_pk>', view=update_debit_note, name='get-debit_note'),
+    # path('update-debitnote-post/<int:client_pk>/<int:invoice_pk>/<int:debit_pk>', view=update_debit_note, name='create-debit_note'),
+    # path('get-debitnote-invoice/<int:client_pk>/<int:invoice_pk>/<int:debit_pk>', view=update_debit_note, name='get-debit_note'),
     path('create-debitnote-post2/<int:client_pk>/<int:invoice_pk>', view=create_debit_note2, name='create-debit_note2'),
     path('delete-debitnote-invoice/<int:client_pk>/<int:invoice_pk>/<int:pk>', view=delete_debit_note, name='delete-debit_note'),
     path('debitnote-view/<int:client_pk>/<int:invoice_pk>/<int:debit_pk>', view=debit_note_detail_view, name='debit_note-view'),
