@@ -215,6 +215,9 @@ class ProductDescription(models.Model):
     sgst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     igst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
+    class Meta:
+        unique_together = ('product', 'description')
+
     def __str__(self):
         return f"Description for {self.product}"
 

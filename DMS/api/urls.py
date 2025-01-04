@@ -163,8 +163,8 @@ urlpatterns = [
 # Credit Note
     path('get-creditnote/<int:pk>/', view=create_credit_note_get, name='get-creditnote'),  # Note the trailing slash
     path('create-creditnote/<int:client_pk>/<int:invoice_pk>', view=create_credit_note, name='create-creditnote'),  # Note the trailing slash
-    path('update-creditnote-post/<int:client_pk>/<int:invoice_pk>/<int:credit_pk>', view=update_credit_note, name='create-credit_note'),
-    path('get-creditnote-invoice/<int:client_pk>/<int:invoice_pk>/<int:credit_pk>', view=update_credit_note, name='get-credit_note'),
+    path('update-creditnote-post/<int:client_pk>/<int:invoice_pk>', view=update_credit_note, name='create-credit_note'),
+    path('get-creditnote-invoice/<int:client_pk>/<int:invoice_pk>', view=update_credit_note, name='get-credit_note'),
     path('create-creditnote-post2/<int:client_pk>/<int:invoice_pk>', view=create_credit_note2, name='create-credit_note2'),
     path('delete-creditnote-invoice/<int:client_pk>/<int:invoice_pk>/<int:credit_pk>', view=delete_credit_note, name='delete-credit_note'),
     path('creditnote-view/<int:client_pk>/<int:invoice_pk>/<int:credit_pk>', view=credit_note_detail_view, name='credit_note-view'),
@@ -192,8 +192,8 @@ urlpatterns = [
 # Income Debit Note
     path('get-incomedebitnote/<int:pk>/', view=create_income_debit_note_get, name='get-income-debit-note'),  # Note the trailing slash
     path('create-incomedebitnote/<int:client_pk>/<int:income_pk>', view=create_income_debit_note, name='create-income-debit-note'),  # Note the trailing slash
-    path('update-incomedebitnote/<int:client_pk>/<int:income_pk>/<int:debit_pk>', view=update_income_debit_note, name='create-income-debit-note'),
-    path('get-incomedebitnote/<int:client_pk>/<int:income_pk>/<int:debit_pk>', view=update_income_debit_note, name='get-income-debit-note'),
+    path('update-incomedebitnote/<int:client_pk>/<int:income_pk>', view=update_income_debit_note, name='create-income-debit-note'),
+    path('get-incomedebitnote/<int:client_pk>/<int:income_pk>', view=update_income_debit_note, name='get-income-debit-note'),
     path('create-incomedebitnote-post2/<int:client_pk>/<int:income_pk>', view=create_income_debit_note2, name='create-income-debit-note2'),
     path('delete-incomedebitnote/<int:client_pk>/<int:income_pk>/<int:pk>', view=delete_income_debit_note, name='delete-income-debit-note'),
     path('incomedebitnote-view/<int:client_pk>/<int:income_pk>/<int:debit_pk>', view=income_debit_note_detail_view, name='income-debit-note-view'),
@@ -202,8 +202,8 @@ urlpatterns = [
 # Expense Credit Note
     path('get-expensescreditnote/<int:pk>/', view=create_expenses_credit_note_get, name='get-expenses-credit-note'),  # Note the trailing slash
     path('create-expensescreditnote/<int:client_pk>/<int:expenses_pk>', view=create_expenses_credit_note, name='create-expenses-credit-note'),  # Note the trailing slash
-    path('update-expensescreditnote/<int:client_pk>/<int:expenses_pk>/<int:credit_pk>', view=update_expenses_credit_note, name='create-expenses-credit-note'),
-    path('get-expensescreditnote/<int:client_pk>/<int:expenses_pk>/<int:credit_pk>', view=update_expenses_credit_note, name='get-expenses-credit-note'),
+    path('update-expensescreditnote/<int:client_pk>/<int:expenses_pk>', view=update_expenses_credit_note, name='create-expenses-credit-note'),
+    path('get-expensescreditnote/<int:client_pk>/<int:expenses_pk>', view=update_expenses_credit_note, name='get-expenses-credit-note'),
     path('create-expensescreditnote-post2/<int:client_pk>/<int:expenses_pk>', view=create_expenses_credit_note2, name='create-expenses-credit-note2'),
     path('delete-expensescreditnote/<int:client_pk>/<int:expenses_pk>/<int:credit_pk>', view=delete_expenses_credit_note, name='delete-expenses-credit-note'),
     path('expensescreditnote-view/<int:client_pk>/<int:expenses_pk>/<int:credit_pk>', view=expenses_credit_note_detail_view, name='expenses-credit-note-view'),
