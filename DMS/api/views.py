@@ -1692,9 +1692,9 @@ def create_sale(request, pk):
                 return Response({'Error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
-        return Response({'Message': 'Sales E-way bill(s) uploaded successfully.'}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Sales E-way bill(s) uploaded successfully.'}, status=status.HTTP_201_CREATED)
     else:
-        return Response({'Error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # def safe_decimal(value):
@@ -2000,13 +2000,10 @@ def update_sales_invoice(request, client_pk, invoice_pk):
 
                 vendor_id = request.data.get("vendorData[vendorID]")  # Retrieve vendorID if provided
 
-                if vendor_id:  # If vendorID is provided
-                    # Fetch the existing vendor
+                if vendor_id:
                     vendor_obj = Customer.objects.filter(id=vendor_id).first()
                     if vendor_obj:
-                        # Check if the gst_no is being changed
                         if vendor_obj.gst_no == vendor_data.get("gst_no"):
-                            # Update the vendor if gst_no is unchanged
                             vendor_serializer = CustomerVendorSerializer(vendor_obj, data=vendor_data, partial=True)
                             if vendor_serializer.is_valid():
                                 vendor_serializer.save()
@@ -2022,10 +2019,8 @@ def update_sales_invoice(request, client_pk, invoice_pk):
                     else:
                         return Response({"error": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
                 else:
-                    # If no vendorID is provided, check if a vendor exists with the same gst_no for this client
                     existing_vendor = Customer.objects.filter(client=sales_invoice.client, gst_no=vendor_data.get("gst_no")).first()
                     if existing_vendor:
-                        # Update the existing vendor with the same gst_no
                         vendor_obj = existing_vendor
                         vendor_serializer = CustomerVendorSerializer(vendor_obj, data=vendor_data, partial=True)
                         if vendor_serializer.is_valid():
@@ -2033,15 +2028,60 @@ def update_sales_invoice(request, client_pk, invoice_pk):
                         else:
                             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
                     else:
-                        # Create a new vendor since no existing vendor with this gst_no is found
                         vendor_serializer = CustomerVendorSerializer(data=vendor_data)
                         if vendor_serializer.is_valid():
                             vendor_obj = vendor_serializer.save(client=sales_invoice.client)
                         else:
                             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Assign vendor_obj to expenses.vendor if defined
+                if vendor_obj:
+                    sales_invoice.customer = vendor_obj
 
-                # Assign the updated/created vendor to the sales invoice
-                sales_invoice.customer = vendor_obj
+            
+
+                # if vendor_id:  # If vendorID is provided
+                #     # Fetch the existing vendor
+                #     vendor_obj = Customer.objects.filter(id=vendor_id).first()
+                #     if vendor_obj:
+                #         # Check if the gst_no is being changed
+                #         if vendor_obj.gst_no == vendor_data.get("gst_no"):
+                #             # Update the vendor if gst_no is unchanged
+                #             vendor_serializer = CustomerVendorSerializer(vendor_obj, data=vendor_data, partial=True)
+                #             if vendor_serializer.is_valid():
+                #                 vendor_serializer.save()
+                #             else:
+                #                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                #         else:
+                #             # Create a new vendor if gst_no is changed
+                #             vendor_serializer = CustomerVendorSerializer(data=vendor_data)
+                #             if vendor_serializer.is_valid():
+                #                 vendor_obj = vendor_serializer.save(client=sales_invoice.client)
+                #             else:
+                #                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                #     else:
+                #         return Response({"error": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                # else:
+                #     # If no vendorID is provided, check if a vendor exists with the same gst_no for this client
+                #     existing_vendor = Customer.objects.filter(client=sales_invoice.client, gst_no=vendor_data.get("gst_no")).first()
+                #     if existing_vendor:
+                #         # Update the existing vendor with the same gst_no
+                #         vendor_obj = existing_vendor
+                #         vendor_serializer = CustomerVendorSerializer(vendor_obj, data=vendor_data, partial=True)
+                #         if vendor_serializer.is_valid():
+                #             vendor_serializer.save()
+                #         else:
+                #             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                #     else:
+                #         # Create a new vendor since no existing vendor with this gst_no is found
+                #         vendor_serializer = CustomerVendorSerializer(data=vendor_data)
+                #         if vendor_serializer.is_valid():
+                #             vendor_obj = vendor_serializer.save(client=sales_invoice.client)
+                #         else:
+                #             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+                # # Assign the updated/created vendor to the sales invoice
+                # sales_invoice.customer = vendor_obj
 
             # Process rows for product summaries
             product_summaries = []
@@ -2519,7 +2559,7 @@ def create_purchase(request, pk):
                 return Response({'Error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
-        return Response({'Message': 'Purchase E-way bill(s) uploaded successfully.'}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Purchase E-way bill(s) uploaded successfully.'}, status=status.HTTP_201_CREATED)
     else:
         return Response({'Error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -2767,7 +2807,7 @@ def update_purchase_invoice(request, client_pk, invoice_pk):
                     vendor_data['address'] = vendor_data.pop('vendor_address')
                     
                 vendor_id = request.data.get("vendorData[vendorID]")
-                
+
                 if vendor_id:
                     vendor_obj = Customer.objects.filter(id=vendor_id).first()
                     if vendor_obj:
@@ -2787,21 +2827,59 @@ def update_purchase_invoice(request, client_pk, invoice_pk):
                     else:
                         return Response({"error": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
                 else:
-                    existing_vendor = Customer.objects.filter(client=purchase_invoice.client,  gst_no=vendor_data.get("gst_no")).first()
+                    existing_vendor = Customer.objects.filter(client=purchase_invoice.client, gst_no=vendor_data.get("gst_no")).first()
                     if existing_vendor:
                         vendor_obj = existing_vendor
-                        vendor_serializer = CustomerVendorSerializer(vendor_obj, data= vendor_data, partial = True)
+                        vendor_serializer = CustomerVendorSerializer(vendor_obj, data=vendor_data, partial=True)
                         if vendor_serializer.is_valid():
                             vendor_serializer.save()
-                        else: 
+                        else:
                             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
                     else:
                         vendor_serializer = CustomerVendorSerializer(data=vendor_data)
                         if vendor_serializer.is_valid():
-                            vendor_serializer.save()
-                        else: 
+                            vendor_obj = vendor_serializer.save(client=purchase_invoice.client)
+                        else:
                             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-                purchase_invoice.vendor = vendor_obj
+                
+                # Assign vendor_obj to expenses.vendor if defined
+                if vendor_obj:
+                    purchase_invoice.vendor = vendor_obj
+                
+                # if vendor_id:
+                #     vendor_obj = Customer.objects.filter(id=vendor_id).first()
+                #     if vendor_obj:
+                #         if vendor_obj.gst_no == vendor_data.get("gst_no"):
+                #             vendor_serializer = CustomerVendorSerializer(vendor_obj, data=vendor_data, partial=True)
+                #             if vendor_serializer.is_valid():
+                #                 vendor_serializer.save()
+                #             else:
+                #                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                #         else:
+                #             # Create a new vendor if gst_no is changed
+                #             vendor_serializer = CustomerVendorSerializer(data=vendor_data)
+                #             if vendor_serializer.is_valid():
+                #                 vendor_obj = vendor_serializer.save(client=purchase_invoice.client)
+                #             else:
+                #                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                #     else:
+                #         return Response({"error": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                # else:
+                #     existing_vendor = Customer.objects.filter(client=purchase_invoice.client,  gst_no=vendor_data.get("gst_no")).first()
+                #     if existing_vendor:
+                #         vendor_obj = existing_vendor
+                #         vendor_serializer = CustomerVendorSerializer(vendor_obj, data= vendor_data, partial = True)
+                #         if vendor_serializer.is_valid():
+                #             vendor_serializer.save()
+                #         else: 
+                #             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                #     else:
+                #         vendor_serializer = CustomerVendorSerializer(data=vendor_data)
+                #         if vendor_serializer.is_valid():
+                #             vendor_serializer.save()
+                #         else: 
+                #             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                # purchase_invoice.vendor = vendor_obj
             
             product_summaries = []
             for row in rows:
@@ -3026,7 +3104,7 @@ def create_purchase_invoice2(request, client_pk):
             # Link ProductSummary to the SalesInvoice
             purchase_invoice.product_summaries.add(product_summary)  # Add the product summary to the invoice
 
-        return Response({"message": "Sales Invoice created successfully.", "invoice_id": purchase_invoice.id}, status=status.HTTP_201_CREATED)
+        return Response({"message": "Purchase Invoice created successfully.", "invoice_id": purchase_invoice.id}, status=status.HTTP_201_CREATED)
 
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -3252,7 +3330,7 @@ def create_debit_note(request, client_pk, invoice_pk):
                 return Response({'Error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
-        return Response({'Message': 'Debit Note E-way bill(s) uploa ded successfully.'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Debit Note E-way bill(s) uploaded successfully.'}, status=status.HTTP_200_OK)
     else:
         return Response({'Error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -4969,7 +5047,7 @@ def create_credit_note(request, client_pk, invoice_pk):
                 return Response({'Error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
-        return Response({'Message': 'Credit Note E-way bill(s) uploa ded successfully.'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Credit Note E-way bill(s) uploa ded successfully.'}, status=status.HTTP_200_OK)
     else:
         return Response({'Error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -5560,7 +5638,7 @@ def create_income(request, pk):
                 return Response({'Error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
-        return Response({'Message': 'Income E-way bill(s) uploaded successfully.'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Income E-way bill(s) uploaded successfully.'}, status=status.HTTP_200_OK)
     else:
         return Response({'Error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -5789,13 +5867,10 @@ def update_income(request, client_pk, invoice_pk):
 
                 vendor_id = request.data.get("vendorData[vendorID]")  # Retrieve vendorID if provided
 
-                if vendor_id:  # If vendorID is provided
-                    # Fetch the existing vendor
+                if vendor_id:
                     vendor_obj = Customer.objects.filter(id=vendor_id).first()
                     if vendor_obj:
-                        # Check if the gst_no is being changed
                         if vendor_obj.gst_no == vendor_data.get("gst_no"):
-                            # Update the vendor if gst_no is unchanged
                             vendor_serializer = CustomerVendorSerializer(vendor_obj, data=vendor_data, partial=True)
                             if vendor_serializer.is_valid():
                                 vendor_serializer.save()
@@ -5811,10 +5886,8 @@ def update_income(request, client_pk, invoice_pk):
                     else:
                         return Response({"error": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
                 else:
-                    # If no vendorID is provided, check if a vendor exists with the same gst_no for this client
                     existing_vendor = Customer.objects.filter(client=income.client, gst_no=vendor_data.get("gst_no")).first()
                     if existing_vendor:
-                        # Update the existing vendor with the same gst_no
                         vendor_obj = existing_vendor
                         vendor_serializer = CustomerVendorSerializer(vendor_obj, data=vendor_data, partial=True)
                         if vendor_serializer.is_valid():
@@ -5822,15 +5895,61 @@ def update_income(request, client_pk, invoice_pk):
                         else:
                             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
                     else:
-                        # Create a new vendor since no existing vendor with this gst_no is found
                         vendor_serializer = CustomerVendorSerializer(data=vendor_data)
                         if vendor_serializer.is_valid():
                             vendor_obj = vendor_serializer.save(client=income.client)
                         else:
                             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Assign vendor_obj to income.vendor if defined
+                if vendor_obj:
+                    income.customer = vendor_obj
+                        
 
-                # Assign the updated/created vendor to the sales invoice
-                income.customer = vendor_obj
+                
+
+                # if vendor_id:  # If vendorID is provided
+                #     # Fetch the existing vendor
+                #     vendor_obj = Customer.objects.filter(id=vendor_id).first()
+                #     if vendor_obj:
+                #         # Check if the gst_no is being changed
+                #         if vendor_obj.gst_no == vendor_data.get("gst_no"):
+                #             # Update the vendor if gst_no is unchanged
+                #             vendor_serializer = CustomerVendorSerializer(vendor_obj, data=vendor_data, partial=True)
+                #             if vendor_serializer.is_valid():
+                #                 vendor_serializer.save()
+                #             else:
+                #                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                #         else:
+                #             # Create a new vendor if gst_no is changed
+                #             vendor_serializer = CustomerVendorSerializer(data=vendor_data)
+                #             if vendor_serializer.is_valid():
+                #                 vendor_obj = vendor_serializer.save(client=income.client)
+                #             else:
+                #                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                #     else:
+                #         return Response({"error": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                # else:
+                #     # If no vendorID is provided, check if a vendor exists with the same gst_no for this client
+                #     existing_vendor = Customer.objects.filter(client=income.client, gst_no=vendor_data.get("gst_no")).first()
+                #     if existing_vendor:
+                #         # Update the existing vendor with the same gst_no
+                #         vendor_obj = existing_vendor
+                #         vendor_serializer = CustomerVendorSerializer(vendor_obj, data=vendor_data, partial=True)
+                #         if vendor_serializer.is_valid():
+                #             vendor_serializer.save()
+                #         else:
+                #             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                #     else:
+                #         # Create a new vendor since no existing vendor with this gst_no is found
+                #         vendor_serializer = CustomerVendorSerializer(data=vendor_data)
+                #         if vendor_serializer.is_valid():
+                #             vendor_obj = vendor_serializer.save(client=income.client)
+                #         else:
+                #             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+                # # Assign the updated/created vendor to the sales invoice
+                # income.customer = vendor_obj
 
             # Process rows for product summaries
             product_summaries = []
@@ -6300,7 +6419,7 @@ def create_expenses(request, pk):
                 return Response({'Error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
-        return Response({'Message': 'Expenses E-way bill(s) uploaded successfully.'}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Expenses E-way bill(s) uploaded successfully.'}, status=status.HTTP_201_CREATED)
     else:
         return Response({'Error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -6944,7 +7063,7 @@ def create_zipupload(request, pk):
                 return Response({'Error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
-        return Response({'Message': 'Zip Files uploaded successfully.'}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Zip Files uploaded successfully.'}, status=status.HTTP_201_CREATED)
     else:
         return Response({'Error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -7078,7 +7197,7 @@ def create_income_debit_note(request, client_pk, income_pk):
                 return Response({'Error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
-        return Response({'Message': 'Debit Note E-way bill(s) uploaded successfully.'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Debit Note E-way bill(s) uploaded successfully.'}, status=status.HTTP_200_OK)
     else:
         return Response({'Error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
     
