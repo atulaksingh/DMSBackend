@@ -200,10 +200,10 @@ class Product(models.Model):
 
     def __str__(self):
         return self.product_name
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['product_name', 'hsn'], name='unique_product_hsn')
-        ]
+    # class Meta:
+    #     constraints = [
+    #         models.UniqueConstraint(fields=['product_name', 'hsn'], name='unique_product_hsn')
+    #     ]
 
 class ProductDescription(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
@@ -215,8 +215,8 @@ class ProductDescription(models.Model):
     sgst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     igst = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
-    class Meta:
-        unique_together = ('product', 'description')
+    # class Meta:
+    #     unique_together = ('product', 'description')
 
     def __str__(self):
         return f"Description for {self.product}"

@@ -5398,6 +5398,8 @@ def update_credit_note(request, client_pk, invoice_pk):
                             
                         credit_note.save()
                     return Response({"message": "Credit Note created successfully."}, status=status.HTTP_200_OK)
+                else: 
+                    return Response({"message": credit_note_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     except Exception as e:
         print("Error in update_credit_note:", str(e))
