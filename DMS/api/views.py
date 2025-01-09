@@ -3650,7 +3650,7 @@ def update_debit_note(request, client_pk, invoice_pk):
                         if not branch_instance:
                             return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
                                             status=status.HTTP_404_NOT_FOUND)
-                        location_obj = OfficeLocation.objects.create(
+                        location_obj, _ = OfficeLocation.objects.get_or_create(
                             location=form_data.get("location"),
                             contact=form_data.get("contact"),
                             address=form_data.get("address"),
@@ -5305,7 +5305,7 @@ def update_credit_note(request, client_pk, invoice_pk):
                         if not branch_instance:
                             return Response({"message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
                                             status=status.HTTP_404_NOT_FOUND)
-                        location_obj = OfficeLocation.objects.create(
+                        location_obj, _ = OfficeLocation.objects.get_or_create(
                             location=form_data.get("location"),
                             contact=form_data.get("contact"),
                             address=form_data.get("address"),
@@ -7864,7 +7864,7 @@ def update_income_debit_note(request, client_pk, income_pk):
                         if not branch_instance:
                             return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
                                             status=status.HTTP_404_NOT_FOUND)
-                        location_obj = OfficeLocation.objects.create(
+                        location_obj, _ = OfficeLocation.objects.get_or_create(
                             location=form_data.get("location"),
                             contact=form_data.get("contact"),
                             address=form_data.get("address"),
@@ -9169,7 +9169,7 @@ def update_expenses_credit_note(request, client_pk, expenses_pk):
                         if not branch_instance:
                             return Response({"message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
                                             status=status.HTTP_404_NOT_FOUND)
-                        location_obj = OfficeLocation.objects.create(
+                        location_obj, _ = OfficeLocation.objects.get_or_create(
                             location=form_data.get("location"),
                             contact=form_data.get("contact"),
                             address=form_data.get("address"),
