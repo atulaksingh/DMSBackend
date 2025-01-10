@@ -173,7 +173,7 @@ def edit_client(request, pk):
     try:
         client = Client.objects.get(id=pk)
     except Client.DoesNotExist:
-        return Response({"error": "Client not found"}, status=404)
+        return Response({"error_message": "Client not found"}, status=404)
 
     # Handle GET request: Retrieve the client and pre-populate the frontend form
     if request.method == 'GET':
@@ -1179,7 +1179,7 @@ class ExcelImportView(APIView):
         try:
             client = Client.objects.get(pk=pk)
         except Client.DoesNotExist:
-            return Response({"error": "Client not found"}, status=404)
+            return Response({"error_message": "Client not found"}, status=404)
 
         file = request.FILES['file']
 
@@ -1805,7 +1805,7 @@ def create_sales_get(request, pk):
     try:
         client = Client.objects.get(id=pk)
     except Client.DoesNotExist:
-        return Response({"error": "Client not found."}, status=404)
+        return Response({"error_message": "Client not found."}, status=404)
 
     if request.method == 'GET':
         # Initialize response context with default values
@@ -1831,7 +1831,7 @@ def create_sales_get(request, pk):
                     "hsn": HSNSerializer(hsn_cc).data
                 })
             except (ValueError, Product.DoesNotExist):
-                return Response({"error": "Invalid Product ID."}, status=400)
+                return Response({"error_message": "Invalid Product ID."}, status=400)
 
         # Process received_value if it exists
         if received_value:
@@ -1846,7 +1846,7 @@ def create_sales_get(request, pk):
                     "branch_gst": branch_gst
                 })
             except (ValueError, OfficeLocation.DoesNotExist):
-                return Response({"error": "Invalid location ID."}, status=400)
+                return Response({"error_message": "Invalid location ID."}, status=400)
 
         # Add data only if productID and received_value were not provided
         if not product_id and not received_value:
@@ -1891,7 +1891,7 @@ def create_sale(request, pk):
                 # Save each file as a separate object
                 serializer.save()
             else:
-                return Response({'Error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
         return Response({'message': 'Sales E-way bill(s) uploaded successfully.'}, status=status.HTTP_201_CREATED)
@@ -1915,7 +1915,7 @@ def get_sales_invoice_data(request, client_pk, invoice_pk):
     sales_invoice = SalesInvoice.objects.filter(client_id=client_pk, id=invoice_pk).first()
 
     if not sales_invoice:
-        return Response({"error": "Sales Invoice not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error_message": "Sales Invoice not found."}, status=status.HTTP_404_NOT_FOUND)
 
     # Serialize the sales invoice
     sales_invoice_data = SalesSerializer3(sales_invoice).data
@@ -1986,7 +1986,7 @@ def update_sales_invoice(request, client_pk, invoice_pk):
         if request.method == 'GET':
             sales_invoice = SalesInvoice.objects.filter(client_id=client_pk, id=invoice_pk).first()
             if not sales_invoice:
-                return Response({"error": "Sales Invoice not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error_message": "Sales Invoice not found."}, status=status.HTTP_404_NOT_FOUND)
 
             sales_invoice_data = SalesSerializer3(sales_invoice).data
             
@@ -2041,7 +2041,7 @@ def update_sales_invoice(request, client_pk, invoice_pk):
             print('youuuuuuuuu',request.FILES)
             sales_invoice = SalesInvoice.objects.filter(client_id=client_pk, id=invoice_pk).first()
             if not sales_invoice:
-                return Response({"error": "Sales Invoice not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error_message": "Sales Invoice not found."}, status=status.HTTP_404_NOT_FOUND)
 
             # Extract data from the request
             # form_data = request.data.get('formData', {})
@@ -2157,7 +2157,7 @@ def update_sales_invoice(request, client_pk, invoice_pk):
                 # Fetch the existing location
                 location_obj = OfficeLocation.objects.filter(id=location_id).first()
                 if not location_obj:
-                    return Response({"error": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+                    return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
 
                 # Update the location details
                 location_obj.location = location_data
@@ -2171,11 +2171,11 @@ def update_sales_invoice(request, client_pk, invoice_pk):
             else:  # Create a new location
                 # Validate branch selection
                 if not branch_id:
-                    return Response({"error": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"error_message": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
 
                 branch_instance = Branch.objects.filter(id=branch_id, client_id=sales_invoice.client.id).first()
                 if not branch_instance:
-                    return Response({"error": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
+                    return Response({"error_message": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
                                     status=status.HTTP_404_NOT_FOUND)
 
                 # Create the new location
@@ -2219,7 +2219,7 @@ def update_sales_invoice(request, client_pk, invoice_pk):
                             else:
                                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
                     else:
-                        return Response({"error": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                        return Response({"error_message": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
                 else:
                     existing_vendor = Customer.objects.filter(client=sales_invoice.client, gst_no=vendor_data.get("gst_no")).first()
                     if existing_vendor:
@@ -2262,7 +2262,7 @@ def update_sales_invoice(request, client_pk, invoice_pk):
                 #             else:
                 #                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
                 #     else:
-                #         return Response({"error": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                #         return Response({"error_message": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
                 # else:
                 #     # If no vendorID is provided, check if a vendor exists with the same gst_no for this client
                 #     existing_vendor = Customer.objects.filter(client=sales_invoice.client, gst_no=vendor_data.get("gst_no")).first()
@@ -2360,7 +2360,7 @@ def update_sales_invoice(request, client_pk, invoice_pk):
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # from decimal import Decimal, InvalidOperation
 # # Helper function to safely convert to Decimal
@@ -2433,11 +2433,11 @@ def create_sales_invoice2(request, client_pk):
         if form_data["offLocID"]:
             location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
             if not location_obj:
-                return Response({"error": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
         else:
             branch_instance = Branch.objects.filter(id=form_data["branchID"], client_id=client_pk).first()
             if not branch_instance:
-                return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+                return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
                                 status=status.HTTP_404_NOT_FOUND)
             location_obj = OfficeLocation.objects.create(
                 location=form_data.get("location"),
@@ -2503,7 +2503,7 @@ def create_sales_invoice2(request, client_pk):
                 # Use existing product
                 product_obj = Product.objects.filter(id=product_id).first()
                 if not product_obj:
-                    return Response({"error": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                    return Response({"error_message": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
             else:
                 # Create new product
                 product_obj, _ = Product.objects.get_or_create(
@@ -2538,11 +2538,11 @@ def create_sales_invoice2(request, client_pk):
         return Response({"message": "Sales Invoice created successfully.", "invoice_id": sales_invoice.id}, status=status.HTTP_200_OK)
 
     # except Exception as e:
-    #     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     
     
@@ -2556,13 +2556,13 @@ def delete_sales_invoice(request, client_pk, pk):
         client = Client.objects.filter(id=client_pk).first()
 
         if not client:
-            return Response({"error": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Retrieve the SalesInvoice instance
         sales_invoice = SalesInvoice.objects.filter(id=pk, client=client).first()
 
         if not sales_invoice:
-            return Response({"error": "Sales Invoice not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Sales Invoice not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Handle deletion of associated ProductSummary instances
         product_summaries = sales_invoice.product_summaries.all()
@@ -2577,7 +2577,7 @@ def delete_sales_invoice(request, client_pk, pk):
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET', 'PATCH'])
@@ -2586,7 +2586,7 @@ def sales_invoice_detail_view(request, client_pk, invoice_pk):
         # Fetch the sales invoice object
         sales_invoice = SalesInvoice.objects.get(client=client_pk, pk=invoice_pk)
     except SalesInvoice.DoesNotExist:
-        return Response({"error": "Sales invoice not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error_message": "Sales invoice not found."}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
         # Serialize and return the sales invoice details
@@ -2768,12 +2768,12 @@ def create_purchase(request, pk):
                 # Save each file as a separate object
                 serializer.save()
             else:
-                return Response({'Error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
         return Response({'message': 'Purchase E-way bill(s) uploaded successfully.'}, status=status.HTTP_201_CREATED)
     else:
-        return Response({'Error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
     
 @api_view(['GET'])
 def get_purchase_invoice_data(request, client_pk, invoice_pk):
@@ -2841,7 +2841,7 @@ def update_purchase_invoice(request, client_pk, invoice_pk):
         if request.method == 'GET':
             purchase_invoice = PurchaseInvoice.objects.filter(client_id=client_pk, id= invoice_pk).first()
             if not purchase_invoice:
-                return Response({"error": "Purchase Invoice not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error_message": "Purchase Invoice not found."}, status=status.HTTP_404_NOT_FOUND)
             purchase_invoice_data = PurchaseSerializer3(purchase_invoice).data
             product_summaries = purchase_invoice.product_summaries.all()
             product_summary_data =[
@@ -2889,7 +2889,7 @@ def update_purchase_invoice(request, client_pk, invoice_pk):
         elif request.method == 'PUT':
             purchase_invoice = PurchaseInvoice.objects.filter(client_id=client_pk, id= invoice_pk).first()
             if not purchase_invoice:
-                    return Response({"error":"Purchase Invoice not found"}, status=status.HTTP_404_NOT_FOUND)
+                    return Response({"error_message":"Purchase Invoice not found"}, status=status.HTTP_404_NOT_FOUND)
                 
             payload = request.data
             rows_data = defaultdict(dict)
@@ -2995,10 +2995,10 @@ def update_purchase_invoice(request, client_pk, invoice_pk):
                 location_obj.save()
             else:
                 if not branch_id:
-                    return Response({"error": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"error_message": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
                 branch_instance = Branch.objects.filter(id=branch_id, client_id=purchase_invoice.client.id).first()
                 if not branch_instance:
-                    return Response({"error": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
+                    return Response({"error_message": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
                                     status=status.HTTP_404_NOT_FOUND)
                     
                 location_obj, _ = OfficeLocation.objects.get_or_create(
@@ -3037,7 +3037,7 @@ def update_purchase_invoice(request, client_pk, invoice_pk):
                             else:
                                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
                     else:
-                        return Response({"error": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                        return Response({"error_message": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
                 else:
                     existing_vendor = Customer.objects.filter(client=purchase_invoice.client, gst_no=vendor_data.get("gst_no")).first()
                     if existing_vendor:
@@ -3127,11 +3127,11 @@ def update_purchase_invoice(request, client_pk, invoice_pk):
             return Response(response_data, status=status.HTTP_200_OK)
     # except Exception as e:
     #     print("Error in update_sales_invoice:", str(e))
-    #     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
@@ -3189,11 +3189,11 @@ def create_purchase_invoice2(request, client_pk):
         if form_data["offLocID"] :
             location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
             if not location_obj:
-                return Response({"error":"Office Location not found"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error_message":"Office Location not found"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             branch_instance = Branch.objects.filter(id=form_data["branchID"], client_id=client_pk).first()
             if not branch_instance:
-                return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+                return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
                                 status=status.HTTP_404_NOT_FOUND)
             location_obj = OfficeLocation.objects.create(
                 location = form_data.get("location"),
@@ -3254,7 +3254,7 @@ def create_purchase_invoice2(request, client_pk):
                 # Use existing product
                 product_obj = Product.objects.filter(id=product_id).first()
                 if not product_obj:
-                    return Response({"error": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                    return Response({"error_message": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
             else:
                 # Create new product
                 product_obj, _ = Product.objects.get_or_create(
@@ -3289,11 +3289,11 @@ def create_purchase_invoice2(request, client_pk):
         return Response({"message": "Purchase Invoice created successfully.", "invoice_id": purchase_invoice.id}, status=status.HTTP_201_CREATED)
 
     # except Exception as e:
-    #     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET','PATCH'])
@@ -3398,13 +3398,13 @@ def delete_purchase_invoice(request, client_pk, pk):
         client = Client.objects.filter(id=client_pk).first()
 
         if not client:
-            return Response({"error": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Retrieve the SalesInvoice instance
         purchase_invoice = PurchaseInvoice.objects.filter(id=pk, client=client).first()
 
         if not purchase_invoice:
-            return Response({"error": "Purchase Invoice not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Purchase Invoice not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Handle deletion of associated ProductSummary instances
         product_summaries = purchase_invoice.product_summaries.all()
@@ -3417,11 +3417,11 @@ def delete_purchase_invoice(request, client_pk, pk):
         return Response({"message": "Purchase Invoice deleted successfully."}, status=status.HTTP_200_OK)
 
     # except Exception as e:
-    #     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
@@ -3432,7 +3432,7 @@ def create_debit_note_get(request, pk):
         client = Client.objects.get(id=pk)
 
     except Client.DoesNotExist:
-        return Response({"error": "Client not found."}, status=404)
+        return Response({"error_message": "Client not found."}, status=404)
 
     if request.method == 'GET':
         # Initialize response context with default values
@@ -3458,7 +3458,7 @@ def create_debit_note_get(request, pk):
                     "hsn": HSNSerializer(hsn_cc).data
                 })
             except (ValueError, Product.DoesNotExist):
-                return Response({"error": "Invalid Product ID."}, status=400)
+                return Response({"error_message": "Invalid Product ID."}, status=400)
 
         # Process received_value if it exists
         if received_value:
@@ -3473,7 +3473,7 @@ def create_debit_note_get(request, pk):
                     "branch_gst": branch_gst
                 })
             except (ValueError, OfficeLocation.DoesNotExist):
-                return Response({"error": "Invalid location ID."}, status=400)
+                return Response({"error_message": "Invalid location ID."}, status=400)
 
         # Add data only if productID and received_value were not provided
         if not product_id and not received_value:
@@ -3520,7 +3520,7 @@ def create_debit_note(request, client_pk, invoice_pk):
                 # Save each file as a separate object
                 serializer.save()
             else:
-                return Response({'Error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
         return Response({'message': 'Debit Note E-way bill(s) uploaded successfully.'}, status=status.HTTP_200_OK)
@@ -3536,7 +3536,7 @@ def get_debit_note_data(request, client_pk, invoice_pk, debit_pk):
     debit_note = DebitNote.objects.filter(client_id=client_pk, sales_invoice_id=invoice_pk, id=debit_pk).first()
 
     if not debit_note:
-        return Response({"error": "Debit Note not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error_message": "Debit Note not found."}, status=status.HTTP_404_NOT_FOUND)
 
     # Serialize the sales invoice
     debit_note_data = DebitNoteSerializer3(debit_note).data
@@ -3610,7 +3610,7 @@ def update_debit_note(request, client_pk, invoice_pk):
                 .first()
 
             if not debit_note:
-                return Response({"error": "Debit Note not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error_message": "Debit Note not found."}, status=status.HTTP_404_NOT_FOUND)
 
             debit_notes = DebitNote.objects.filter(sales_invoice=debit_note)
             product_unit_sums = defaultdict(int)
@@ -3700,7 +3700,7 @@ def update_debit_note(request, client_pk, invoice_pk):
              # Fetch the Client
             client = Client.objects.filter(pk=client_pk).first()
             if not client:
-                return Response({"error": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error_message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
 
             # Fetch the Sales Invoice
             sales_invoice = SalesInvoice.objects.filter(client_id=client_pk, id=invoice_pk) \
@@ -3709,7 +3709,7 @@ def update_debit_note(request, client_pk, invoice_pk):
                 .first()
 
             if not sales_invoice:
-                return Response({"error": "Sales Invoice not found or does not belong to the client."},
+                return Response({"error_message": "Sales Invoice not found or does not belong to the client."},
                                 status=status.HTTP_404_NOT_FOUND)
 
             # Calculate remaining units
@@ -3794,11 +3794,11 @@ def update_debit_note(request, client_pk, invoice_pk):
             # if form_data["offLocID"]:
             #     location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
             #     if not location_obj:
-            #         return Response({"error": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+            #         return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
             # else:
             #     branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
             #     if not branch_instance:
-            #         return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+            #         return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
             #                         status=status.HTTP_404_NOT_FOUND)
             #     location_obj = OfficeLocation.objects.create(
             #         location=form_data.get("location"),
@@ -3837,11 +3837,11 @@ def update_debit_note(request, client_pk, invoice_pk):
                     if form_data["offLocID"]:
                         location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
                         if not location_obj:
-                            return Response({"error": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+                            return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
                     else:
                         branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
                         if not branch_instance:
-                            return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+                            return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
                                             status=status.HTTP_404_NOT_FOUND)
                         location_obj, _ = OfficeLocation.objects.get_or_create(
                             location=form_data.get("location"),
@@ -3940,11 +3940,11 @@ def update_debit_note(request, client_pk, invoice_pk):
                     return Response({"message": "Debit Note created successfully."}, status=status.HTTP_200_OK)
 
     # except Exception as e:
-    #     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
@@ -3958,7 +3958,7 @@ def debit_note_detail_view(request, client_pk, invoice_pk, debit_pk):
         # Fetch the sales invoice object
         debit_note = DebitNote.objects.get(client=client_pk, sales_invoice=invoice_pk, pk=debit_pk)
     except SalesInvoice.DoesNotExist:
-        return Response({"error": "Sales invoice not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error_message": "Sales invoice not found."}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
         # Serialize and return the sales invoice details
@@ -4067,18 +4067,18 @@ def delete_debit_note(request, client_pk, invoice_pk, pk):
         client = Client.objects.filter(id=client_pk).first()
 
         if not client:
-            return Response({"error": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
         
         sales = SalesInvoice.objects.filter(pk=invoice_pk, client=client).first()
         if not sales:
-            return Response({"error": "Sales Invoice not found or does not belong to the client."},
+            return Response({"error_message": "Sales Invoice not found or does not belong to the client."},
                             status=status.HTTP_404_NOT_FOUND)
 
         # Retrieve the SalesInvoice instance
         debit_note = DebitNote.objects.filter(id=pk, sales_invoice=sales ,client=client).first()
 
         if not debit_note:
-            return Response({"error": "Debit Note not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Debit Note not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Handle deletion of associated ProductSummary instances
         product_summaries = debit_note.product_summaries.all()
@@ -4091,11 +4091,11 @@ def delete_debit_note(request, client_pk, invoice_pk, pk):
         return Response({"message": "Debit Note deleted successfully."}, status=status.HTTP_200_OK)
 
     # except Exception as e:
-    #     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
@@ -4107,12 +4107,12 @@ def create_debit_note2(request, client_pk, invoice_pk):
         # Fetch the Client
         client = Client.objects.filter(pk=client_pk).first()
         if not client:
-            return Response({"error": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Fetch the Sales Invoice
         sales_invoice = SalesInvoice.objects.filter(pk=invoice_pk, client=client).first()
         if not sales_invoice:
-            return Response({"error": "Sales Invoice not found or does not belong to the client."},
+            return Response({"error_message": "Sales Invoice not found or does not belong to the client."},
                             status=status.HTTP_404_NOT_FOUND)
             
         product_summaries_sales = sales_invoice.product_summaries.all()
@@ -4170,11 +4170,11 @@ def create_debit_note2(request, client_pk, invoice_pk):
         if form_data["offLocID"]:
             location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
             if not location_obj:
-                return Response({"error": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
         else:
             branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
             if not branch_instance:
-                return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+                return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
                                 status=status.HTTP_404_NOT_FOUND)
             location_obj = OfficeLocation.objects.create(
                 location=form_data.get("location"),
@@ -4210,7 +4210,7 @@ def create_debit_note2(request, client_pk, invoice_pk):
         for row in rows:
             # If the total_units_remaining becomes 0 or negative, stop creating more debit notes
             if total_units_remaining <= 0:
-                return Response({"error": "No units left to create debit notes."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error_message": "No units left to create debit notes."}, status=status.HTTP_400_BAD_REQUEST)
 
             # Calculate the units for the current debit note
             unit_value = safe_decimal(row.get('unit', '0'))
@@ -4255,11 +4255,11 @@ def create_debit_note2(request, client_pk, invoice_pk):
         }, status=status.HTTP_200_OK)
 
     # except Exception as e:
-    #     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
@@ -4272,7 +4272,7 @@ def create_credit_note_get(request, pk):
         client = Client.objects.get(id=pk)
 
     except Client.DoesNotExist:
-        return Response({"error": "Client not found."}, status=404)
+        return Response({"error_message": "Client not found."}, status=404)
 
     if request.method == 'GET':
         # Initialize response context with default values
@@ -4298,7 +4298,7 @@ def create_credit_note_get(request, pk):
                     "hsn": HSNSerializer(hsn_cc).data
                 })
             except (ValueError, Product.DoesNotExist):
-                return Response({"error": "Invalid Product ID."}, status=400)
+                return Response({"error_message": "Invalid Product ID."}, status=400)
 
         # Process received_value if it exists
         if received_value:
@@ -4313,7 +4313,7 @@ def create_credit_note_get(request, pk):
                     "branch_gst": branch_gst
                 })
             except (ValueError, OfficeLocation.DoesNotExist):
-                return Response({"error": "Invalid location ID."}, status=400)
+                return Response({"error_message": "Invalid location ID."}, status=400)
 
         # Add data only if productID and received_value were not provided
         if not product_id and not received_value:
@@ -4345,12 +4345,12 @@ def create_credit_note2(request, client_pk, invoice_pk):
         # Fetch the Client
         client = Client.objects.filter(pk=client_pk).first()
         if not client:
-            return Response({"error": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Fetch the Purchase Invoice
         purchase_invoice = PurchaseInvoice.objects.filter(pk=invoice_pk, client=client).first()
         if not purchase_invoice:
-            return Response({"error": "Purchase Invoice not found or does not belong to the client."},
+            return Response({"error_message": "Purchase Invoice not found or does not belong to the client."},
                             status=status.HTTP_404_NOT_FOUND)
 
         # Extract rows dynamically
@@ -4407,11 +4407,11 @@ def create_credit_note2(request, client_pk, invoice_pk):
         if form_data["offLocID"]:
             location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
             if not location_obj:
-                return Response({"error": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
         else:
             branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
             if not branch_instance:
-                return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+                return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
                                 status=status.HTTP_404_NOT_FOUND)
             location_obj = OfficeLocation.objects.create(
                 location=form_data.get("location"),
@@ -4474,7 +4474,7 @@ def create_credit_note2(request, client_pk, invoice_pk):
                 # Use existing product
                 product_obj = Product.objects.filter(id=product_id).first()
                 if not product_obj:
-                    return Response({"error": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                    return Response({"error_message": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
             else:
                 # Create new product
                 product_obj, _ = Product.objects.get_or_create(
@@ -4512,11 +4512,11 @@ def create_credit_note2(request, client_pk, invoice_pk):
         return Response({"message": "Credit Note created successfully.", "invoice_id": credit_note.id}, status=status.HTTP_200_OK)
 
     # except Exception as e:
-    #     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     
 @api_view(['POST'])
@@ -4543,12 +4543,12 @@ def create_credit_note(request, client_pk, invoice_pk):
                 # Save each file as a separate object
                 serializer.save()
             else:
-                return Response({'Error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
         return Response({'message': 'Credit Note E-way bill(s) uploa ded successfully.'}, status=status.HTTP_200_OK)
     else:
-        return Response({'Error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
     
 
 @api_view(['GET', 'POST'])
@@ -4562,7 +4562,7 @@ def update_credit_note(request, client_pk, invoice_pk):
                 .prefetch_related('product_summaries__hsn', 'product_summaries__prod_description') \
                 .first()
             if not credit_note:
-                return Response({"error": "Credit Note not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error_message": "Credit Note not found."}, status=status.HTTP_404_NOT_FOUND)
 
             debit_notes = CreditNote.objects.filter(purchase_invoice=credit_note)
             product_unit_sums = defaultdict(int)
@@ -4754,11 +4754,11 @@ def update_credit_note(request, client_pk, invoice_pk):
             # if form_data["offLocID"]:
             #     location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
             #     if not location_obj:
-            #         return Response({"error": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+            #         return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
             # else:
             #     branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
             #     if not branch_instance:
-            #         return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+            #         return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
             #                         status=status.HTTP_404_NOT_FOUND)
             #     location_obj = OfficeLocation.objects.create(
             #         location=form_data.get("location"),
@@ -4902,11 +4902,11 @@ def update_credit_note(request, client_pk, invoice_pk):
 
     # except Exception as e:
     #     print("Error in update_credit_note:", str(e))
-    #     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     
     
@@ -4920,18 +4920,18 @@ def delete_credit_note(request, client_pk, invoice_pk, credit_pk):
         client = Client.objects.filter(id=client_pk).first()
 
         if not client:
-            return Response({"error": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
         
         purchase = PurchaseInvoice.objects.filter(pk=invoice_pk, client=client).first()
         if not purchase:
-            return Response({"error": "Purchase Invoice not found or does not belong to the client."},
+            return Response({"error_message": "Purchase Invoice not found or does not belong to the client."},
                             status=status.HTTP_404_NOT_FOUND)
 
         # Retrieve the SalesInvoice instance
         credit_note = CreditNote.objects.filter(id=credit_pk, purchase_invoice=purchase ,client=client).first()
 
         if not credit_note:
-            return Response({"error": "Credit Note not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Credit Note not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Handle deletion of associated ProductSummary instances
         product_summaries = credit_note.product_summaries.all()
@@ -4944,11 +4944,11 @@ def delete_credit_note(request, client_pk, invoice_pk, credit_pk):
         return Response({"message": "Credit Note deleted successfully."}, status=status.HTTP_200_OK)
 
     # except Exception as e:
-    #     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     
 
@@ -4959,7 +4959,7 @@ def credit_note_detail_view(request, client_pk, invoice_pk, credit_pk):
         # Fetch the sales invoice object
         credit_note = CreditNote.objects.get(client=client_pk, purchase_invoice=invoice_pk, pk=credit_pk)
     except PurchaseInvoice.DoesNotExist:
-        return Response({"error": "Purchase invoice not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error_message": "Purchase invoice not found."}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
         # Serialize and return the sales invoice details
@@ -5146,12 +5146,12 @@ def create_income(request, pk):
                 # Save each file as a separate object
                 serializer.save()
             else:
-                return Response({'Error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
         return Response({'message': 'Income E-way bill(s) uploaded successfully.'}, status=status.HTTP_200_OK)
     else:
-        return Response({'Error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'PUT'])
@@ -5162,7 +5162,7 @@ def update_income(request, client_pk, invoice_pk):
         if request.method == 'GET':
             income = Income.objects.filter(client_id=client_pk, id=invoice_pk).first()
             if not income:
-                return Response({"error": "Income not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error_message": "Income not found."}, status=status.HTTP_404_NOT_FOUND)
 
             income_data = IncomeSerializer3(income).data
             
@@ -5217,7 +5217,7 @@ def update_income(request, client_pk, invoice_pk):
             print('youuuuuuuuu',request.FILES)
             income = Income.objects.filter(client_id=client_pk, id=invoice_pk).first()
             if not income:
-                return Response({"error": "Income not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error_message": "Income not found."}, status=status.HTTP_404_NOT_FOUND)
 
             # Extract data from the request
             # form_data = request.data.get('formData', {})
@@ -5333,7 +5333,7 @@ def update_income(request, client_pk, invoice_pk):
                 # Fetch the existing location
                 location_obj = OfficeLocation.objects.filter(id=location_id).first()
                 if not location_obj:
-                    return Response({"error": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+                    return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
 
                 # Update the location details
                 location_obj.location = location_data
@@ -5347,11 +5347,11 @@ def update_income(request, client_pk, invoice_pk):
             else:  # Create a new location
                 # Validate branch selection
                 if not branch_id:
-                    return Response({"error": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"error_message": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
 
                 branch_instance = Branch.objects.filter(id=branch_id, client_id=income.client.id).first()
                 if not branch_instance:
-                    return Response({"error": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
+                    return Response({"error_message": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
                                     status=status.HTTP_404_NOT_FOUND)
 
                 # Create the new location
@@ -5395,7 +5395,7 @@ def update_income(request, client_pk, invoice_pk):
                             else:
                                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
                     else:
-                        return Response({"error": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                        return Response({"error_message": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
                 else:
                     existing_vendor = Customer.objects.filter(client=income.client, gst_no=vendor_data.get("gst_no")).first()
                     if existing_vendor:
@@ -5439,7 +5439,7 @@ def update_income(request, client_pk, invoice_pk):
                 #             else:
                 #                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
                 #     else:
-                #         return Response({"error": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                #         return Response({"error_message": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
                 # else:
                 #     # If no vendorID is provided, check if a vendor exists with the same gst_no for this client
                 #     existing_vendor = Customer.objects.filter(client=income.client, gst_no=vendor_data.get("gst_no")).first()
@@ -5536,11 +5536,11 @@ def update_income(request, client_pk, invoice_pk):
 
     # except Exception as e:
     #     print("Error in update_income:", str(e))
-    #     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
@@ -5602,11 +5602,11 @@ def create_income2(request, client_pk):
         if form_data["offLocID"]:
             location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
             if not location_obj:
-                return Response({"error": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
         else:
             branch_instance = Branch.objects.filter(id=form_data["branchID"], client_id=client_pk).first()
             if not branch_instance:
-                return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+                return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
                                 status=status.HTTP_404_NOT_FOUND)
             location_obj = OfficeLocation.objects.create(
                 location=form_data.get("location"),
@@ -5672,7 +5672,7 @@ def create_income2(request, client_pk):
                 # Use existing product
                 product_obj = Product.objects.filter(id=product_id).first()
                 if not product_obj:
-                    return Response({"error": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                    return Response({"error_message": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
             else:
                 # Create new product
                 product_obj, _ = Product.objects.get_or_create(
@@ -5707,11 +5707,11 @@ def create_income2(request, client_pk):
         return Response({"message": "Income created successfully.", "invoice_id": income.id}, status=status.HTTP_201_CREATED)
 
     # except Exception as e:
-    #     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
     
@@ -5725,13 +5725,13 @@ def delete_income(request, client_pk, pk):
         client = Client.objects.filter(id=client_pk).first()
 
         if not client:
-            return Response({"error": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Retrieve the SalesInvoice instance
         income = Income.objects.filter(id=pk, client=client).first()
 
         if not income:
-            return Response({"error": "Income not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Income not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Handle deletion of associated ProductSummary instances
         product_summaries = income.product_summaries.all()
@@ -5744,11 +5744,11 @@ def delete_income(request, client_pk, pk):
         return Response({"message": "Income deleted successfully."}, status=status.HTTP_200_OK)
 
     # except Exception as e:
-    #     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET', 'PATCH'])
@@ -5757,7 +5757,7 @@ def income_detail_view(request, client_pk, invoice_pk):
         # Fetch the sales invoice object
         income = Income.objects.get(client=client_pk, pk=invoice_pk)
     except Income.DoesNotExist:
-        return Response({"error": "Income not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error_message": "Income not found."}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
         # Serialize and return the sales invoice details
@@ -5941,12 +5941,12 @@ def create_expenses(request, pk):
                 # Save each file as a separate object
                 serializer.save()
             else:
-                return Response({'Error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
         return Response({'message': 'Expenses E-way bill(s) uploaded successfully.'}, status=status.HTTP_201_CREATED)
     else:
-        return Response({'Error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
     
     
 @api_view(['GET','PUT'])
@@ -5956,7 +5956,7 @@ def update_expenses(request, client_pk, invoice_pk):
         if request.method == 'GET':
             expenses = Expenses.objects.filter(client_id=client_pk, id= invoice_pk).first()
             if not expenses:
-                return Response({"error": "Expenses not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error_message": "Expenses not found."}, status=status.HTTP_404_NOT_FOUND)
             expenses_data = ExpensesSerializer3(expenses).data
             product_summaries = expenses.product_summaries.all()
             product_summary_data =[
@@ -6004,7 +6004,7 @@ def update_expenses(request, client_pk, invoice_pk):
         elif request.method == 'PUT':
             expenses = Expenses.objects.filter(client_id=client_pk, id= invoice_pk).first()
             if not expenses:
-                    return Response({"error":"Expenses not found"}, status=status.HTTP_404_NOT_FOUND)
+                    return Response({"error_message":"Expenses not found"}, status=status.HTTP_404_NOT_FOUND)
                 
             payload = request.data
             rows_data = defaultdict(dict)
@@ -6110,10 +6110,10 @@ def update_expenses(request, client_pk, invoice_pk):
                 location_obj.save()
             else:
                 if not branch_id:
-                    return Response({"error": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"error_message": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
                 branch_instance = Branch.objects.filter(id=branch_id, client_id=expenses.client.id).first()
                 if not branch_instance:
-                    return Response({"error": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
+                    return Response({"error_message": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
                                     status=status.HTTP_404_NOT_FOUND)
                     
                 location_obj = OfficeLocation.objects.create(
@@ -6152,7 +6152,7 @@ def update_expenses(request, client_pk, invoice_pk):
                             else:
                                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
                     else:
-                        return Response({"error": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                        return Response({"error_message": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
                 else:
                     existing_vendor = Customer.objects.filter(client=expenses.client, gst_no=vendor_data.get("gst_no")).first()
                     if existing_vendor:
@@ -6191,7 +6191,7 @@ def update_expenses(request, client_pk, invoice_pk):
                 #             else:
                 #                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
                 #     else:
-                #         return Response({"error": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                #         return Response({"error_message": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
                 # else:
                 #     existing_vendor = Customer.objects.filter(client=expenses.client,  gst_no=vendor_data.get("gst_no")).first()
                 #     if existing_vendor:
@@ -6278,11 +6278,11 @@ def update_expenses(request, client_pk, invoice_pk):
             return Response(response_data, status=status.HTTP_200_OK)
     # except Exception as e:
         # print("Error in update_expenses:", str(e))
-        # return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
@@ -6340,11 +6340,11 @@ def create_expenses2(request, client_pk):
         if form_data["offLocID"] :
             location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
             if not location_obj:
-                return Response({"error":"Office Location not found"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error_message":"Office Location not found"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             branch_instance = Branch.objects.filter(id=form_data["branchID"], client_id=client_pk).first()
             if not branch_instance:
-                return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+                return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
                                 status=status.HTTP_404_NOT_FOUND)
             location_obj = OfficeLocation.objects.create(
                 location = form_data.get("location"),
@@ -6405,7 +6405,7 @@ def create_expenses2(request, client_pk):
                 # Use existing product
                 product_obj = Product.objects.filter(id=product_id).first()
                 if not product_obj:
-                    return Response({"error": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                    return Response({"error_message": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
             else:
                 # Create new product
                 product_obj, _ = Product.objects.get_or_create(
@@ -6440,11 +6440,11 @@ def create_expenses2(request, client_pk):
         return Response({"message": "Expenses created successfully.", "invoice_id": expenses.id}, status=status.HTTP_200_OK)
 
     # except Exception as e:
-    #     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)  
+    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)  
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET','PATCH'])
@@ -6550,13 +6550,13 @@ def delete_expenses(request, client_pk, pk):
         client = Client.objects.filter(id=client_pk).first()
 
         if not client:
-            return Response({"error": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Retrieve the SalesInvoice instance
         expenses = Expenses.objects.filter(id=pk, client=client).first()
 
         if not expenses:
-            return Response({"error": "Expenses not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Expenses not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Handle deletion of associated ProductSummary instances
         product_summaries = expenses.product_summaries.all()
@@ -6571,11 +6571,11 @@ def delete_expenses(request, client_pk, pk):
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
     # except Exception as e:
-    #     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 # ************************************************Zip Upload*********************************************************
 
@@ -6601,12 +6601,12 @@ def create_zipupload(request, pk):
                 # Save each file as a separate object
                 serializer.save()
             else:
-                return Response({'Error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
         return Response({'message': 'Zip Files uploaded successfully.'}, status=status.HTTP_201_CREATED)
     else:
-        return Response({'Error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
     
 @api_view(['DELETE'])
 def delete_zipupload(request, client_pk, pk):
@@ -6618,13 +6618,13 @@ def delete_zipupload(request, client_pk, pk):
         client = Client.objects.filter(id=client_pk).first()
 
         if not client:
-            return Response({"error": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Retrieve the SalesInvoice instance
         zipupload = ZipUpload.objects.filter(id=pk, client=client).first()
 
         if not zipupload:
-            return Response({"error": "Zip Uploaded not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Zip Uploaded not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Handle deletion of associated ProductSummary instances
         # product_summaries = expenses.product_summaries.all()
@@ -6637,11 +6637,11 @@ def delete_zipupload(request, client_pk, pk):
         return Response({"message": "File deleted successfully."}, status=status.HTTP_200_OK)
 
     # except Exception as e:
-    #     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     
     
@@ -6652,7 +6652,7 @@ def create_income_debit_note_get(request, pk):
         client = Client.objects.get(id=pk)
 
     except Client.DoesNotExist:
-        return Response({"error": "Client not found."}, status=404)
+        return Response({"error_message": "Client not found."}, status=404)
 
     if request.method == 'GET':
         # Initialize response context with default values
@@ -6678,7 +6678,7 @@ def create_income_debit_note_get(request, pk):
                     "hsn": HSNSerializer(hsn_cc).data
                 })
             except (ValueError, Product.DoesNotExist):
-                return Response({"error": "Invalid Product ID."}, status=400)
+                return Response({"error_message": "Invalid Product ID."}, status=400)
 
         # Process received_value if it exists
         if received_value:
@@ -6693,7 +6693,7 @@ def create_income_debit_note_get(request, pk):
                     "branch_gst": branch_gst
                 })
             except (ValueError, OfficeLocation.DoesNotExist):
-                return Response({"error": "Invalid location ID."}, status=400)
+                return Response({"error_message": "Invalid location ID."}, status=400)
 
         # Add data only if productID and received_value were not provided
         if not product_id and not received_value:
@@ -6740,12 +6740,12 @@ def create_income_debit_note(request, client_pk, income_pk):
                 # Save each file as a separate object
                 serializer.save()
             else:
-                return Response({'Error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
         return Response({'message': 'Debit Note E-way bill(s) uploaded successfully.'}, status=status.HTTP_200_OK)
     else:
-        return Response({'Error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
     
 @api_view(['GET'])
 def get_income_debit_note_data(request, client_pk, income_pk, debit_pk):
@@ -6756,7 +6756,7 @@ def get_income_debit_note_data(request, client_pk, income_pk, debit_pk):
     debit_note = IncomeDebitNote.objects.filter(client_id=client_pk, sales_invoice_id=income_pk, id=debit_pk).first()
 
     if not debit_note:
-        return Response({"error": "Debit Note not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error_message": "Debit Note not found."}, status=status.HTTP_404_NOT_FOUND)
 
     # Serialize the sales invoice
     debit_note_data = IncomeDebitNoteSerializer3(debit_note).data
@@ -6829,7 +6829,7 @@ def update_income_debit_note(request, client_pk, income_pk):
                 .first()
 
             if not debit_note:
-                return Response({"error": "Debit Note not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error_message": "Debit Note not found."}, status=status.HTTP_404_NOT_FOUND)
 
             debit_notes = IncomeDebitNote.objects.filter(income=debit_note)
             product_unit_sums = defaultdict(int)
@@ -6919,7 +6919,7 @@ def update_income_debit_note(request, client_pk, income_pk):
              # Fetch the Client
             client = Client.objects.filter(pk=client_pk).first()
             if not client:
-                return Response({"error": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error_message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
 
             # Fetch the Sales Invoice
             income = Income.objects.filter(client_id=client_pk, id=income_pk) \
@@ -6928,7 +6928,7 @@ def update_income_debit_note(request, client_pk, income_pk):
                 .first()
 
             if not income:
-                return Response({"error": "Income not found or does not belong to the client."},
+                return Response({"error_message": "Income not found or does not belong to the client."},
                                 status=status.HTTP_404_NOT_FOUND)
 
             # Calculate remaining units
@@ -7013,11 +7013,11 @@ def update_income_debit_note(request, client_pk, income_pk):
             # if form_data["offLocID"]:
             #     location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
             #     if not location_obj:
-            #         return Response({"error": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+            #         return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
             # else:
             #     branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
             #     if not branch_instance:
-            #         return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+            #         return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
             #                         status=status.HTTP_404_NOT_FOUND)
             #     location_obj = OfficeLocation.objects.create(
             #         location=form_data.get("location"),
@@ -7056,11 +7056,11 @@ def update_income_debit_note(request, client_pk, income_pk):
                     if form_data["offLocID"]:
                         location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
                         if not location_obj:
-                            return Response({"error": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+                            return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
                     else:
                         branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
                         if not branch_instance:
-                            return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+                            return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
                                             status=status.HTTP_404_NOT_FOUND)
                         location_obj, _ = OfficeLocation.objects.get_or_create(
                             location=form_data.get("location"),
@@ -7160,11 +7160,11 @@ def update_income_debit_note(request, client_pk, income_pk):
                     return Response({"message": "Income Debit Note created successfully."}, status=status.HTTP_200_OK)
 
     # except Exception as e:
-    #     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET', 'PATCH'])
@@ -7173,7 +7173,7 @@ def income_debit_note_detail_view(request, client_pk, income_pk, debit_pk):
         # Fetch the sales invoice object
         debit_note = IncomeDebitNote.objects.get(client=client_pk, income_id=income_pk, pk=debit_pk)
     except Income.DoesNotExist:
-        return Response({"error": "Income not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error_message": "Income not found."}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
         # Serialize and return the sales invoice details
@@ -7282,18 +7282,18 @@ def delete_income_debit_note(request, client_pk, income_pk, pk):
         client = Client.objects.filter(id=client_pk).first()
 
         if not client:
-            return Response({"error": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
         
         income = Income.objects.filter(pk=income_pk, client=client).first()
         if not income:
-            return Response({"error": "Income not found or does not belong to the client."},
+            return Response({"error_message": "Income not found or does not belong to the client."},
                             status=status.HTTP_404_NOT_FOUND)
 
         # Retrieve the SalesInvoice instance
         debit_note = IncomeDebitNote.objects.filter(id=pk, income=income ,client=client).first()
 
         if not debit_note:
-            return Response({"error": "Debit Note not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Debit Note not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Handle deletion of associated ProductSummary instances
         product_summaries = debit_note.product_summaries.all()
@@ -7306,7 +7306,7 @@ def delete_income_debit_note(request, client_pk, income_pk, pk):
         return Response({"message": "Debit Note deleted successfully."}, status=status.HTTP_200_OK)
 
     except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
 @api_view(['POST'])
@@ -7318,12 +7318,12 @@ def create_income_debit_note2(request, client_pk, income_pk):
         # Fetch the Client
         client = Client.objects.filter(pk=client_pk).first()
         if not client:
-            return Response({"error": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Fetch the Sales Invoice
         income = Income.objects.filter(pk=income_pk, client=client).first()
         if not income:
-            return Response({"error": "Income not found or does not belong to the client."},
+            return Response({"error_message": "Income not found or does not belong to the client."},
                             status=status.HTTP_404_NOT_FOUND)
 
         # Extract rows dynamically
@@ -7377,11 +7377,11 @@ def create_income_debit_note2(request, client_pk, income_pk):
         if form_data["offLocID"]:
             location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
             if not location_obj:
-                return Response({"error": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
         else:
             branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
             if not branch_instance:
-                return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+                return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
                                 status=status.HTTP_404_NOT_FOUND)
             location_obj = OfficeLocation.objects.create(
                 location=form_data.get("location"),
@@ -7446,7 +7446,7 @@ def create_income_debit_note2(request, client_pk, income_pk):
                 # Use existing product
                 product_obj = Product.objects.filter(id=product_id).first()
                 if not product_obj:
-                    return Response({"error": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                    return Response({"error_message": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
             else:
                 # Create new product
                 product_obj, _ = Product.objects.get_or_create(
@@ -7482,11 +7482,11 @@ def create_income_debit_note2(request, client_pk, income_pk):
         return Response({"message": "Debit Note created successfully.", "invoice_id": debit_note.id}, status=status.HTTP_200_OK)
 
     # except Exception as e:
-    #     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
  
 # ******************************************************Credit Note****************************************************   
@@ -7497,7 +7497,7 @@ def create_expenses_credit_note_get(request, pk):
         client = Client.objects.get(id=pk)
 
     except Client.DoesNotExist:
-        return Response({"error": "Client not found."}, status=404)
+        return Response({"error_message": "Client not found."}, status=404)
 
     if request.method == 'GET':
         # Initialize response context with default values
@@ -7523,7 +7523,7 @@ def create_expenses_credit_note_get(request, pk):
                     "hsn": HSNSerializer(hsn_cc).data
                 })
             except (ValueError, Product.DoesNotExist):
-                return Response({"error": "Invalid Product ID."}, status=400)
+                return Response({"error_message": "Invalid Product ID."}, status=400)
 
         # Process received_value if it exists
         if received_value:
@@ -7538,7 +7538,7 @@ def create_expenses_credit_note_get(request, pk):
                     "branch_gst": branch_gst
                 })
             except (ValueError, OfficeLocation.DoesNotExist):
-                return Response({"error": "Invalid location ID."}, status=400)
+                return Response({"error_message": "Invalid location ID."}, status=400)
 
         # Add data only if productID and received_value were not provided
         if not product_id and not received_value:
@@ -7570,12 +7570,12 @@ def create_expenses_credit_note2(request, client_pk, expenses_pk):
         # Fetch the Client
         client = Client.objects.filter(pk=client_pk).first()
         if not client:
-            return Response({"error": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Fetch the Purchase Invoice
         expenses = Expenses.objects.filter(pk=expenses_pk, client=client).first()
         if not expenses:
-            return Response({"error": "Expenses not found or does not belong to the client."},
+            return Response({"error_message": "Expenses not found or does not belong to the client."},
                             status=status.HTTP_404_NOT_FOUND)
 
         # Extract rows dynamically
@@ -7632,11 +7632,11 @@ def create_expenses_credit_note2(request, client_pk, expenses_pk):
         if form_data["offLocID"]:
             location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
             if not location_obj:
-                return Response({"error": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
         else:
             branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
             if not branch_instance:
-                return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+                return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
                                 status=status.HTTP_404_NOT_FOUND)
             location_obj = OfficeLocation.objects.create(
                 location=form_data.get("location"),
@@ -7699,7 +7699,7 @@ def create_expenses_credit_note2(request, client_pk, expenses_pk):
                 # Use existing product
                 product_obj = Product.objects.filter(id=product_id).first()
                 if not product_obj:
-                    return Response({"error": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                    return Response({"error_message": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
             else:
                 # Create new product
                 product_obj, _ = Product.objects.get_or_create(
@@ -7737,11 +7737,11 @@ def create_expenses_credit_note2(request, client_pk, expenses_pk):
         return Response({"message": "Credit Note created successfully.", "invoice_id": credit_note.id}, status=status.HTTP_200_OK)
 
     # except Exception as e:
-    #     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     
 @api_view(['POST'])
@@ -7768,12 +7768,12 @@ def create_expenses_credit_note(request, client_pk, expenses_pk):
                 # Save each file as a separate object
                 serializer.save()
             else:
-                return Response({'Error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
         return Response({'Message': 'Credit Note E-way bill(s) uploa ded successfully.'}, status=status.HTTP_200_OK)
     else:
-        return Response({'Error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'POST'])
 def update_expenses_credit_note(request, client_pk, expenses_pk):
@@ -7786,7 +7786,7 @@ def update_expenses_credit_note(request, client_pk, expenses_pk):
                 .prefetch_related('product_summaries__hsn', 'product_summaries__prod_description') \
                 .first()
             if not credit_note:
-                return Response({"error": "Expenses not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error_message": "Expenses not found."}, status=status.HTTP_404_NOT_FOUND)
 
             credit_notes = ExpensesCreditNote.objects.filter(expenses=credit_note)
             product_unit_sums = defaultdict(int)
@@ -7978,11 +7978,11 @@ def update_expenses_credit_note(request, client_pk, expenses_pk):
             # if form_data["offLocID"]:
             #     location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
             #     if not location_obj:
-            #         return Response({"error": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+            #         return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
             # else:
             #     branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
             #     if not branch_instance:
-            #         return Response({"error": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+            #         return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
             #                         status=status.HTTP_404_NOT_FOUND)
             #     location_obj = OfficeLocation.objects.create(
             #         location=form_data.get("location"),
@@ -8125,11 +8125,11 @@ def update_expenses_credit_note(request, client_pk, expenses_pk):
 
     # except Exception as e:
     #     print("Error in update_credit_note:", str(e))
-    #     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     
 @api_view(['DELETE'])
@@ -8142,18 +8142,18 @@ def delete_expenses_credit_note(request, client_pk, expenses_pk, credit_pk):
         client = Client.objects.filter(id=client_pk).first()
 
         if not client:
-            return Response({"error": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
         
         expenses = Expenses.objects.filter(pk=expenses_pk, client=client).first()
         if not expenses:
-            return Response({"error": "Expenses not found or does not belong to the client."},
+            return Response({"error_message": "Expenses not found or does not belong to the client."},
                             status=status.HTTP_404_NOT_FOUND)
 
         # Retrieve the SalesInvoice instance
         credit_note = ExpensesCreditNote.objects.filter(id=credit_pk, expenses=expenses ,client=client).first()
 
         if not credit_note:
-            return Response({"error": "Credit Note not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error_message": "Credit Note not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Handle deletion of associated ProductSummary instances
         product_summaries = credit_note.product_summaries.all()
@@ -8166,11 +8166,11 @@ def delete_expenses_credit_note(request, client_pk, expenses_pk, credit_pk):
         return Response({"message": "Credit Note deleted successfully."}, status=status.HTTP_200_OK)
 
     # except Exception as e:
-    #     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
-        return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     
 
@@ -8181,7 +8181,7 @@ def expenses_credit_note_detail_view(request, client_pk, expenses_pk, credit_pk)
         # Fetch the sales invoice object
         credit_note = ExpensesCreditNote.objects.get(client=client_pk, expenses=expenses_pk, pk=credit_pk)
     except Expenses.DoesNotExist:
-        return Response({"error": "Expenses not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error_message": "Expenses not found."}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
         # Serialize and return the sales invoice details
@@ -8401,7 +8401,7 @@ def import_hsn_excel(request):
     if request.method == 'POST':
         # Check if an Excel file is provided
         if 'file' not in request.FILES:
-            return Response({'Error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Get the uploaded Excel file
         excel_file = request.FILES['file']
@@ -8416,7 +8416,7 @@ def import_hsn_excel(request):
 
             # Ensure there are at least two columns
             if df.shape[1] < 2:
-                return Response({'Error': 'The Excel file must contain at least two columns'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'The Excel file must contain at least two columns'}, status=status.HTTP_400_BAD_REQUEST)
 
             # Iterate through each row and create a new record
             for index, row in df.iterrows():
@@ -8450,7 +8450,7 @@ def import_hsn_excel(request):
         except Exception as e:
             error_details = traceback.format_exc()
             # print({"Error in update_sales_invoice" : str(e)})
-            return Response({"error": error_details,'raised error':str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST','GET'])
@@ -8460,7 +8460,7 @@ def create_hsn(request):
         if serializer.is_valid():
             serializer.save()
             return Response ({'Message':'TDS Payment created', 'Data': serializer.data})
-        return Response({'Error':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'POST'])
 def edit_hsn(request, pk):
@@ -8502,7 +8502,7 @@ def create_product(request):
         if serializer.is_valid():
             serializer.save()
             return Response ({'Message':'Product Payment created', 'Data': serializer.data})
-        return Response({'Error':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'POST'])
 def edit_product(request, pk):
@@ -8545,7 +8545,7 @@ def create_product_description(request):
         if serializer.is_valid():
             serializer.save()
             return Response ({'Message':'Product Description created', 'Data': serializer.data})
-        return Response({'Error':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def list_product_description(request):
