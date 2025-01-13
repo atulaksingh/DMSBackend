@@ -392,7 +392,7 @@ def delete_bank(request,pk, bank_pk):
 #                 }, status=status.HTTP_400_BAD_REQUEST)
 #             # save the all the data
 #             owner_serializer.save(client=client)
-#             return Response({'Message': 'Owner Created successfully','Data': owner_serializer.data, 'Status': status.HTTP_200_OK})
+#             return Response({'message': 'Owner Created successfully','Data': owner_serializer.data, 'Status': status.HTTP_200_OK})
 
 #         # show error if given data is not valid
 #         return Response(owner_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -428,7 +428,7 @@ def delete_bank(request,pk, bank_pk):
 #             remaining_shares = 100 - total_shares
 
 #             return Response({
-#                 'Message': 'Owner Created',
+#                 'message': 'Owner Created',
 #                 'data': owner_serializer.data,
 #                 'remaining_shares': remaining_shares
 #             }, status=status.HTTP_201_CREATED)
@@ -501,7 +501,7 @@ def create_owner(request, pk):
 #         owner_serializer = OwnerSerializer(data=request.data, instance=owner)
 #         if owner_serializer.is_valid():
 #             owner_serializer.save(client=client)
-#             return Response({'Message':'Owner Updated Successfully', 'Status': status.HTTP_200_OK})
+#             return Response({'message':'Owner Updated Successfully', 'Status': status.HTTP_200_OK})
 #         return Response(owner_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 #     elif request.method == 'GET':
 #         owner_serializer1 =OwnerSerializer(owner)
@@ -541,8 +541,8 @@ def edit_owner(request, pk, owner_pk):
             owner_serializer.save(client=client)
 
             remaining_shares = a - new_share
-            return Response({'Message':'Owner Updated Successfully', 'remaining_shares': remaining_shares, 'status' : status.HTTP_200_OK})
-            # return Response({'Message':'Owner Updated Successfully', 'Status': status.HTTP_200_OK, 'remaining shares' : c})
+            return Response({'message':'Owner Updated Successfully', 'remaining_shares': remaining_shares, 'status' : status.HTTP_200_OK})
+            # return Response({'message':'Owner Updated Successfully', 'Status': status.HTTP_200_OK, 'remaining shares' : c})
         return Response({
                 'message': 'Fail to update owner',
                 'error': owner_serializer.errors,
@@ -822,7 +822,7 @@ def create_branch(request, pk):
 #         branch_serializer = BranchSerailizer(data=request.data)
 #         if branch_serializer.is_valid():
 #             branch_serializer.save(client=client)
-#             return Response({'Message':'Branch Created', 'Data': branch_serializer.data}, status=status.HTTP_201_CREATED)
+#             return Response({'message':'Branch Created', 'Data': branch_serializer.data}, status=status.HTTP_201_CREATED)
 #         return Response(branch_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -7972,7 +7972,7 @@ def create_expenses_credit_note(request, client_pk, expenses_pk):
                 return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
-        return Response({'Message': 'Credit Note E-way bill(s) uploa ded successfully.'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Credit Note E-way bill(s) uploa ded successfully.'}, status=status.HTTP_200_OK)
     else:
         return Response({'error': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -8640,7 +8640,7 @@ def import_hsn_excel(request):
                     errors.append({'row': index + 1, 'errors': serializer.errors})
 
             # Prepare response
-            response_message = {'Message': 'HSN records imported successfully', 'Imported': successful_imports}
+            response_message = {'message': 'HSN records imported successfully', 'Imported': successful_imports}
             if errors:
                 response_message['Errors'] = errors
 
@@ -8660,7 +8660,7 @@ def create_hsn(request):
         serializer = HSNSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response ({'Message':'TDS Payment created', 'Data': serializer.data})
+            return Response ({'message':'TDS Payment created', 'Data': serializer.data})
         return Response({'error':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'POST'])
@@ -8674,7 +8674,7 @@ def edit_hsn(request, pk):
     elif request.method == 'POST':
         if serializer.is_valid():
             serializer.save()
-            return Response ({'Message':'hsn Code Updated'})
+            return Response ({'message':'hsn Code Updated'})
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
@@ -8690,7 +8690,7 @@ def delete_hsn(request, pk):
     if request.method == 'DELETE':
         hsn.delete()
         return Response({'Messgae':'HSN Return Delete'})
-    return Response({'Message':'Fail to delete HSN Return'} ,status=status.HTTP_400_BAD_REQUEST)
+    return Response({'message':'Fail to delete HSN Return'} ,status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST','GET'])
 def create_product(request):
@@ -8702,7 +8702,7 @@ def create_product(request):
         serializer = ProductSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response ({'Message':'Product Payment created', 'Data': serializer.data})
+            return Response ({'message':'Product Payment created', 'Data': serializer.data})
         return Response({'error':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'POST'])
@@ -8716,7 +8716,7 @@ def edit_product(request, pk):
     elif request.method == 'POST':
         if serializer.is_valid():
             serializer.save()
-            return Response ({'Message':'Product Updated'})
+            return Response ({'message':'Product Updated'})
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
@@ -8733,7 +8733,7 @@ def delete_product(request, pk):
     if request.method == 'DELETE':
         product.delete()
         return Response({'Messgae':'Product Return Delete'})
-    return Response({'Message':'Fail to delete HSN Return'} ,status=status.HTTP_400_BAD_REQUEST)
+    return Response({'message':'Fail to delete HSN Return'} ,status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST','GET'])
 def create_product_description(request):
@@ -8745,7 +8745,7 @@ def create_product_description(request):
         serializer = ProductDescriptionSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response ({'Message':'Product Description created', 'Data': serializer.data})
+            return Response ({'message':'Product Description created', 'Data': serializer.data})
         return Response({'error':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
@@ -8767,7 +8767,7 @@ def edit_product_description(request, pk):
     elif request.method == 'POST':
         if serializer.is_valid():
             serializer.save()
-            return Response ({'Message':'Product Description Updated'})
+            return Response ({'message':'Product Description Updated'})
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['DELETE'])
@@ -8776,7 +8776,7 @@ def delete_product_description(request, pk):
     if request.method == 'DELETE':
         product_description.delete()
         return Response({'Messgae':'Product Description Return Delete'})
-    return Response({'Message':'Fail to delete Product Description Return'} ,status=status.HTTP_400_BAD_REQUEST)
+    return Response({'message':'Fail to delete Product Description Return'} ,status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def sales_invoice_list(request):
