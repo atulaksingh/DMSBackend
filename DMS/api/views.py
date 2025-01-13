@@ -99,9 +99,9 @@ def create_client(request):
                     File.objects.create(fileinfo=fileinfo, files=file)
 
             # return Response(client_serializer.data, status=201)
-            return Response({'message': 'Client created successfully','data': client_serializer.data, 'status': status.HTTP_201_CREATED})
+            return Response({'message': 'Client created successfully','data': client_serializer.data},status=status.HTTP_201_CREATED)
 
-        return Response({'message': 'data not created','error': client_serializer.errors, 'status' : status.HTTP_400_BAD_REQUEST})
+        return Response({'message': 'data not created','error': client_serializer.errors},status=status.HTTP_400_BAD_REQUEST)
 
 # *****************************Backend create-client api*************************************
 # @api_view(['POST'])
@@ -230,10 +230,10 @@ def edit_client(request, pk):
                 index += 1
 
             # return Response(client_serializer.data, status=200)
-            return Response({'message': 'Client updated successfully','data': client_serializer.data, 'status': status.HTTP_200_OK})
+            return Response({'message': 'Client updated successfully','data': client_serializer.data},status=status.HTTP_200_OK)
 
 
-        return Response({'message': 'Fail to update client', 'error' : client_serializer.errors, 'status': status.HTTP_400_BAD_REQUEST})
+        return Response({'message': 'Fail to update client', 'error' : client_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def single_fileinfo(request,pk,fileinfo_pk):
@@ -289,8 +289,8 @@ def create_bank(request,pk):
                     if file_serializer.is_valid(raise_exception=True):
                         file_serializer.save()
 
-            return Response({'message':'Bank created successfully', 'data' : serializer.data, 'status' : status.HTTP_201_CREATED})
-    return Response({'message':'Fail to create bank', 'error' : serializer.errors, 'status' : status.HTTP_400_BAD_REQUEST})
+            return Response({'message':'Bank created successfully', 'data' : serializer.data},status=status.HTTP_201_CREATED)
+    return Response({'message':'Fail to create bank', 'error' : serializer.errors},status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
 @parser_classes([MultiPartParser, FormParser])
@@ -328,9 +328,9 @@ def edit_bank(request, pk, bank_pk):
                     else:
                         return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response({'message':'Bank updated successfully','data' : bank_serializer.data,'status' : status.HTTP_200_OK})
+            return Response({'message':'Bank updated successfully','data' : bank_serializer.data},status=status.HTTP_200_OK)
         else:
-            return Response({'message': 'fail to update bank', 'error': bank_serializer.errors, 'status': status.HTTP_400_BAD_REQUEST})
+            return Response({'message': 'fail to update bank', 'error': bank_serializer.errors},status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'GET':
         serializer = BankSerializer(bank)
@@ -365,7 +365,7 @@ def delete_bank(request,pk, bank_pk):
     if request.method == 'DELETE':
         bank.delete()
         return Response({'message':'Bank is Deleted'})
-    return Response({'error':'Fail to Delete Bank','status':status.HTTP_400_BAD_REQUEST})
+    return Response({'error':'Fail to Delete Bank'},status=status.HTTP_400_BAD_REQUEST)
 
 # **********************************************Owners View's*******************************************
 
@@ -472,15 +472,13 @@ def create_owner(request, pk):
                 'message': 'Owner Created Successfully',
                 'data': owner_serializer.data,
                 'remaining_shares': remaining_shares,
-                'status' : status.HTTP_201_CREATED
-            })
+                },status=status.HTTP_201_CREATED)
 
         # Show errors if the data is not valid
         return Response({
                 'message': 'Fail to create owner',
                 'error': owner_serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'GET':
         # Calculate total shares and remaining shares
@@ -548,8 +546,7 @@ def edit_owner(request, pk, owner_pk):
         return Response({
                 'message': 'Fail to update owner',
                 'error': owner_serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
     elif request.method == 'GET':
         owner_serializer1 =OwnerSerializer(owner)
         return Response(owner_serializer1.data)
@@ -584,7 +581,7 @@ def delete_owner(request, pk, owner_pk):
         remaining_shares = 100 - total_shares
         return Response({'message': f'Owner is deleted.{owner_share}% share is added back. Avaliable shares: {remaining_shares}%'}, status=status.HTTP_200_OK)
     except :
-        return Response({'error':'Owner not found','status':status.HTTP_400_BAD_REQUEST})
+        return Response({'error':'Owner not found'},status=status.HTTP_400_BAD_REQUEST)
 
 # ******************************************User's Views*******************************************
 
@@ -747,13 +744,11 @@ def create_companydoc(request,pk):
             return Response({
                 'message': 'company document created',
                 'data': doc_serializer.data,
-                'status' : status.HTTP_201_CREATED
-            })
+                },status=status.HTTP_201_CREATED)
         return Response({
                 'message': 'Fail to create company document',
                 'error': doc_serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
         
 
 @api_view(['POST', 'GET'])
@@ -772,8 +767,7 @@ def edit_companydoc(request,pk,companydoc_pk):
         return Response({
                 'message': 'Fail to update company document',
                 'error': doc_serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
     elif request.method == 'GET':
         doc_ser = CompanyDocSerailizer(doc)
         return Response(doc_ser.data)
@@ -804,16 +798,33 @@ def create_branch(request, pk):
         branch_serializer = BranchSerailizer(data=request.data)
         if branch_serializer.is_valid():
             branch_serializer.save(client=client)
-            return Response({
-                'message': 'Branch created',
-                'data': branch_serializer.data,
-                'status' : status.HTTP_201_CREATED
-            })
-        return Response({
-                'message': 'Fail to create branch',
-                'error': branch_serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+            return Response(
+                {
+                    'message': 'Branch created',
+                    'data': branch_serializer.data,
+                },
+                status=status.HTTP_201_CREATED  # Correct placement of status
+            )
+        else:
+            return Response(
+                {
+                    'message': 'Fail to create branch',
+                    'error': branch_serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST  # Correct placement of status
+            )
+
+
+# @api_view(['POST'])
+# def create_branch(request, pk):
+#     client = Client.objects.get(id=pk)
+#     if request.method == 'POST':
+#         branch_serializer = BranchSerailizer(data=request.data)
+#         if branch_serializer.is_valid():
+#             branch_serializer.save(client=client)
+#             return Response({'Message':'Branch Created', 'Data': branch_serializer.data}, status=status.HTTP_201_CREATED)
+#         return Response(branch_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['POST', 'GET'])
 def edit_branch(request,pk,branch_pk):
@@ -826,13 +837,11 @@ def edit_branch(request,pk,branch_pk):
             return Response({
                 'message': 'Branch updated',
                 'data': branch_serializer.data,
-                'status' : status.HTTP_201_CREATED
-            })
+                },status=status.HTTP_201_CREATED)
         return Response({
                 'message': 'Fail to update branch',
                 'error': branch_serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'GET':
         branch_ser = BranchSerailizer(branch)
@@ -868,13 +877,11 @@ def create_officelocation(request,branch_pk):
             return Response({
                 'message': 'Office Loaction created',
                 'data': officeLocation_serializer.data,
-                'status' : status.HTTP_201_CREATED
-            })
+                },status=status.HTTP_201_CREATED)
         return Response({
                 'message': 'Fail to create Office Location',
                 'error': officeLocation_serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST', 'GET'])
@@ -893,8 +900,7 @@ def edit_officelocation(request,branch_pk,office_pk):
         return Response({
                 'message': 'Fail to updated Office Location',
                 'error': officeLocation_serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
     elif request.method == 'GET':
         office_ser = OfficeLocationSerializer(office)
         return Response (office_ser.data)
@@ -931,13 +937,11 @@ def create_customer(request, pk):
             return Response({
                 'message': 'Customer or Vendor created',
                 'data': customer_serializer.data,
-                'status' : status.HTTP_201_CREATED
-            })
+                },status=status.HTTP_201_CREATED)
         return Response({
                 'message': 'Fail to create Customer or Vendor',
                 'error': customer_serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
 @api_view(['POST', 'GET'])
 def edit_customer(request, pk, customer_pk):
     client = Client.objects.get(id=pk)
@@ -954,8 +958,7 @@ def edit_customer(request, pk, customer_pk):
         return Response({
                 'message': 'Fail to update Customer or Vendor',
                 'error': customer_serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
     elif request.method == 'GET':
         customer_ser = CustomerVendorSerializer(customer)
         return Response(customer_ser.data)
@@ -1007,13 +1010,11 @@ def create_branchdoc(request,branch_pk):
             return Response({
                 'message': 'Branch Document created',
                 'data': serializer.data,
-                'status' : status.HTTP_201_CREATED
-            })
+                },status=status.HTTP_201_CREATED)
         return Response({
                 'message': 'Fail to create Branch Document',
                 'error': serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
 @parser_classes([MultiPartParser, FormParser])
@@ -1059,8 +1060,7 @@ def edit_branchdoc(request, branch_pk, branchdoc_pk):
             return Response({
                 'message': 'Fail to update Branch Document',
                 'error': branchdoc_serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'GET':
         branchdoc_serializer = BranchDocSerailizer(branchdoc)
@@ -1105,13 +1105,11 @@ def create_incometaxdoc(request,pk):
             return Response({
                 'message': 'Income Tax Documents created',
                 'data': income_serializer.data,
-                'status' : status.HTTP_201_CREATED
-            })
+                },status=status.HTTP_201_CREATED)
         return Response({
                 'message': 'Fail to create Income Tax Documents',
                 'error': income_serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
 @api_view(['POST','GET'])
 def edit_incometaxdoc(request, pk, income_pk):
     client = Client.objects.get(id=pk)
@@ -1128,8 +1126,7 @@ def edit_incometaxdoc(request, pk, income_pk):
         return Response({
                 'message': 'Fail to update Income Tax Documents',
                 'error': income_serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
     elif request.method == 'GET':
         income_ser = IncomeTaxDocumentSerializer(income)
         return Response(income_ser.data)
@@ -1163,13 +1160,11 @@ def create_pf(request,pk):
             return Response({
                 'message': 'PF created',
                 'data': pf_serializer.data,
-                'status' : status.HTTP_201_CREATED
-            })
+                },status=status.HTTP_201_CREATED)
         return Response({
                 'message': 'Fail to create PF',
                 'error': pf_serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
 
 class ExcelImportView(APIView):
     parser_classes = [MultiPartParser]
@@ -1248,8 +1243,7 @@ def edit_pf(request, pk, pf_pk):
         return Response({
                 'message': 'Fail to update PF',
                 'error': pf_serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
     elif request.method == 'GET':
         pf_ser = PfSerializer(pf)
         return Response(pf_ser.data)
@@ -1300,13 +1294,11 @@ def create_taxaudit(request,pk):
             return Response({
                 'message': 'Tax Audit created',
                 'data': serializer.data,
-                'status' : status.HTTP_201_CREATED
-            })
+                },status=status.HTTP_201_CREATED)
         return Response({
                 'message': 'Fail to create Tax Audit',
                 'error': serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
 @parser_classes([MultiPartParser, FormParser])
@@ -1352,8 +1344,7 @@ def edit_taxaudit(request, pk, taxaudit_pk):
             return Response({
                 'message': 'Fail to update Tax Audit',
                 'error': taxaudit_serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
     elif request.method == 'GET':
         taxaudit_serializer = TaxAuditSerializer(taxaudit)
         return Response(taxaudit_serializer.data)
@@ -1414,13 +1405,11 @@ def create_air(request,pk):
             return Response({
                 'message': 'AIR created',
                 'data': serializer.data,
-                'status' : status.HTTP_201_CREATED
-            })
+                },status=status.HTTP_201_CREATED)
         return Response({
                 'message': 'Fail to create AIR',
                 'error': serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
 @parser_classes([MultiPartParser, FormParser])
@@ -1466,8 +1455,7 @@ def edit_air(request, pk, air_pk):
             return Response({
                 'message': 'Fail to update AIR',
                 'error': air_serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'GET':
         air_serializer = AIRSerializer(air)
@@ -1529,13 +1517,11 @@ def create_sft(request,pk):
             return Response({
                 'message': 'SFT created',
                 'data': serializer.data,
-                'status' : status.HTTP_201_CREATED
-            })
+                },status=status.HTTP_201_CREATED)
         return Response({
                 'message': 'Fail to create SFT',
                 'error': serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
 @parser_classes([MultiPartParser, FormParser])
@@ -1581,8 +1567,7 @@ def edit_sft(request, pk, sft_pk):
             return Response({
                 'message': 'Fail to update SFT',
                 'error': sft_serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'GET':
         sft_serializer = SFTSerializer(sft)
@@ -1627,13 +1612,11 @@ def create_tdspayment(request, pk):
             return Response({
                 'message': 'TDS Payment created',
                 'data': serializer.data,
-                'status' : status.HTTP_201_CREATED
-            })
+                },status=status.HTTP_201_CREATED)
         return Response({
                 'message': 'Fail to create TDS Payment',
                 'error': serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'POST'])
 def edit_tdspayment(request, pk, tdspayment_pk):
@@ -1655,8 +1638,7 @@ def edit_tdspayment(request, pk, tdspayment_pk):
         return Response({
                 'message': 'Fail to update TDS Payment',
                 'error': serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def list_tdspayment(request, pk):
@@ -1712,13 +1694,11 @@ def create_tds(request,pk):
             return Response({
                 'message': 'TDS Return created',
                 'data': serializer.data,
-                'status' : status.HTTP_201_CREATED
-            })
+                },status=status.HTTP_201_CREATED)
         return Response({
                 'message': 'Fail to create TDS Return',
                 'error': serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
 @parser_classes([MultiPartParser, FormParser])
@@ -1764,8 +1744,7 @@ def edit_tds(request, pk, tds_pk):
             return Response({
                 'message': 'Fail to update TDS Return',
                 'error': tds_serializer.errors,
-                'status' : status.HTTP_400_BAD_REQUEST
-            })
+                },status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'GET':
         tdsreturn_serializer = TDSReturnSerializer(tds)
@@ -2149,49 +2128,49 @@ def update_sales_invoice(request, client_pk, invoice_pk):
             # Update or create client location
             # Update or create client location
             # Handle Office Location updates or creation
-            location_data = form_data.get('location')  # Location name entered by user
-            location_id = form_data.get('offLocID')   # Existing location ID, if provided
-            branch_id = form_data.get('branchID')     # Branch ID selected for new location
+            # location_data = form_data.get('location')  # Location name entered by user
+            # location_id = form_data.get('offLocID')   # Existing location ID, if provided
+            # branch_id = form_data.get('branchID')     # Branch ID selected for new location
 
-            if location_id:  # Update existing location
-                # Fetch the existing location
-                location_obj = OfficeLocation.objects.filter(id=location_id).first()
-                if not location_obj:
-                    return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+            # if location_id:  # Update existing location
+            #     # Fetch the existing location
+            #     location_obj = OfficeLocation.objects.filter(id=location_id).first()
+            #     if not location_obj:
+            #         return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
 
-                # Update the location details
-                location_obj.location = location_data
-                location_obj.contact = form_data.get('contact')
-                location_obj.address = form_data.get('address')
-                location_obj.city = form_data.get('city')
-                location_obj.state = form_data.get('state')
-                location_obj.country = form_data.get('country')
-                location_obj.save()
+            #     # Update the location details
+            #     location_obj.location = location_data
+            #     location_obj.contact = form_data.get('contact')
+            #     location_obj.address = form_data.get('address')
+            #     location_obj.city = form_data.get('city')
+            #     location_obj.state = form_data.get('state')
+            #     location_obj.country = form_data.get('country')
+            #     location_obj.save()
 
-            else:  # Create a new location
-                # Validate branch selection
-                if not branch_id:
-                    return Response({"error_message": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
+            # else:  # Create a new location
+            #     # Validate branch selection
+            #     if not branch_id:
+            #         return Response({"error_message": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
 
-                branch_instance = Branch.objects.filter(id=branch_id, client_id=sales_invoice.client.id).first()
-                if not branch_instance:
-                    return Response({"error_message": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
-                                    status=status.HTTP_404_NOT_FOUND)
+            #     branch_instance = Branch.objects.filter(id=branch_id, client_id=sales_invoice.client.id).first()
+            #     if not branch_instance:
+            #         return Response({"error_message": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
+            #                         status=status.HTTP_404_NOT_FOUND)
 
-                # Create the new location
-                location_obj = OfficeLocation.objects.create(
-                    location=location_data,
-                    contact=form_data.get('contact'),
-                    address=form_data.get('address'),
-                    city=form_data.get('city'),
-                    state=form_data.get('state'),
-                    country=form_data.get('country'),
-                    branch=branch_instance  # Associate with the selected branch
-                )
+            #     # Create the new location
+            #     location_obj = OfficeLocation.objects.create(
+            #         location=location_data,
+            #         contact=form_data.get('contact'),
+            #         address=form_data.get('address'),
+            #         city=form_data.get('city'),
+            #         state=form_data.get('state'),
+            #         country=form_data.get('country'),
+            #         branch=branch_instance  # Associate with the selected branch
+            #     )
 
-            # Associate the updated or newly created location with the sales invoice
-            sales_invoice.client_Location = location_obj
-            sales_invoice.save()
+            # # Associate the updated or newly created location with the sales invoice
+            # sales_invoice.client_Location = location_obj
+            # sales_invoice.save()
                         # Update or create vendor
             # Update or create vendor
             # Update or create vendor (Customer)
@@ -2348,6 +2327,49 @@ def update_sales_invoice(request, client_pk, invoice_pk):
             #             )
 
             sales_invoice.product_summaries.set(product_summaries)
+            # sales_invoice.save()
+            location_data = form_data.get('location')  # Location name entered by user
+            location_id = form_data.get('offLocID')   # Existing location ID, if provided
+            branch_id = form_data.get('branchID')     # Branch ID selected for new location
+
+            if location_id:  # Update existing location
+                # Fetch the existing location
+                location_obj = OfficeLocation.objects.filter(id=location_id).first()
+                if not location_obj:
+                    return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+
+                # Update the location details
+                location_obj.location = location_data
+                location_obj.contact = form_data.get('contact')
+                location_obj.address = form_data.get('address')
+                location_obj.city = form_data.get('city')
+                location_obj.state = form_data.get('state')
+                location_obj.country = form_data.get('country')
+                location_obj.save()
+
+            else:  # Create a new location
+                # Validate branch selection
+                if not branch_id:
+                    return Response({"error_message": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
+
+                branch_instance = Branch.objects.filter(id=branch_id, client_id=sales_invoice.client.id).first()
+                if not branch_instance:
+                    return Response({"error_message": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
+                                    status=status.HTTP_404_NOT_FOUND)
+
+                # Create the new location
+                location_obj, _ = OfficeLocation.objects.get_or_create(
+                    location=location_data,
+                    contact=form_data.get('contact'),
+                    address=form_data.get('address'),
+                    city=form_data.get('city'),
+                    state=form_data.get('state'),
+                    country=form_data.get('country'),
+                    branch=branch_instance  # Associate with the selected branch
+                )
+
+            # Associate the updated or newly created location with the sales invoice
+            sales_invoice.client_Location = location_obj
             sales_invoice.save()
 
             response_data = {
@@ -2429,25 +2451,25 @@ def create_sales_invoice2(request, client_pk):
         attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
 
         # Handle Office Location creation or selection
-        location_obj = None
-        if form_data["offLocID"]:
-            location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
-            if not location_obj:
-                return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
-        else:
-            branch_instance = Branch.objects.filter(id=form_data["branchID"], client_id=client_pk).first()
-            if not branch_instance:
-                return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
-                                status=status.HTTP_404_NOT_FOUND)
-            location_obj = OfficeLocation.objects.create(
-                location=form_data.get("location"),
-                contact=form_data.get("contact"),
-                address=form_data.get("address"),
-                city=form_data.get("city"),
-                state=form_data.get("state"),
-                country=form_data.get("country"),
-                branch=branch_instance
-            )
+        # location_obj = None
+        # if form_data["offLocID"]:
+        #     location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
+        #     if not location_obj:
+        #         return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+        # else:
+        #     branch_instance = Branch.objects.filter(id=form_data["branchID"], client_id=client_pk).first()
+        #     if not branch_instance:
+        #         return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+        #                         status=status.HTTP_404_NOT_FOUND)
+        #     location_obj = OfficeLocation.objects.create(
+        #         location=form_data.get("location"),
+        #         contact=form_data.get("contact"),
+        #         address=form_data.get("address"),
+        #         city=form_data.get("city"),
+        #         state=form_data.get("state"),
+        #         country=form_data.get("country"),
+        #         branch=branch_instance
+        #     )
 
         # Handle Vendor creation or update
         vendor_obj = None
@@ -2466,77 +2488,103 @@ def create_sales_invoice2(request, client_pk):
                 else:
                     return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+        data = request.data
+        ser = SalesSerializer(data=data)
+        if ser.is_valid():
         # Create the Sales Invoice
-        sales_invoice = SalesInvoice.objects.create(
-            client_id=client_pk,
-            client_Location=location_obj,
-            customer=vendor_obj,
-            attach_invoice=attach_invoice,
-            attach_e_way_bill=attach_e_way_bill,
-            **invoice_data
-        )
-
-        # Create Product Summaries
-        # Create Product Summaries
-        # Create Product Summaries
-        product_summaries = []  # To store created product summaries
-        for row in rows:
-            hsn_code = row.get('hsnCode')
-            gst_rate = safe_decimal(row.get('gstRate', '0'))
-            product_name = row.get('product')
-            product_id = row.get('product_id')  # Assuming the frontend sends this if selecting an existing product
-            description_text = row.get('description', '')
-            unit_value = safe_decimal(row.get('unit', '0'))
-            rate_value = safe_decimal(row.get('rate', '0'))
-            amount = safe_decimal(row.get('product_amount', '0'))
-            cgst = safe_decimal(row.get('cgst', '0'))
-            sgst = safe_decimal(row.get('sgst', '0'))
-            igst = safe_decimal(row.get('igst', '0'))
-
-            # Handle HSNCode
-            hsn_code_obj, _ = HSNCode.objects.get_or_create(
-                hsn_code=hsn_code, defaults={'gst_rate': gst_rate}
+            sales_invoice = SalesInvoice.objects.create(
+                client_id=client_pk,
+                # client_Location=location_obj,
+                customer=vendor_obj,
+                attach_invoice=attach_invoice,
+                attach_e_way_bill=attach_e_way_bill,
+                **invoice_data
             )
 
-            # Handle Product (existing or new)
-            if product_id:
-                # Use existing product
-                product_obj = Product.objects.filter(id=product_id).first()
-                if not product_obj:
-                    return Response({"error_message": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
-            else:
-                # Create new product
-                product_obj, _ = Product.objects.get_or_create(
-                    product_name=product_name, hsn=hsn_code_obj, defaults={'unit_of_measure': unit_value}
+            # Create Product Summaries
+            # Create Product Summaries
+            # Create Product Summaries
+            product_summaries = []  # To store created product summaries
+            for row in rows:
+                hsn_code = row.get('hsnCode')
+                gst_rate = safe_decimal(row.get('gstRate', '0'))
+                product_name = row.get('product')
+                product_id = row.get('product_id')  # Assuming the frontend sends this if selecting an existing product
+                description_text = row.get('description', '')
+                unit_value = safe_decimal(row.get('unit', '0'))
+                rate_value = safe_decimal(row.get('rate', '0'))
+                amount = safe_decimal(row.get('product_amount', '0'))
+                cgst = safe_decimal(row.get('cgst', '0'))
+                sgst = safe_decimal(row.get('sgst', '0'))
+                igst = safe_decimal(row.get('igst', '0'))
+
+                # Handle HSNCode
+                hsn_code_obj, _ = HSNCode.objects.get_or_create(
+                    hsn_code=hsn_code, defaults={'gst_rate': gst_rate}
                 )
 
-            # Handle ProductDescription
-            product_description_obj, _ = ProductDescription.objects.get_or_create(
-                product=product_obj,
-                description=description_text,
-                defaults={
-                    'unit': unit_value,
-                    'rate': rate_value,
-                    'product_amount': amount,
-                    'cgst': cgst,
-                    'sgst': sgst,
-                    'igst': igst,
-                }
-            )
+                # Handle Product (existing or new)
+                if product_id:
+                    # Use existing product
+                    product_obj = Product.objects.filter(id=product_id).first()
+                    if not product_obj:
+                        return Response({"error_message": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                else:
+                    # Create new product
+                    product_obj, _ = Product.objects.get_or_create(
+                        product_name=product_name, hsn=hsn_code_obj, defaults={'unit_of_measure': unit_value}
+                    )
 
-            # Create ProductSummary
-            product_summary = ProductSummary.objects.create(
-                hsn=hsn_code_obj,
-                product=product_obj,
-                prod_description=product_description_obj
-            )
-            product_summaries.append(product_summary)
+                # Handle ProductDescription
+                product_description_obj, _ = ProductDescription.objects.get_or_create(
+                    product=product_obj,
+                    description=description_text,
+                    defaults={
+                        'unit': unit_value,
+                        'rate': rate_value,
+                        'product_amount': amount,
+                        'cgst': cgst,
+                        'sgst': sgst,
+                        'igst': igst,
+                    }
+                )
 
-            # Link ProductSummary to the SalesInvoice
-            sales_invoice.product_summaries.add(product_summary)  # Add the product summary to the invoice
+                # Create ProductSummary
+                product_summary = ProductSummary.objects.create(
+                    hsn=hsn_code_obj,
+                    product=product_obj,
+                    prod_description=product_description_obj
+                )
+                product_summaries.append(product_summary)
 
-        return Response({"message": "Sales Invoice created successfully.", "invoice_id": sales_invoice.id}, status=status.HTTP_200_OK)
+                # Link ProductSummary to the SalesInvoice
+                sales_invoice.product_summaries.add(product_summary)  # Add the product summary to the invoice
 
+            location_obj = None
+            if form_data["offLocID"]:
+                location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
+                if not location_obj:
+                    return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                branch_instance = Branch.objects.filter(id=form_data["branchID"], client_id=client_pk).first()
+                if not branch_instance:
+                    return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+                                    status=status.HTTP_404_NOT_FOUND)
+                location_obj, _ = OfficeLocation.objects.get_or_create(
+                    location=form_data.get("location"),
+                    contact=form_data.get("contact"),
+                    address=form_data.get("address"),
+                    city=form_data.get("city"),
+                    state=form_data.get("state"),
+                    country=form_data.get("country"),
+                    branch=branch_instance
+                )
+                sales_invoice.client_Location = location_obj
+                sales_invoice.save()
+
+            return Response({"message": "Sales Invoice created successfully.", "invoice_id": sales_invoice.id}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error_message":ser.errors}, status=status.HTTP_400_BAD_REQUEST)
     # except Exception as e:
     #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
@@ -2892,6 +2940,8 @@ def update_purchase_invoice(request, client_pk, invoice_pk):
                     return Response({"error_message":"Purchase Invoice not found"}, status=status.HTTP_404_NOT_FOUND)
                 
             payload = request.data
+            # ser = PurchaseSerializer(data=payload)
+            # if ser.is_valid()
             rows_data = defaultdict(dict)
             for key, value in payload.items():
                 if key.startswith("rows["):  # Check if the key corresponds to rows
@@ -2946,185 +2996,229 @@ def update_purchase_invoice(request, client_pk, invoice_pk):
             }
             attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
             attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
-            if attach_invoice:
-                purchase_invoice.attach_invoice = attach_invoice
-                
-            if attach_e_way_bill:
-                purchase_invoice.attach_e_way_bill = attach_e_way_bill
-            
-            for field, value in invoice_data.items():
-                if field not in ['attach_invoice','attach_e_way_bill']:
-                    if hasattr(purchase_invoice, field):
-                        setattr(
-                            purchase_invoice,
-                            field,
-                            safe_decimal(value) if field in [
-                                'taxable_amount', 'totalall_gst', 'total_invoice_value',
-                                'tds_tcs_rate', 'tds', 'tcs', 'amount_receivable'
-                            ] else value
-                        )
-            
-            attach_invoice = invoice_data.get('attach_invoice')
-            print('attach_invoice',attach_invoice)
-             # Log the flattened data
-            # print("Flattened form_data:", form_data)
-            print("Flattened invoice_data:", invoice_data)
-            print('request payload', request.data)
-            if invoice_file:
-                purchase_invoice.invoice_file = invoice_file
-                purchase_invoice.save()
-                return Response ({'message':'Invoice file uploaded successfully '},status=status.HTTP_400_BAD_REQUEST)
-            
-            # location_data = form_data.get('location')
-            # location_id = form_data.get('offLocID')
-            
-            location_data = form_data.get('location')  # Location name entered by user
-            location_id = form_data.get('offLocID')   # Existing location ID, if provided
-            branch_id = form_data.get('branchID')     # Branch ID selected for new location
-            
-            if location_id:
-                location_obj = OfficeLocation.objects.filter(id=location_id).first()
-                if not location_obj:
-                    return Response({'error':'Office Location not found. '}, status=status.HTTP_400_BAD_REQUEST)
-                location_obj.location = location_data
-                location_obj.contact = form_data.get('contact')
-                location_obj.address = form_data.get('address')
-                location_obj.city = form_data.get('city')
-                location_obj.state = form_data.get('state')
-                location_obj.country = form_data.get('country')
-                location_obj.save()
-            else:
-                if not branch_id:
-                    return Response({"error_message": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
-                branch_instance = Branch.objects.filter(id=branch_id, client_id=purchase_invoice.client.id).first()
-                if not branch_instance:
-                    return Response({"error_message": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
-                                    status=status.HTTP_404_NOT_FOUND)
+            data = request.data
+            ser = PurchaseSerializer(data=data)
+            if ser.is_valid():
+                if attach_invoice:
+                    purchase_invoice.attach_invoice = attach_invoice
                     
-                location_obj, _ = OfficeLocation.objects.get_or_create(
-                    location = location_data,
-                    contact = form_data.get('contact'),
-                    address = form_data.get('address'),
-                    city = form_data.get('city'),
-                    state = form_data.get('state'),
-                    country = form_data.get('country'),
-                    branch = branch_instance
-                )
+                if attach_e_way_bill:
+                    purchase_invoice.attach_e_way_bill = attach_e_way_bill
                 
-            purchase_invoice.client_Location = location_obj
-            purchase_invoice.save()
-            
-            if vendor_data:
-                if 'vendor_address' in vendor_data:
-                    vendor_data['address'] = vendor_data.pop('vendor_address')
+                for field, value in invoice_data.items():
+                    if field not in ['attach_invoice','attach_e_way_bill']:
+                        if hasattr(purchase_invoice, field):
+                            setattr(
+                                purchase_invoice,
+                                field,
+                                safe_decimal(value) if field in [
+                                    'taxable_amount', 'totalall_gst', 'total_invoice_value',
+                                    'tds_tcs_rate', 'tds', 'tcs', 'amount_receivable'
+                                ] else value
+                            )
+                
+                attach_invoice = invoice_data.get('attach_invoice')
+                print('attach_invoice',attach_invoice)
+                # Log the flattened data
+                # print("Flattened form_data:", form_data)
+                print("Flattened invoice_data:", invoice_data)
+                print('request payload', request.data)
+                if invoice_file:
+                    purchase_invoice.invoice_file = invoice_file
+                    purchase_invoice.save()
+                    return Response ({'message':'Invoice file uploaded successfully '},status=status.HTTP_400_BAD_REQUEST)
+                
+                # location_data = form_data.get('location')
+                # location_id = form_data.get('offLocID')
+                
+                # location_data = form_data.get('location')  # Location name entered by user
+                # location_id = form_data.get('offLocID')   # Existing location ID, if provided
+                # branch_id = form_data.get('branchID')     # Branch ID selected for new location
+                
+                # if location_id:
+                #     location_obj = OfficeLocation.objects.filter(id=location_id).first()
+                #     if not location_obj:
+                #         return Response({'error':'Office Location not found. '}, status=status.HTTP_400_BAD_REQUEST)
+                #     location_obj.location = location_data
+                #     location_obj.contact = form_data.get('contact')
+                #     location_obj.address = form_data.get('address')
+                #     location_obj.city = form_data.get('city')
+                #     location_obj.state = form_data.get('state')
+                #     location_obj.country = form_data.get('country')
+                #     location_obj.save()
+                # else:
+                #     if not branch_id:
+                #         return Response({"error_message": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
+                #     branch_instance = Branch.objects.filter(id=branch_id, client_id=purchase_invoice.client.id).first()
+                #     if not branch_instance:
+                #         return Response({"error_message": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
+                #                         status=status.HTTP_404_NOT_FOUND)
+                        
+                #     location_obj, _ = OfficeLocation.objects.get_or_create(
+                #         location = location_data,
+                #         contact = form_data.get('contact'),
+                #         address = form_data.get('address'),
+                #         city = form_data.get('city'),
+                #         state = form_data.get('state'),
+                #         country = form_data.get('country'),
+                #         branch = branch_instance
+                #     )
                     
-                vendor_id = request.data.get("vendorData[vendorID]")
+                # purchase_invoice.client_Location = location_obj
+                # purchase_invoice.save()
+                
+                if vendor_data:
+                    if 'vendor_address' in vendor_data:
+                        vendor_data['address'] = vendor_data.pop('vendor_address')
+                        
+                    vendor_id = request.data.get("vendorData[vendorID]")
 
-                if vendor_id:
-                    vendor_obj = Customer.objects.filter(id=vendor_id).first()
-                    if vendor_obj:
-                        if vendor_obj.gst_no == vendor_data.get("gst_no"):
+                    if vendor_id:
+                        vendor_obj = Customer.objects.filter(id=vendor_id).first()
+                        if vendor_obj:
+                            if vendor_obj.gst_no == vendor_data.get("gst_no"):
+                                vendor_serializer = CustomerVendorSerializer(vendor_obj, data=vendor_data, partial=True)
+                                if vendor_serializer.is_valid():
+                                    vendor_serializer.save()
+                                else:
+                                    return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                            else:
+                                # Create a new vendor if gst_no is changed
+                                vendor_serializer = CustomerVendorSerializer(data=vendor_data)
+                                if vendor_serializer.is_valid():
+                                    vendor_obj = vendor_serializer.save(client=purchase_invoice.client)
+                                else:
+                                    return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                        else:
+                            return Response({"error_message": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                    else:
+                        existing_vendor = Customer.objects.filter(client=purchase_invoice.client, gst_no=vendor_data.get("gst_no")).first()
+                        if existing_vendor:
+                            vendor_obj = existing_vendor
                             vendor_serializer = CustomerVendorSerializer(vendor_obj, data=vendor_data, partial=True)
                             if vendor_serializer.is_valid():
                                 vendor_serializer.save()
                             else:
                                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
                         else:
-                            # Create a new vendor if gst_no is changed
                             vendor_serializer = CustomerVendorSerializer(data=vendor_data)
                             if vendor_serializer.is_valid():
                                 vendor_obj = vendor_serializer.save(client=purchase_invoice.client)
                             else:
                                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        return Response({"error_message": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                    
+                    # Assign vendor_obj to expenses.vendor if defined
+                    if vendor_obj:
+                        purchase_invoice.vendor = vendor_obj
+
+                
+                    
+                product_summaries = []
+                for row in rows:
+                    hsn_code = row.get('hsnCode')
+                    gst_rate = safe_decimal(row.get('gstRate', '0'))
+                    product_name = row.get('product')
+                    description_text = row.get('description')
+                    unit_value = safe_decimal(row.get('unit', '0'))
+                    rate_value = safe_decimal(row.get('rate', '0'))
+                    amount = safe_decimal(row.get('product_amount', '0'))
+                    cgst = safe_decimal(row.get('cgst', '0'))
+                    sgst = safe_decimal(row.get('sgst', '0'))
+                    igst = safe_decimal(row.get('igst', '0'))
+
+                    # Update or create HSNCode
+                    hsn_code_obj, _ = HSNCode.objects.update_or_create(
+                        hsn_code=hsn_code,
+                        defaults={'gst_rate': gst_rate}
+                    )
+
+                    # Update or create Product
+                    product_obj, _ = Product.objects.update_or_create(
+                        product_name=product_name,
+                        hsn=hsn_code_obj,
+                        defaults={'unit_of_measure': unit_value}
+                    )
+
+                    # Update or create ProductDescription
+                    product_description_obj, _ = ProductDescription.objects.update_or_create(
+                        product=product_obj,
+                        description=description_text,
+                        defaults={
+                            'unit': unit_value,
+                            'rate': rate_value,
+                            'product_amount': amount,
+                            'cgst': cgst,
+                            'sgst': sgst,
+                            'igst': igst
+                        }
+                    )
+                    
+                    product_summary, _ = ProductSummaryPurchase.objects.update_or_create(
+                        hsn=hsn_code_obj,
+                        product=product_obj,
+                        prod_description=product_description_obj
+                    )
+                    product_summaries.append(product_summary)
+                    
+                    if invoice_data:
+                        for field, value in invoice_data.items():
+                            if field != 'client':
+                                setattr(
+                                    purchase_invoice,
+                                    field,
+                                    safe_decimal(value) if field in [
+                                        'taxable_amount', 'totalall_gst', 'total_invoice_value',
+                                        'tds_tcs_rate', 'tds', 'tcs', 'amount_receivable'
+                                    ] else value
+                                )
+                purchase_invoice.product_summaries.set(product_summaries)
+                # purchase_invoice.save()
+                
+                location_data = form_data.get('location')  # Location name entered by user
+                location_id = form_data.get('offLocID')   # Existing location ID, if provided
+                branch_id = form_data.get('branchID')     # Branch ID selected for new location
+                
+                if location_id:
+                    location_obj = OfficeLocation.objects.filter(id=location_id).first()
+                    if not location_obj:
+                        return Response({'error':'Office Location not found. '}, status=status.HTTP_400_BAD_REQUEST)
+                    location_obj.location = location_data
+                    location_obj.contact = form_data.get('contact')
+                    location_obj.address = form_data.get('address')
+                    location_obj.city = form_data.get('city')
+                    location_obj.state = form_data.get('state')
+                    location_obj.country = form_data.get('country')
+                    location_obj.save()
                 else:
-                    existing_vendor = Customer.objects.filter(client=purchase_invoice.client, gst_no=vendor_data.get("gst_no")).first()
-                    if existing_vendor:
-                        vendor_obj = existing_vendor
-                        vendor_serializer = CustomerVendorSerializer(vendor_obj, data=vendor_data, partial=True)
-                        if vendor_serializer.is_valid():
-                            vendor_serializer.save()
-                        else:
-                            return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        vendor_serializer = CustomerVendorSerializer(data=vendor_data)
-                        if vendor_serializer.is_valid():
-                            vendor_obj = vendor_serializer.save(client=purchase_invoice.client)
-                        else:
-                            return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                    if not branch_id:
+                        return Response({"error_message": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
+                    branch_instance = Branch.objects.filter(id=branch_id, client_id=purchase_invoice.client.id).first()
+                    if not branch_instance:
+                        return Response({"error_message": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
+                                        status=status.HTTP_404_NOT_FOUND)
+                        
+                    location_obj, _ = OfficeLocation.objects.get_or_create(
+                        location = location_data,
+                        contact = form_data.get('contact'),
+                        address = form_data.get('address'),
+                        city = form_data.get('city'),
+                        state = form_data.get('state'),
+                        country = form_data.get('country'),
+                        branch = branch_instance
+                    )
+                    
+                purchase_invoice.client_Location = location_obj
+                purchase_invoice.save()
                 
-                # Assign vendor_obj to expenses.vendor if defined
-                if vendor_obj:
-                    purchase_invoice.vendor = vendor_obj
                 
-            product_summaries = []
-            for row in rows:
-                hsn_code = row.get('hsnCode')
-                gst_rate = safe_decimal(row.get('gstRate', '0'))
-                product_name = row.get('product')
-                description_text = row.get('description')
-                unit_value = safe_decimal(row.get('unit', '0'))
-                rate_value = safe_decimal(row.get('rate', '0'))
-                amount = safe_decimal(row.get('product_amount', '0'))
-                cgst = safe_decimal(row.get('cgst', '0'))
-                sgst = safe_decimal(row.get('sgst', '0'))
-                igst = safe_decimal(row.get('igst', '0'))
-
-                # Update or create HSNCode
-                hsn_code_obj, _ = HSNCode.objects.update_or_create(
-                    hsn_code=hsn_code,
-                    defaults={'gst_rate': gst_rate}
-                )
-
-                # Update or create Product
-                product_obj, _ = Product.objects.update_or_create(
-                    product_name=product_name,
-                    hsn=hsn_code_obj,
-                    defaults={'unit_of_measure': unit_value}
-                )
-
-                # Update or create ProductDescription
-                product_description_obj, _ = ProductDescription.objects.update_or_create(
-                    product=product_obj,
-                    description=description_text,
-                    defaults={
-                        'unit': unit_value,
-                        'rate': rate_value,
-                        'product_amount': amount,
-                        'cgst': cgst,
-                        'sgst': sgst,
-                        'igst': igst
-                    }
-                )
-                
-                product_summary, _ = ProductSummaryPurchase.objects.update_or_create(
-                    hsn=hsn_code_obj,
-                    product=product_obj,
-                    prod_description=product_description_obj
-                )
-                product_summaries.append(product_summary)
-                
-                if invoice_data:
-                    for field, value in invoice_data.items():
-                        if field != 'client':
-                            setattr(
-                                purchase_invoice,
-                                field,
-                                safe_decimal(value) if field in [
-                                    'taxable_amount', 'totalall_gst', 'total_invoice_value',
-                                     'tds_tcs_rate', 'tds', 'tcs', 'amount_receivable'
-                                ] else value
-                            )
-            purchase_invoice.product_summaries.set(product_summaries)
-            purchase_invoice.save()
-            
-            response_data = {
-                'message' : 'Purchase Invoice Updated successfully. ',
-                'purchase_invoice_data' : PurchaseSerializer(purchase_invoice).data,
-                'product_summaries' : [{'id': summary.id, 'product_name': summary.product.product_name} for summary in product_summaries]
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
+                response_data = {
+                    'message' : 'Purchase Invoice Updated successfully. ',
+                    'purchase_invoice_data' : PurchaseSerializer(purchase_invoice).data,
+                    'product_summaries' : [{'id': summary.id, 'product_name': summary.product.product_name} for summary in product_summaries]
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': ser.errors}, status=status.HTTP_400_BAD_REQUEST)
     # except Exception as e:
     #     print("Error in update_sales_invoice:", str(e))
     #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -3137,6 +3231,7 @@ def update_purchase_invoice(request, client_pk, invoice_pk):
 @api_view(['POST'])
 def create_purchase_invoice2(request, client_pk):
     try:
+        data = request.data
         payload = request.data
         print('payload',payload)
 
@@ -3185,26 +3280,26 @@ def create_purchase_invoice2(request, client_pk):
         attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
         attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
 
-        location_obj = None
-        if form_data["offLocID"] :
-            location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
-            if not location_obj:
-                return Response({"error_message":"Office Location not found"}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            branch_instance = Branch.objects.filter(id=form_data["branchID"], client_id=client_pk).first()
-            if not branch_instance:
-                return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
-                                status=status.HTTP_404_NOT_FOUND)
-            location_obj = OfficeLocation.objects.create(
-                location = form_data.get("location"),
-                contact = form_data.get("contact"),
-                address = form_data.get("address"),
-                city = form_data.get("city"),
-                state = form_data.get("state"),
-                country = form_data.get("country"),
-                branch = branch_instance
+        # location_obj = None
+        # if form_data["offLocID"] :
+        #     location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
+        #     if not location_obj:
+        #         return Response({"error_message":"Office Location not found"}, status=status.HTTP_400_BAD_REQUEST)
+        # else:
+        #     branch_instance = Branch.objects.filter(id=form_data["branchID"], client_id=client_pk).first()
+        #     if not branch_instance:
+        #         return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+        #                         status=status.HTTP_404_NOT_FOUND)
+        #     location_obj = OfficeLocation.objects.create(
+        #         location = form_data.get("location"),
+        #         contact = form_data.get("contact"),
+        #         address = form_data.get("address"),
+        #         city = form_data.get("city"),
+        #         state = form_data.get("state"),
+        #         country = form_data.get("country"),
+        #         branch = branch_instance
 
-            )
+        #     )
 
         vendor_obj = None
         if vendor_data.get("gst_no"):
@@ -3222,71 +3317,98 @@ def create_purchase_invoice2(request, client_pk):
                 else:
                     return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-        purchase_invoice = PurchaseInvoice.objects.create(
-            client_id = client_pk,
-            client_Location = location_obj,
-            vendor = vendor_obj,
-            attach_invoice = attach_invoice,
-            attach_e_way_bill = attach_e_way_bill,
-            **invoice_data
-        )
-        product_summaries = []  # To store created product summaries
-        for row in rows:
-            hsn_code = row.get('hsnCode')
-            gst_rate = safe_decimal(row.get('gstRate', '0'))
-            product_name = row.get('product')
-            product_id = row.get('product_id')  # Assuming the frontend sends this if selecting an existing product
-            description_text = row.get('description', '')
-            unit_value = safe_decimal(row.get('unit', '0'))
-            rate_value = safe_decimal(row.get('rate', '0'))
-            amount = safe_decimal(row.get('product_amount', '0'))
-            cgst = safe_decimal(row.get('cgst', '0'))
-            sgst = safe_decimal(row.get('sgst', '0'))
-            igst = safe_decimal(row.get('igst', '0'))
-
-            # Handle HSNCode
-            hsn_code_obj, _ = HSNCode.objects.get_or_create(
-                hsn_code=hsn_code, defaults={'gst_rate': gst_rate}
+        ser = PurchaseSerializer(data=data)
+        if ser.is_valid():
+            purchase_invoice, _ = PurchaseInvoice.objects.get_or_create(
+                client_id = client_pk,
+                # client_Location = location_obj,
+                vendor = vendor_obj,
+                attach_invoice = attach_invoice,
+                attach_e_way_bill = attach_e_way_bill,
+                **invoice_data
             )
+            product_summaries = []  # To store created product summaries
+            for row in rows:
+                hsn_code = row.get('hsnCode')
+                gst_rate = safe_decimal(row.get('gstRate', '0'))
+                product_name = row.get('product')
+                product_id = row.get('product_id')  # Assuming the frontend sends this if selecting an existing product
+                description_text = row.get('description', '')
+                unit_value = safe_decimal(row.get('unit', '0'))
+                rate_value = safe_decimal(row.get('rate', '0'))
+                amount = safe_decimal(row.get('product_amount', '0'))
+                cgst = safe_decimal(row.get('cgst', '0'))
+                sgst = safe_decimal(row.get('sgst', '0'))
+                igst = safe_decimal(row.get('igst', '0'))
 
-            # Handle Product (existing or new)
-            if product_id:
-                # Use existing product
-                product_obj = Product.objects.filter(id=product_id).first()
-                if not product_obj:
-                    return Response({"error_message": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
-            else:
-                # Create new product
-                product_obj, _ = Product.objects.get_or_create(
-                    product_name=product_name, hsn=hsn_code_obj, defaults={'unit_of_measure': unit_value}
+                # Handle HSNCode
+                hsn_code_obj, _ = HSNCode.objects.get_or_create(
+                    hsn_code=hsn_code, defaults={'gst_rate': gst_rate}
                 )
 
-            # Handle ProductDescription
-            product_description_obj, _ = ProductDescription.objects.get_or_create(
-                product=product_obj,
-                description=description_text,
-                defaults={
-                    'unit': unit_value,
-                    'rate': rate_value,
-                    'product_amount': amount,
-                    'cgst': cgst,
-                    'sgst': sgst,
-                    'igst': igst,
-                }
-            )
+                # Handle Product (existing or new)
+                if product_id:
+                    # Use existing product
+                    product_obj = Product.objects.filter(id=product_id).first()
+                    if not product_obj:
+                        return Response({"error_message": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                else:
+                    # Create new product
+                    product_obj, _ = Product.objects.get_or_create(
+                        product_name=product_name, hsn=hsn_code_obj, defaults={'unit_of_measure': unit_value}
+                    )
 
-            # Create ProductSummary
-            product_summary = ProductSummaryPurchase.objects.create(
-                hsn=hsn_code_obj,
-                product=product_obj,
-                prod_description=product_description_obj
-            )
-            product_summaries.append(product_summary)
+                # Handle ProductDescription
+                product_description_obj, _ = ProductDescription.objects.get_or_create(
+                    product=product_obj,
+                    description=description_text,
+                    defaults={
+                        'unit': unit_value,
+                        'rate': rate_value,
+                        'product_amount': amount,
+                        'cgst': cgst,
+                        'sgst': sgst,
+                        'igst': igst,
+                    }
+                )
 
-            # Link ProductSummary to the SalesInvoice
-            purchase_invoice.product_summaries.add(product_summary)  # Add the product summary to the invoice
+                # Create ProductSummary
+                product_summary = ProductSummaryPurchase.objects.create(
+                    hsn=hsn_code_obj,
+                    product=product_obj,
+                    prod_description=product_description_obj
+                )
+                product_summaries.append(product_summary)
 
-        return Response({"message": "Purchase Invoice created successfully.", "invoice_id": purchase_invoice.id}, status=status.HTTP_201_CREATED)
+                # Link ProductSummary to the SalesInvoice
+                purchase_invoice.product_summaries.add(product_summary)  # Add the product summary to the invoice
+
+            location_obj = None
+            if form_data["offLocID"] :
+                location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
+                if not location_obj:
+                    return Response({"error_message":"Office Location not found"}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                branch_instance = Branch.objects.filter(id=form_data["branchID"], client_id=client_pk).first()
+                if not branch_instance:
+                    return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+                                    status=status.HTTP_404_NOT_FOUND)
+                location_obj, _ = OfficeLocation.objects.get_or_create(
+                    location = form_data.get("location"),
+                    contact = form_data.get("contact"),
+                    address = form_data.get("address"),
+                    city = form_data.get("city"),
+                    state = form_data.get("state"),
+                    country = form_data.get("country"),
+                    branch = branch_instance
+
+                )
+                purchase_invoice.client_Location = location_obj
+                purchase_invoice.save()
+
+            return Response({"message": "Purchase Invoice created successfully.", "invoice_id": purchase_invoice.id}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({"error":ser.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     # except Exception as e:
     #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -5325,49 +5447,49 @@ def update_income(request, client_pk, invoice_pk):
             # Update or create client location
             # Update or create client location
             # Handle Office Location updates or creation
-            location_data = form_data.get('location')  # Location name entered by user
-            location_id = form_data.get('offLocID')   # Existing location ID, if provided
-            branch_id = form_data.get('branchID')     # Branch ID selected for new location
+            # location_data = form_data.get('location')  # Location name entered by user
+            # location_id = form_data.get('offLocID')   # Existing location ID, if provided
+            # branch_id = form_data.get('branchID')     # Branch ID selected for new location
 
-            if location_id:  # Update existing location
-                # Fetch the existing location
-                location_obj = OfficeLocation.objects.filter(id=location_id).first()
-                if not location_obj:
-                    return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+            # if location_id:  # Update existing location
+            #     # Fetch the existing location
+            #     location_obj = OfficeLocation.objects.filter(id=location_id).first()
+            #     if not location_obj:
+            #         return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
 
-                # Update the location details
-                location_obj.location = location_data
-                location_obj.contact = form_data.get('contact')
-                location_obj.address = form_data.get('address')
-                location_obj.city = form_data.get('city')
-                location_obj.state = form_data.get('state')
-                location_obj.country = form_data.get('country')
-                location_obj.save()
+            #     # Update the location details
+            #     location_obj.location = location_data
+            #     location_obj.contact = form_data.get('contact')
+            #     location_obj.address = form_data.get('address')
+            #     location_obj.city = form_data.get('city')
+            #     location_obj.state = form_data.get('state')
+            #     location_obj.country = form_data.get('country')
+            #     location_obj.save()
 
-            else:  # Create a new location
-                # Validate branch selection
-                if not branch_id:
-                    return Response({"error_message": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
+            # else:  # Create a new location
+            #     # Validate branch selection
+            #     if not branch_id:
+            #         return Response({"error_message": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
 
-                branch_instance = Branch.objects.filter(id=branch_id, client_id=income.client.id).first()
-                if not branch_instance:
-                    return Response({"error_message": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
-                                    status=status.HTTP_404_NOT_FOUND)
+            #     branch_instance = Branch.objects.filter(id=branch_id, client_id=income.client.id).first()
+            #     if not branch_instance:
+            #         return Response({"error_message": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
+            #                         status=status.HTTP_404_NOT_FOUND)
 
-                # Create the new location
-                location_obj = OfficeLocation.objects.create(
-                    location=location_data,
-                    contact=form_data.get('contact'),
-                    address=form_data.get('address'),
-                    city=form_data.get('city'),
-                    state=form_data.get('state'),
-                    country=form_data.get('country'),
-                    branch=branch_instance  # Associate with the selected branch
-                )
+            #     # Create the new location
+            #     location_obj = OfficeLocation.objects.create(
+            #         location=location_data,
+            #         contact=form_data.get('contact'),
+            #         address=form_data.get('address'),
+            #         city=form_data.get('city'),
+            #         state=form_data.get('state'),
+            #         country=form_data.get('country'),
+            #         branch=branch_instance  # Associate with the selected branch
+            #     )
 
-            # Associate the updated or newly created location with the sales invoice
-            income.client_Location = location_obj
-            income.save()
+            # # Associate the updated or newly created location with the sales invoice
+            # income.client_Location = location_obj
+            # income.save()
                         # Update or create vendor
             # Update or create vendor
             # Update or create vendor (Customer)
@@ -5525,6 +5647,49 @@ def update_income(request, client_pk, invoice_pk):
             #             )
 
             income.product_summaries.set(product_summaries)
+            # income.save()
+            location_data = form_data.get('location')  # Location name entered by user
+            location_id = form_data.get('offLocID')   # Existing location ID, if provided
+            branch_id = form_data.get('branchID')     # Branch ID selected for new location
+
+            if location_id:  # Update existing location
+                # Fetch the existing location
+                location_obj = OfficeLocation.objects.filter(id=location_id).first()
+                if not location_obj:
+                    return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+
+                # Update the location details
+                location_obj.location = location_data
+                location_obj.contact = form_data.get('contact')
+                location_obj.address = form_data.get('address')
+                location_obj.city = form_data.get('city')
+                location_obj.state = form_data.get('state')
+                location_obj.country = form_data.get('country')
+                location_obj.save()
+
+            else:  # Create a new location
+                # Validate branch selection
+                if not branch_id:
+                    return Response({"error_message": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
+
+                branch_instance = Branch.objects.filter(id=branch_id, client_id=income.client.id).first()
+                if not branch_instance:
+                    return Response({"error_message": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
+                                    status=status.HTTP_404_NOT_FOUND)
+
+                # Create the new location
+                location_obj, _  = OfficeLocation.objects.get_or_create(
+                    location=location_data,
+                    contact=form_data.get('contact'),
+                    address=form_data.get('address'),
+                    city=form_data.get('city'),
+                    state=form_data.get('state'),
+                    country=form_data.get('country'),
+                    branch=branch_instance  # Associate with the selected branch
+                )
+
+            # Associate the updated or newly created location with the sales invoice
+            income.client_Location = location_obj
             income.save()
 
             response_data = {
@@ -6093,41 +6258,41 @@ def update_expenses(request, client_pk, invoice_pk):
             # location_data = form_data.get('location')
             # location_id = form_data.get('offLocID')
             
-            location_data = form_data.get('location')  # Location name entered by user
-            location_id = form_data.get('offLocID')   # Existing location ID, if provided
-            branch_id = form_data.get('branchID')     # Branch ID selected for new location
+            # location_data = form_data.get('location')  # Location name entered by user
+            # location_id = form_data.get('offLocID')   # Existing location ID, if provided
+            # branch_id = form_data.get('branchID')     # Branch ID selected for new location
             
-            if location_id:
-                location_obj = OfficeLocation.objects.filter(id=location_id).first()
-                if not location_obj:
-                    return Response({'error':'Office Location not found. '}, status=status.HTTP_400_BAD_REQUEST)
-                location_obj.location = location_data
-                location_obj.contact = form_data.get('contact')
-                location_obj.address = form_data.get('address')
-                location_obj.city = form_data.get('city')
-                location_obj.state = form_data.get('state')
-                location_obj.country = form_data.get('country')
-                location_obj.save()
-            else:
-                if not branch_id:
-                    return Response({"error_message": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
-                branch_instance = Branch.objects.filter(id=branch_id, client_id=expenses.client.id).first()
-                if not branch_instance:
-                    return Response({"error_message": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
-                                    status=status.HTTP_404_NOT_FOUND)
+            # if location_id:
+            #     location_obj = OfficeLocation.objects.filter(id=location_id).first()
+            #     if not location_obj:
+            #         return Response({'error':'Office Location not found. '}, status=status.HTTP_400_BAD_REQUEST)
+            #     location_obj.location = location_data
+            #     location_obj.contact = form_data.get('contact')
+            #     location_obj.address = form_data.get('address')
+            #     location_obj.city = form_data.get('city')
+            #     location_obj.state = form_data.get('state')
+            #     location_obj.country = form_data.get('country')
+            #     location_obj.save()
+            # else:
+            #     if not branch_id:
+            #         return Response({"error_message": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
+            #     branch_instance = Branch.objects.filter(id=branch_id, client_id=expenses.client.id).first()
+            #     if not branch_instance:
+            #         return Response({"error_message": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
+            #                         status=status.HTTP_404_NOT_FOUND)
                     
-                location_obj = OfficeLocation.objects.create(
-                    location = location_data,
-                    contact = form_data.get('contact'),
-                    address = form_data.get('address'),
-                    city = form_data.get('city'),
-                    state = form_data.get('state'),
-                    country = form_data.get('country'),
-                    branch = branch_instance
-                )
+            #     location_obj = OfficeLocation.objects.create(
+            #         location = location_data,
+            #         contact = form_data.get('contact'),
+            #         address = form_data.get('address'),
+            #         city = form_data.get('city'),
+            #         state = form_data.get('state'),
+            #         country = form_data.get('country'),
+            #         branch = branch_instance
+            #     )
                 
-            expenses.client_Location = location_obj
-            expenses.save()
+            # expenses.client_Location = location_obj
+            # expenses.save()
             
             if vendor_data:
                 if 'vendor_address' in vendor_data:
@@ -6268,6 +6433,42 @@ def update_expenses(request, client_pk, invoice_pk):
                                 ] else value
                             )
             expenses.product_summaries.set(product_summaries)
+            # expenses.save()
+
+            location_data = form_data.get('location')  # Location name entered by user
+            location_id = form_data.get('offLocID')   # Existing location ID, if provided
+            branch_id = form_data.get('branchID')     # Branch ID selected for new location
+            
+            if location_id:
+                location_obj = OfficeLocation.objects.filter(id=location_id).first()
+                if not location_obj:
+                    return Response({'error':'Office Location not found. '}, status=status.HTTP_400_BAD_REQUEST)
+                location_obj.location = location_data
+                location_obj.contact = form_data.get('contact')
+                location_obj.address = form_data.get('address')
+                location_obj.city = form_data.get('city')
+                location_obj.state = form_data.get('state')
+                location_obj.country = form_data.get('country')
+                location_obj.save()
+            else:
+                if not branch_id:
+                    return Response({"error_message": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
+                branch_instance = Branch.objects.filter(id=branch_id, client_id=expenses.client.id).first()
+                if not branch_instance:
+                    return Response({"error_message": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
+                                    status=status.HTTP_404_NOT_FOUND)
+                    
+                location_obj, _ = OfficeLocation.objects.get_or_create(
+                    location = location_data,
+                    contact = form_data.get('contact'),
+                    address = form_data.get('address'),
+                    city = form_data.get('city'),
+                    state = form_data.get('state'),
+                    country = form_data.get('country'),
+                    branch = branch_instance
+                )
+                
+            expenses.client_Location = location_obj
             expenses.save()
             
             response_data = {

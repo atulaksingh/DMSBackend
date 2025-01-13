@@ -297,8 +297,8 @@ class SalesInvoice(models.Model):
     taxable_amount = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     totalall_gst = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     total_invoice_value = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    tds_tcs_rate = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    tds_tcs_section = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    tds_tcs_rate = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, default=0.00)
+    # tds_tcs_section = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, default=0.00)
     tcs = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     tds = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     amount_receivable = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
@@ -309,7 +309,7 @@ class SalesInvoice(models.Model):
 
 class ProductSummaryPurchase(models.Model):
         hsn = models.ForeignKey(HSNCode,on_delete=models.SET_NULL, null=True, blank=True)
-        product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
+        product = models.ForeignKey(Product, on_delete=models.CASCADE)
         prod_description = models.ForeignKey('ProductDescription', on_delete=models.SET_NULL, null=True, blank=True)
 
         def __str__(self):
@@ -372,8 +372,8 @@ class PurchaseInvoice(models.Model):
     vendor = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
     invoice_no = models.CharField(max_length=100, null=True, blank=True)
     invoice_date = models.DateField(null=True, blank=True)
-    invoice_type = models.CharField(max_length=100, choices=invoice_type, null=True, blank=True)
-    entry_type = models.CharField(max_length=100, choices=entry_type, null=True, blank=True)
+    invoice_type = models.CharField(max_length=100, null=True, blank=True)
+    entry_type = models.CharField(max_length=100, null=True, blank=True)
 
     # Link to ProductSummary for each item in the invoice
     product_summaries = models.ManyToManyField(ProductSummaryPurchase, blank=True, related_name="purchase_invoices")
