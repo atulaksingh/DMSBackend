@@ -2579,8 +2579,8 @@ def create_sales_invoice2(request, client_pk):
                     country=form_data.get("country"),
                     branch=branch_instance
                 )
-                sales_invoice.client_Location = location_obj
-                sales_invoice.save()
+            sales_invoice.client_Location = location_obj
+            sales_invoice.save()
 
             return Response({"message": "Sales Invoice created successfully.", "invoice_id": sales_invoice.id}, status=status.HTTP_200_OK)
         else:
@@ -3403,8 +3403,30 @@ def create_purchase_invoice2(request, client_pk):
                     branch = branch_instance
 
                 )
-                purchase_invoice.client_Location = location_obj
-                purchase_invoice.save()
+            purchase_invoice.client_Location = location_obj
+            purchase_invoice.save()
+
+            # vendor_obj = None
+            # if vendor_data["gst_no"]:
+            #     # purchase_invoice.vendor = vendor_obj
+            #     existing_vendor = Customer.objects.filter(gst_no=vendor_data["gst_no"],client_id=client_pk).first()
+            #     if not existing_vendor:
+            #         return Response({"error_message":"c or v not found"}, status=status.HTTP_400_BAD_REQUEST)
+            # else:
+            #     client_instance = Client.objects.filter(id=client_pk).first()
+            #     if not client_instance:
+            #         return Response({"error_message":"client not found"}, status=status.HTTP_400_BAD_REQUEST)
+            #     vendor_obj, _ = Customer.objects.get_or_create(
+            #         name = vendor_data.get("name"),
+            #         gst_no = vendor_data.get("gst_no"),
+            #         pan = vendor_data.get("pan"),
+            #         address = vendor_data.get("vendor_address"),
+            #         customer = vendor_data.get("customer"),
+            #         vendor = vendor_data.get("vendor"),
+            #         client = client_instance
+            #     )
+            #     purchase_invoice.vendor = vendor_obj
+            #     purchase_invoice.save()
 
             return Response({"message": "Purchase Invoice created successfully.", "invoice_id": purchase_invoice.id}, status=status.HTTP_201_CREATED)
         else:
@@ -5228,7 +5250,7 @@ def create_income_get(request, pk):
 
         if not product_Id and not received_value:
             off = OfficeLocation.objects.filter(branch__client=client)
-            customer = Customer.objects.filter(client=client, vendor=True)
+            customer = Customer.objects.filter(client=client, customer=True)
             product = Product.objects.all()
             branch = Branch.objects.filter(client=client)
 
@@ -5891,8 +5913,8 @@ def create_income2(request, client_pk):
                     country=form_data.get("country"),
                     branch=branch_instance
                 )
-                income.client_Location = location_obj
-                income.save()
+            income.client_Location = location_obj
+            income.save()
             return Response({"message": "Income created successfully.", "invoice_id": income.id}, status=status.HTTP_201_CREATED)
         else:
             return Response({"error_message":ser.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -6684,8 +6706,8 @@ def create_expenses2(request, client_pk):
                     branch = branch_instance
 
                 )
-                expenses.client_Location = location_obj
-                expenses.save()
+            expenses.client_Location = location_obj
+            expenses.save()
             print('eeeeee',data)
             return Response({"message": "Expenses created successfully.", "invoice_id": expenses.id}, status=status.HTTP_200_OK)
         else:

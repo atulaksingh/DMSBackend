@@ -267,6 +267,7 @@ from api.models import *
 admin.site.register(CompanyDocument)
 admin.site.register(CustomUser)
 admin.site.register(Branch)
+admin.site.register(BranchDocument)
 admin.site.register(OfficeLocation)
 admin.site.register(Customer)
 admin.site.register(Owner)
