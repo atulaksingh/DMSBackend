@@ -942,6 +942,7 @@ def create_customer(request, pk):
                 'message': 'Fail to create Customer or Vendor',
                 'error_message': customer_serializer.errors,
                 },status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['POST', 'GET'])
 def edit_customer(request, pk, customer_pk):
     client = Client.objects.get(id=pk)
@@ -6302,45 +6303,6 @@ def update_expenses(request, client_pk, invoice_pk):
                 expenses.save()
                 return Response ({'message':'Invoice file uploaded successfully '},status=status.HTTP_400_BAD_REQUEST)
             
-            # location_data = form_data.get('location')
-            # location_id = form_data.get('offLocID')
-            
-            # location_data = form_data.get('location')  # Location name entered by user
-            # location_id = form_data.get('offLocID')   # Existing location ID, if provided
-            # branch_id = form_data.get('branchID')     # Branch ID selected for new location
-            
-            # if location_id:
-            #     location_obj = OfficeLocation.objects.filter(id=location_id).first()
-            #     if not location_obj:
-            #         return Response({'error_message':'Office Location not found. '}, status=status.HTTP_400_BAD_REQUEST)
-            #     location_obj.location = location_data
-            #     location_obj.contact = form_data.get('contact')
-            #     location_obj.address = form_data.get('address')
-            #     location_obj.city = form_data.get('city')
-            #     location_obj.state = form_data.get('state')
-            #     location_obj.country = form_data.get('country')
-            #     location_obj.save()
-            # else:
-            #     if not branch_id:
-            #         return Response({"error_message": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
-            #     branch_instance = Branch.objects.filter(id=branch_id, client_id=expenses.client.id).first()
-            #     if not branch_instance:
-            #         return Response({"error_message": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
-            #                         status=status.HTTP_404_NOT_FOUND)
-                    
-            #     location_obj = OfficeLocation.objects.create(
-            #         location = location_data,
-            #         contact = form_data.get('contact'),
-            #         address = form_data.get('address'),
-            #         city = form_data.get('city'),
-            #         state = form_data.get('state'),
-            #         country = form_data.get('country'),
-            #         branch = branch_instance
-            #     )
-                
-            # expenses.client_Location = location_obj
-            # expenses.save()
-            
             if vendor_data:
                 if 'vendor_address' in vendor_data:
                     vendor_data['address'] = vendor_data.pop('vendor_address')
@@ -6385,42 +6347,6 @@ def update_expenses(request, client_pk, invoice_pk):
                 if vendor_obj:
                     expenses.vendor = vendor_obj
                         
-
-                # if vendor_id:
-                #     vendor_obj = Customer.objects.filter(id=vendor_id).first()
-                #     if vendor_obj:
-                #         if vendor_obj.gst_no == vendor_data.get("gst_no"):
-                #             vendor_serializer = CustomerVendorSerializer(vendor_obj, data=vendor_data, partial=True)
-                #             if vendor_serializer.is_valid():
-                #                 vendor_serializer.save()
-                #             else:
-                #                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-                #         else:
-                #             # Create a new vendor if gst_no is changed
-                #             vendor_serializer = CustomerVendorSerializer(data=vendor_data)
-                #             if vendor_serializer.is_valid():
-                #                 vendor_obj = vendor_serializer.save(client=expenses.client)
-                #             else:
-                #                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-                #     else:
-                #         return Response({"error_message": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
-                # else:
-                #     existing_vendor = Customer.objects.filter(client=expenses.client,  gst_no=vendor_data.get("gst_no")).first()
-                #     if existing_vendor:
-                #         vendor_obj = existing_vendor
-                #         vendor_serializer = CustomerVendorSerializer(vendor_obj, data= vendor_data, partial = True)
-                #         if vendor_serializer.is_valid():
-                #             vendor_serializer.save()
-                #         else: 
-                #             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-                #     else:
-                #         vendor_serializer = CustomerVendorSerializer(data=vendor_data)
-                #         if vendor_serializer.is_valid():
-                #             vendor_serializer.save()
-                #         else: 
-                #             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-                # expenses.vendor = vendor_obj
-            
             product_summaries = []
             for row in rows:
                 hsn_code = row.get('hsnCode')
@@ -6468,17 +6394,17 @@ def update_expenses(request, client_pk, invoice_pk):
                 )
                 product_summaries.append(product_summary)
                 
-                if invoice_data:
-                    for field, value in invoice_data.items():
-                        if field != 'client':
-                            setattr(
-                                expenses,
-                                field,
-                                safe_decimal(value) if field in [
-                                    'taxable_amount', 'totalall_gst', 'total_invoice_value',
-                                     'tds_tcs_rate', 'tds', 'tcs', 'amount_receivable'
-                                ] else value
-                            )
+                # if invoice_data:
+                #     for field, value in invoice_data.items():
+                #         if field != 'client':
+                #             setattr(
+                #                 expenses,
+                #                 field,
+                #                 safe_decimal(value) if field in [
+                #                     'taxable_amount', 'totalall_gst', 'total_invoice_value',
+                #                      'tds_tcs_rate', 'tds', 'tcs', 'amount_receivable'
+                #                 ] else value
+                #             )
             expenses.product_summaries.set(product_summaries)
             # expenses.save()
 
