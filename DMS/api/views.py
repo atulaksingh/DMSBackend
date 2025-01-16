@@ -8840,7 +8840,7 @@ def delete_hsn(request, pk):
     hsn = HSNCode.objects.get(id = pk)
     if request.method == 'DELETE':
         hsn.delete()
-        return Response({'Messgae':'HSN Return Delete'})
+        return Response({'message':'HSN Return Delete'})
     return Response({'message':'Fail to delete HSN Return'} ,status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST','GET'])
@@ -8883,7 +8883,7 @@ def delete_product(request, pk):
     product = Product.objects.get(id = pk)
     if request.method == 'DELETE':
         product.delete()
-        return Response({'Messgae':'Product Return Delete'})
+        return Response({'message':'Product Return Delete'})
     return Response({'message':'Fail to delete HSN Return'} ,status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST','GET'])
@@ -8926,7 +8926,7 @@ def delete_product_description(request, pk):
     product_description = ProductDescription.objects.get(id = pk)
     if request.method == 'DELETE':
         product_description.delete()
-        return Response({'Messgae':'Product Description Return Delete'})
+        return Response({'message':'Product Description Return Delete'})
     return Response({'message':'Fail to delete Product Description Return'} ,status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
