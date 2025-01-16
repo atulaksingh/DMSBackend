@@ -2124,57 +2124,6 @@ def update_sales_invoice(request, client_pk, invoice_pk):
                 sales_invoice.save()
                 return Response({"message": "Invoice file uploaded successfully."}, status=status.HTTP_200_OK)
 
-            # Update or create client location
-            # Update or create client location
-            # Update or create client location
-            # Update or create client location
-            # Handle Office Location updates or creation
-            # location_data = form_data.get('location')  # Location name entered by user
-            # location_id = form_data.get('offLocID')   # Existing location ID, if provided
-            # branch_id = form_data.get('branchID')     # Branch ID selected for new location
-
-            # if location_id:  # Update existing location
-            #     # Fetch the existing location
-            #     location_obj = OfficeLocation.objects.filter(id=location_id).first()
-            #     if not location_obj:
-            #         return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
-
-            #     # Update the location details
-            #     location_obj.location = location_data
-            #     location_obj.contact = form_data.get('contact')
-            #     location_obj.address = form_data.get('address')
-            #     location_obj.city = form_data.get('city')
-            #     location_obj.state = form_data.get('state')
-            #     location_obj.country = form_data.get('country')
-            #     location_obj.save()
-
-            # else:  # Create a new location
-            #     # Validate branch selection
-            #     if not branch_id:
-            #         return Response({"error_message": "Branch ID is required for creating a new location."}, status=status.HTTP_400_BAD_REQUEST)
-
-            #     branch_instance = Branch.objects.filter(id=branch_id, client_id=sales_invoice.client.id).first()
-            #     if not branch_instance:
-            #         return Response({"error_message": f"Branch with ID {branch_id} not found or doesn't belong to the client."},
-            #                         status=status.HTTP_404_NOT_FOUND)
-
-            #     # Create the new location
-            #     location_obj = OfficeLocation.objects.create(
-            #         location=location_data,
-            #         contact=form_data.get('contact'),
-            #         address=form_data.get('address'),
-            #         city=form_data.get('city'),
-            #         state=form_data.get('state'),
-            #         country=form_data.get('country'),
-            #         branch=branch_instance  # Associate with the selected branch
-            #     )
-
-            # # Associate the updated or newly created location with the sales invoice
-            # sales_invoice.client_Location = location_obj
-            # sales_invoice.save()
-                        # Update or create vendor
-            # Update or create vendor
-            # Update or create vendor (Customer)
             if vendor_data:
                 # Check for 'customer_address' in vendor data and map it to 'address'
                 if 'customer_address' in vendor_data:
@@ -2220,54 +2169,10 @@ def update_sales_invoice(request, client_pk, invoice_pk):
                 if vendor_obj:
                     sales_invoice.customer = vendor_obj
 
-            
-
-                # if vendor_id:  # If vendorID is provided
-                #     # Fetch the existing vendor
-                #     vendor_obj = Customer.objects.filter(id=vendor_id).first()
-                #     if vendor_obj:
-                #         # Check if the gst_no is being changed
-                #         if vendor_obj.gst_no == vendor_data.get("gst_no"):
-                #             # Update the vendor if gst_no is unchanged
-                #             vendor_serializer = CustomerVendorSerializer(vendor_obj, data=vendor_data, partial=True)
-                #             if vendor_serializer.is_valid():
-                #                 vendor_serializer.save()
-                #             else:
-                #                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-                #         else:
-                #             # Create a new vendor if gst_no is changed
-                #             vendor_serializer = CustomerVendorSerializer(data=vendor_data)
-                #             if vendor_serializer.is_valid():
-                #                 vendor_obj = vendor_serializer.save(client=sales_invoice.client)
-                #             else:
-                #                 return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-                #     else:
-                #         return Response({"error_message": f"Vendor with ID {vendor_id} not found."}, status=status.HTTP_404_NOT_FOUND)
-                # else:
-                #     # If no vendorID is provided, check if a vendor exists with the same gst_no for this client
-                #     existing_vendor = Customer.objects.filter(client=sales_invoice.client, gst_no=vendor_data.get("gst_no")).first()
-                #     if existing_vendor:
-                #         # Update the existing vendor with the same gst_no
-                #         vendor_obj = existing_vendor
-                #         vendor_serializer = CustomerVendorSerializer(vendor_obj, data=vendor_data, partial=True)
-                #         if vendor_serializer.is_valid():
-                #             vendor_serializer.save()
-                #         else:
-                #             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-                #     else:
-                #         # Create a new vendor since no existing vendor with this gst_no is found
-                #         vendor_serializer = CustomerVendorSerializer(data=vendor_data)
-                #         if vendor_serializer.is_valid():
-                #             vendor_obj = vendor_serializer.save(client=sales_invoice.client)
-                #         else:
-                #             return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-                # # Assign the updated/created vendor to the sales invoice
-                # sales_invoice.customer = vendor_obj
 
             # Process rows for product summaries
             product_summaries = []
-            processed_product_names = set()
+            # processed_product_names = set()
             for row in rows:
                 hsn_code = row.get('hsnCode')
                 gst_rate = safe_decimal(row.get('gstRate', '0'))
@@ -2280,14 +2185,14 @@ def update_sales_invoice(request, client_pk, invoice_pk):
                 sgst = safe_decimal(row.get('sgst', '0'))
                 igst = safe_decimal(row.get('igst', '0'))
 
-                if product_name in processed_product_names:
-                    return Response(
-                        {"error_message": f"Product name '{product_name}' already exists in this invoice."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                # if product_name in processed_product_names:
+                #     return Response(
+                #         {"error_message": f"Product name '{product_name}' already exists in this invoice."},
+                #         status=status.HTTP_400_BAD_REQUEST
+                #     )
                 
                 # Mark the product name as processed for this invoice
-                processed_product_names.add(product_name)
+                # processed_product_names.add(product_name)
 
                 # Update or create HSNCode
                 hsn_code_obj, _ = HSNCode.objects.update_or_create(
@@ -2324,23 +2229,23 @@ def update_sales_invoice(request, client_pk, invoice_pk):
                 )
 
                 # Update or create ProductSummary
-                # product_summary, _ = ProductSummary.objects.update_or_create(
-                #     hsn=hsn_code_obj,
-                #     product=product_obj,
-                #     prod_description=product_description_obj
-                # )
-                # product_summaries.append(product_summary)
-                product_summary, created = ProductSummary.objects.update_or_create(
+                product_summary, _ = ProductSummary.objects.update_or_create(
                     hsn=hsn_code_obj,
                     product=product_obj,
-                    defaults={
-                        'prod_description': product_description_obj
-                    }
+                    prod_description=product_description_obj
                 )
-                if created:
-                    print(f"Created new ProductSummary: {product_summary}")
-                else:
-                    print(f"Updated existing ProductSummary: {product_summary}")
+                # product_summaries.append(product_summary)
+                # product_summary, created = ProductSummary.objects.update_or_create(
+                #     hsn=hsn_code_obj,
+                #     product=product_obj,
+                #     defaults={
+                #         'prod_description': product_description_obj
+                #     }
+                # )
+                # if created:
+                #     print(f"Created new ProductSummary: {product_summary}")
+                # else:
+                #     print(f"Updated existing ProductSummary: {product_summary}")
 
                 product_summaries.append(product_summary)
 
@@ -2414,21 +2319,6 @@ def update_sales_invoice(request, client_pk, invoice_pk):
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-# from decimal import Decimal, InvalidOperation
-# # Helper function to safely convert to Decimal
-# def safe_decimal(value, default='0'):
-#     try:
-
-#         return Decimal(value)
-#     except (ValueError, InvalidOperation):
-#         return Decimal(default)
-
-# def safe_decimal(value, default=0):
-#     try:
-#         return Decimal(value)
-#     except (InvalidOperation, TypeError, ValueError):
-#         return Decimal(default)
 
 @api_view(['POST'])
 def create_sales_invoice2(request, client_pk):
@@ -2536,7 +2426,7 @@ def create_sales_invoice2(request, client_pk):
             # Create Product Summaries
             # Create Product Summaries
             product_summaries = []  # To store created product summaries
-            processed_product_names = set()
+            # processed_product_names = set()
             for row in rows:
                 hsn_code = row.get('hsnCode')
                 gst_rate = safe_decimal(row.get('gstRate', '0'))
@@ -2550,14 +2440,14 @@ def create_sales_invoice2(request, client_pk):
                 sgst = safe_decimal(row.get('sgst', '0'))
                 igst = safe_decimal(row.get('igst', '0'))
 
-                if product_name in processed_product_names:
-                    return Response(
-                        {"error_message": f"Product name '{product_name}' already exists in this invoice."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                # if product_name in processed_product_names:
+                #     return Response(
+                #         {"error_message": f"Product name '{product_name}' already exists in this invoice."},
+                #         status=status.HTTP_400_BAD_REQUEST
+                #     )
                 
-                # Mark the product name as processed for this invoice
-                processed_product_names.add(product_name)
+                # # Mark the product name as processed for this invoice
+                # processed_product_names.add(product_name)
 
                 # Handle HSNCode
                 hsn_code_obj, _ = HSNCode.objects.get_or_create(
@@ -3162,7 +3052,7 @@ def update_purchase_invoice(request, client_pk, invoice_pk):
                 
                     
                 product_summaries = []
-                processed_product_names = set()
+                # processed_product_names = set()
                 for row in rows:
                     hsn_code = row.get('hsnCode')
                     gst_rate = safe_decimal(row.get('gstRate', '0'))
@@ -3175,14 +3065,14 @@ def update_purchase_invoice(request, client_pk, invoice_pk):
                     sgst = safe_decimal(row.get('sgst', '0'))
                     igst = safe_decimal(row.get('igst', '0'))
 
-                    if product_name in processed_product_names:
-                        return Response(
-                            {"error_message": f"Product name '{product_name}' already exists in this invoice."},
-                            status=status.HTTP_400_BAD_REQUEST
-                        )
+                    # if product_name in processed_product_names:
+                    #     return Response(
+                    #         {"error_message": f"Product name '{product_name}' already exists in this invoice."},
+                    #         status=status.HTTP_400_BAD_REQUEST
+                    #     )
                 
-                    # Mark the product name as processed for this invoice
-                    processed_product_names.add(product_name)
+                    # # Mark the product name as processed for this invoice
+                    # processed_product_names.add(product_name)
 
 
                     # Update or create HSNCode
@@ -3394,7 +3284,7 @@ def create_purchase_invoice2(request, client_pk):
                 **invoice_data
             )
             product_summaries = []  # To store created product summaries
-            processed_product_names = set()
+            # processed_product_names = set()
             for row in rows:
                 hsn_code = row.get('hsnCode')
                 gst_rate = safe_decimal(row.get('gstRate', '0'))
@@ -3408,14 +3298,14 @@ def create_purchase_invoice2(request, client_pk):
                 sgst = safe_decimal(row.get('sgst', '0'))
                 igst = safe_decimal(row.get('igst', '0'))
 
-                if product_name in processed_product_names:
-                    return Response(
-                        {"error_message": f"Product name '{product_name}' already exists in this invoice."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                # if product_name in processed_product_names:
+                #     return Response(
+                #         {"error_message": f"Product name '{product_name}' already exists in this invoice."},
+                #         status=status.HTTP_400_BAD_REQUEST
+                #     )
                 
-                # Mark the product name as processed for this invoice
-                processed_product_names.add(product_name)
+                # # Mark the product name as processed for this invoice
+                # processed_product_names.add(product_name)
 
                 # Handle HSNCode
                 hsn_code_obj, _ = HSNCode.objects.get_or_create(
@@ -5691,7 +5581,7 @@ def update_income(request, client_pk, invoice_pk):
 
             # Process rows for product summaries
             product_summaries = []
-            processed_product_names = set()
+            # processed_product_names = set()
             for row in rows:
                 hsn_code = row.get('hsnCode')
                 gst_rate = safe_decimal(row.get('gstRate', '0'))
@@ -5704,14 +5594,14 @@ def update_income(request, client_pk, invoice_pk):
                 sgst = safe_decimal(row.get('sgst', '0'))
                 igst = safe_decimal(row.get('igst', '0'))
 
-                if product_name in processed_product_names:
-                    return Response(
-                        {"error_message": f"Product name '{product_name}' already exists in this invoice."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                # if product_name in processed_product_names:
+                #     return Response(
+                #         {"error_message": f"Product name '{product_name}' already exists in this invoice."},
+                #         status=status.HTTP_400_BAD_REQUEST
+                #     )
                 
-                # Mark the product name as processed for this invoice
-                processed_product_names.add(product_name)
+                # # Mark the product name as processed for this invoice
+                # processed_product_names.add(product_name)
 
 
                 # Update or create HSNCode
@@ -5941,7 +5831,7 @@ def create_income2(request, client_pk):
             # Create Product Summaries
             # Create Product Summaries
             product_summaries = []  # To store created product summaries
-            processed_product_names = set()
+            # processed_product_names = set()
             for row in rows:
                 hsn_code = row.get('hsnCode')
                 gst_rate = safe_decimal(row.get('gstRate', '0'))
@@ -5955,14 +5845,14 @@ def create_income2(request, client_pk):
                 sgst = safe_decimal(row.get('sgst', '0'))
                 igst = safe_decimal(row.get('igst', '0'))
 
-                if product_name in processed_product_names:
-                    return Response(
-                        {"error_message": f"Product name '{product_name}' already exists in this invoice."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                # if product_name in processed_product_names:
+                #     return Response(
+                #         {"error_message": f"Product name '{product_name}' already exists in this invoice."},
+                #         status=status.HTTP_400_BAD_REQUEST
+                #     )
                 
-                # Mark the product name as processed for this invoice
-                processed_product_names.add(product_name)
+                # # Mark the product name as processed for this invoice
+                # processed_product_names.add(product_name)
 
 
                 # Handle HSNCode
@@ -6467,7 +6357,7 @@ def update_expenses(request, client_pk, invoice_pk):
                     expenses.vendor = vendor_obj
                         
             product_summaries = []
-            processed_product_names = set()
+            # processed_product_names = set()
             for row in rows:
                 hsn_code = row.get('hsnCode')
                 gst_rate = safe_decimal(row.get('gstRate', '0'))
@@ -6480,14 +6370,14 @@ def update_expenses(request, client_pk, invoice_pk):
                 sgst = safe_decimal(row.get('sgst', '0'))
                 igst = safe_decimal(row.get('igst', '0'))
 
-                if product_name in processed_product_names:
-                    return Response(
-                        {"error_message": f"Product name '{product_name}' already exists in this invoice."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                # if product_name in processed_product_names:
+                #     return Response(
+                #         {"error_message": f"Product name '{product_name}' already exists in this invoice."},
+                #         status=status.HTTP_400_BAD_REQUEST
+                #     )
                 
-                # Mark the product name as processed for this invoice
-                processed_product_names.add(product_name)
+                # # Mark the product name as processed for this invoice
+                # processed_product_names.add(product_name)
 
                 # Update or create HSNCode
                 hsn_code_obj, _ = HSNCode.objects.update_or_create(
@@ -6694,7 +6584,7 @@ def create_expenses2(request, client_pk):
                 **invoice_data
             )
             product_summaries = []  # To store created product summaries
-            processed_product_names = set()
+            # processed_product_names = set()
             for row in rows:
                 hsn_code = row.get('hsnCode')
                 gst_rate = safe_decimal(row.get('gstRate', '0'))
@@ -6708,14 +6598,14 @@ def create_expenses2(request, client_pk):
                 sgst = safe_decimal(row.get('sgst', '0'))
                 igst = safe_decimal(row.get('igst', '0'))
 
-                if product_name in processed_product_names:
-                    return Response(
-                        {"error_message": f"Product name '{product_name}' already exists in this invoice."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                # if product_name in processed_product_names:
+                #     return Response(
+                #         {"error_message": f"Product name '{product_name}' already exists in this invoice."},
+                #         status=status.HTTP_400_BAD_REQUEST
+                #     )
                 
-                # Mark the product name as processed for this invoice
-                processed_product_names.add(product_name)
+                # # Mark the product name as processed for this invoice
+                # processed_product_names.add(product_name)
 
                 # Handle HSNCode
                 hsn_code_obj, _ = HSNCode.objects.get_or_create(

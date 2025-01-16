@@ -173,60 +173,6 @@ class FilesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Files
         fields = '__all__'
-#         fields = ['id', 'files']
-# from rest_framework import serializers
-
-# class FilesSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Files
-#         fields = ['id', 'files', 'branch_doc', 'tax_audit', 'air', 'sft','tds','bank']
-
-#     def to_representation(self, instance):
-#         # Get the original representation
-#         representation = super().to_representation(instance)
-
-#         # Check which model is being serialized and remove null fields
-#         if representation['tax_audit'] is not None:
-#             # If it's TaxAudit, remove AIR and SFT fields
-#             representation.pop('air', None)
-#             representation.pop('sft', None)
-#             representation.pop('tds', None)
-#             representation.pop('branch_doc', None)
-#             representation.pop('bank', None)
-#         elif representation['air'] is not None:
-#             # If it's AIR, remove TaxAudit and SFT fields
-#             representation.pop('tax_audit', None)
-#             representation.pop('sft', None)
-#             representation.pop('tds', None)
-#             representation.pop('branch_doc', None)
-#             representation.pop('bank', None)
-#         elif representation['sft'] is not None:
-#             # If it's SFT, remove TaxAudit and AIR fields
-#             representation.pop('tax_audit', None)
-#             representation.pop('air', None)
-#             representation.pop('tds', None)
-#             representation.pop('branch_doc', None)
-#             representation.pop('bank', None)
-#         elif representation['tds'] is not None:
-#             representation.pop('tax_audit', None)
-#             representation.pop('air', None)
-#             representation.pop('sft', None)
-#             representation.pop('branch_doc', None)
-#             representation.pop('bank', None)
-#         elif representation['branch_doc'] is not None:
-#             representation.pop('tax_audit', None)
-#             representation.pop('air', None)
-#             representation.pop('sft', None)
-#             representation.pop('tds', None)
-#             representation.pop('bank', None)
-#         elif representation['bank'] is not None:
-#             representation.pop('tax_audit', None)
-#             representation.pop('air', None)
-#             representation.pop('sft', None)
-#             representation.pop('tds', None)
-#             representation.pop('branch_doc', None)
-
-#         return representation
 
 
 # Branch Document
@@ -529,30 +475,9 @@ class ProductSerializer(serializers.ModelSerializer):
         hsn = data.get('hsn')
 
         if Product.objects.filter(product_name=product_name, hsn=hsn).exists():
-            raise serializers.ValidationError("A product with this name and HSN code already exists.")
+            raise serializers.ValidationError({"error_message":"A product with this name and HSN code already exists."})
         return data
 
-
-
-# class ProductSerializer(serializers.ModelSerializer):
-#     hsn_code = serializers.CharField(source='hsn.hsn_code', read_only=True)
-#     class Meta:
-#         model = Product
-#         fields = ['id', 'product_name', 'hsn_code','hsn','unit_of_measure']
-
-# class ProductDescriptionSerializer2(serializers.ModelSerializer):
-
-#     class Meta:
-#         model = ProductDescription
-#         fields = ['id', 'description', 'unit', 'rate']
-
-# class ProductSerializer2(serializers.ModelSerializer):
-#     hsn_code = serializers.CharField(source='hsn.hsn_code', read_only=True)
-#     gst_rate = serializers.CharField(source='hsn.gst_rate', read_only=True)
-#     description_name = serializers.CharField(source='ProductDescription.description', read_only=True)
-#     class Meta:
-#         model = Product
-#         fields = ['id', 'product_name', 'hsn_code','gst_rate','hsn','description','description_name']
 
 
 
@@ -562,6 +487,13 @@ class ProductDescriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductDescription
         fields = ['id', 'description', 'unit', 'rate','product_name','product','product_amount','cgst','sgst','igst']
+
+    # def validate(self, data):
+    #     product_name = data.get('product_name')
+
+    #     if ProductDescription.filter(product_name=product_name).exists():
+    #         raise serializer.ValidationError({"error_message":"Product name already exists"})
+
 
 
 
