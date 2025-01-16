@@ -2307,11 +2307,24 @@ def update_sales_invoice(request, client_pk, invoice_pk):
                 )
 
                 # Update or create ProductSummary
-                product_summary, _ = ProductSummary.objects.update_or_create(
+                # product_summary, _ = ProductSummary.objects.update_or_create(
+                #     hsn=hsn_code_obj,
+                #     product=product_obj,
+                #     prod_description=product_description_obj
+                # )
+                # product_summaries.append(product_summary)
+                product_summary, created = ProductSummary.objects.update_or_create(
                     hsn=hsn_code_obj,
                     product=product_obj,
-                    prod_description=product_description_obj
+                    defaults={
+                        'prod_description': product_description_obj
+                    }
                 )
+                if created:
+                    print(f"Created new ProductSummary: {product_summary}")
+                else:
+                    print(f"Updated existing ProductSummary: {product_summary}")
+
                 product_summaries.append(product_summary)
 
             # Update sales invoice data

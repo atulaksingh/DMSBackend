@@ -276,18 +276,6 @@ class PfSerializer(serializers.ModelSerializer):
             'advance', 'esic_employee', 'tds','total_deduction', 'net_pay', 'advance_esic_employer_cont'
             ]
 
-# # Tax Audit
-# class TaxAuditSerializer(serializers.ModelSerializer):
-#     files = serializers.SerializerMethodField()
-
-#     class Meta:
-#         model = TaxAudit
-#         fields = ['id','client','financial_year','month','files']
-
-#     def get_files(self, obj):
-#         files = Files.objects.filter(tax_audit=obj)
-#         return FilesSerializer(files, many=True).data
-
 # Tax Audit
 class TaxAuditSerializer(serializers.ModelSerializer):
     files = serializers.SerializerMethodField()

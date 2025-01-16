@@ -187,7 +187,7 @@ class Customer(models.Model):
        return self.name if self.name else "No Name"
 
 class HSNCode(models.Model):
-    hsn_code = models.IntegerField(null=True, blank=True)
+    hsn_code = models.IntegerField(null=True, blank=True, unique=True)
     gst_rate = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
 
     def __str__(self):
@@ -195,8 +195,12 @@ class HSNCode(models.Model):
 
 class Product(models.Model):
     hsn = models.ForeignKey(HSNCode, on_delete=models.CASCADE, null=True, blank=True)
-    product_name = models.CharField(max_length=100, null=True, blank=True)
+    product_name = models.CharField(max_length=100, null=True, blank=True,unique=True)
     unit_of_measure = models.DecimalField(null=True, blank=True, decimal_places=2, max_digits=15)
+    # class Meta:
+    #     constraints = [
+    #         models.UniqueConstraint(fields=['product_name', 'hsn'], name='unique_product_hsn')
+    #     ]
 
     def __str__(self):
         return self.product_name
@@ -226,7 +230,11 @@ class ProductSummary(models.Model): #new
     hsn = models.ForeignKey(HSNCode, on_delete=models.SET_NULL, null=True, blank=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
     prod_description = models.ForeignKey('ProductDescription', on_delete=models.SET_NULL, null=True, blank=True)
-
+    # class Meta:
+    #     constraints = [
+    #         models.UniqueConstraint(fields=['product'], name='unique_product_in_summary')
+    #     ]
+        
     # def __str__(self):
     #     product_name = self.product.product_name if self.product else "No Product"
     #     return f"Summary for {product_name}"
