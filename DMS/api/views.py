@@ -2267,6 +2267,7 @@ def update_sales_invoice(request, client_pk, invoice_pk):
 
             # Process rows for product summaries
             product_summaries = []
+            processed_product_names = set()
             for row in rows:
                 hsn_code = row.get('hsnCode')
                 gst_rate = safe_decimal(row.get('gstRate', '0'))
@@ -2279,12 +2280,27 @@ def update_sales_invoice(request, client_pk, invoice_pk):
                 sgst = safe_decimal(row.get('sgst', '0'))
                 igst = safe_decimal(row.get('igst', '0'))
 
+                if product_name in processed_product_names:
+                    return Response(
+                        {"error_message": f"Product name '{product_name}' already exists in this invoice."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Mark the product name as processed for this invoice
+                processed_product_names.add(product_name)
+
                 # Update or create HSNCode
                 hsn_code_obj, _ = HSNCode.objects.update_or_create(
                     hsn_code=hsn_code,
                     defaults={'gst_rate': gst_rate}
                 )
 
+                existing_product = Product.objects.filter(product_name=product_name).exclude(hsn=hsn_code_obj).first()
+                if existing_product:
+                    return Response(
+                        {"error_message": f"Product name '{product_name}' already exists with a different HSN code."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
                 # Update or create Product
                 product_obj, _ = Product.objects.update_or_create(
                     product_name=product_name,
@@ -2304,6 +2320,7 @@ def update_sales_invoice(request, client_pk, invoice_pk):
                         'sgst': sgst,
                         'igst': igst
                     }
+                    
                 )
 
                 # Update or create ProductSummary
@@ -2519,6 +2536,7 @@ def create_sales_invoice2(request, client_pk):
             # Create Product Summaries
             # Create Product Summaries
             product_summaries = []  # To store created product summaries
+            processed_product_names = set()
             for row in rows:
                 hsn_code = row.get('hsnCode')
                 gst_rate = safe_decimal(row.get('gstRate', '0'))
@@ -2532,10 +2550,26 @@ def create_sales_invoice2(request, client_pk):
                 sgst = safe_decimal(row.get('sgst', '0'))
                 igst = safe_decimal(row.get('igst', '0'))
 
+                if product_name in processed_product_names:
+                    return Response(
+                        {"error_message": f"Product name '{product_name}' already exists in this invoice."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Mark the product name as processed for this invoice
+                processed_product_names.add(product_name)
+
                 # Handle HSNCode
                 hsn_code_obj, _ = HSNCode.objects.get_or_create(
                     hsn_code=hsn_code, defaults={'gst_rate': gst_rate}
                 )
+
+                existing_product = Product.objects.filter(product_name=product_name).exclude(hsn=hsn_code_obj).first()
+                if existing_product:
+                    return Response(
+                        {"error_message": f"Product name '{product_name}' already exists with a different HSN code."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
                 # Handle Product (existing or new)
                 if product_id:
@@ -3128,6 +3162,7 @@ def update_purchase_invoice(request, client_pk, invoice_pk):
                 
                     
                 product_summaries = []
+                processed_product_names = set()
                 for row in rows:
                     hsn_code = row.get('hsnCode')
                     gst_rate = safe_decimal(row.get('gstRate', '0'))
@@ -3140,11 +3175,28 @@ def update_purchase_invoice(request, client_pk, invoice_pk):
                     sgst = safe_decimal(row.get('sgst', '0'))
                     igst = safe_decimal(row.get('igst', '0'))
 
+                    if product_name in processed_product_names:
+                        return Response(
+                            {"error_message": f"Product name '{product_name}' already exists in this invoice."},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                
+                    # Mark the product name as processed for this invoice
+                    processed_product_names.add(product_name)
+
+
                     # Update or create HSNCode
                     hsn_code_obj, _ = HSNCode.objects.update_or_create(
                         hsn_code=hsn_code,
                         defaults={'gst_rate': gst_rate}
                     )
+
+                    existing_product = Product.objects.filter(product_name=product_name).exclude(hsn=hsn_code_obj).first()
+                    if existing_product:
+                        return Response(
+                            {"error_message": f"Product name '{product_name}' already exists with a different HSN code."},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
 
                     # Update or create Product
                     product_obj, _ = Product.objects.update_or_create(
@@ -3342,6 +3394,7 @@ def create_purchase_invoice2(request, client_pk):
                 **invoice_data
             )
             product_summaries = []  # To store created product summaries
+            processed_product_names = set()
             for row in rows:
                 hsn_code = row.get('hsnCode')
                 gst_rate = safe_decimal(row.get('gstRate', '0'))
@@ -3355,10 +3408,26 @@ def create_purchase_invoice2(request, client_pk):
                 sgst = safe_decimal(row.get('sgst', '0'))
                 igst = safe_decimal(row.get('igst', '0'))
 
+                if product_name in processed_product_names:
+                    return Response(
+                        {"error_message": f"Product name '{product_name}' already exists in this invoice."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Mark the product name as processed for this invoice
+                processed_product_names.add(product_name)
+
                 # Handle HSNCode
                 hsn_code_obj, _ = HSNCode.objects.get_or_create(
                     hsn_code=hsn_code, defaults={'gst_rate': gst_rate}
                 )
+
+                existing_product = Product.objects.filter(product_name=product_name).exclude(hsn=hsn_code_obj).first()
+                if existing_product:
+                    return Response(
+                        {"error_message": f"Product name '{product_name}' already exists with a different HSN code."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
                 # Handle Product (existing or new)
                 if product_id:
@@ -5622,6 +5691,7 @@ def update_income(request, client_pk, invoice_pk):
 
             # Process rows for product summaries
             product_summaries = []
+            processed_product_names = set()
             for row in rows:
                 hsn_code = row.get('hsnCode')
                 gst_rate = safe_decimal(row.get('gstRate', '0'))
@@ -5634,12 +5704,30 @@ def update_income(request, client_pk, invoice_pk):
                 sgst = safe_decimal(row.get('sgst', '0'))
                 igst = safe_decimal(row.get('igst', '0'))
 
+                if product_name in processed_product_names:
+                    return Response(
+                        {"error_message": f"Product name '{product_name}' already exists in this invoice."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Mark the product name as processed for this invoice
+                processed_product_names.add(product_name)
+
+
                 # Update or create HSNCode
                 hsn_code_obj, _ = HSNCode.objects.update_or_create(
                     hsn_code=hsn_code,
                     defaults={'gst_rate': gst_rate}
                 )
 
+                existing_product = Product.objects.filter(product_name=product_name).exclude(hsn=hsn_code_obj).first()
+                if existing_product:
+                    return Response(
+                        {"error_message": f"Product name '{product_name}' already exists with a different HSN code."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+            
                 # Update or create Product
                 product_obj, _ = Product.objects.update_or_create(
                     product_name=product_name,
@@ -5853,6 +5941,7 @@ def create_income2(request, client_pk):
             # Create Product Summaries
             # Create Product Summaries
             product_summaries = []  # To store created product summaries
+            processed_product_names = set()
             for row in rows:
                 hsn_code = row.get('hsnCode')
                 gst_rate = safe_decimal(row.get('gstRate', '0'))
@@ -5866,10 +5955,27 @@ def create_income2(request, client_pk):
                 sgst = safe_decimal(row.get('sgst', '0'))
                 igst = safe_decimal(row.get('igst', '0'))
 
+                if product_name in processed_product_names:
+                    return Response(
+                        {"error_message": f"Product name '{product_name}' already exists in this invoice."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Mark the product name as processed for this invoice
+                processed_product_names.add(product_name)
+
+
                 # Handle HSNCode
                 hsn_code_obj, _ = HSNCode.objects.get_or_create(
                     hsn_code=hsn_code, defaults={'gst_rate': gst_rate}
                 )
+
+                existing_product = Product.objects.filter(product_name=product_name).exclude(hsn=hsn_code_obj).first()
+                if existing_product:
+                    return Response(
+                        {"error_message": f"Product name '{product_name}' already exists with a different HSN code."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
                 # Handle Product (existing or new)
                 if product_id:
@@ -6361,6 +6467,7 @@ def update_expenses(request, client_pk, invoice_pk):
                     expenses.vendor = vendor_obj
                         
             product_summaries = []
+            processed_product_names = set()
             for row in rows:
                 hsn_code = row.get('hsnCode')
                 gst_rate = safe_decimal(row.get('gstRate', '0'))
@@ -6373,11 +6480,27 @@ def update_expenses(request, client_pk, invoice_pk):
                 sgst = safe_decimal(row.get('sgst', '0'))
                 igst = safe_decimal(row.get('igst', '0'))
 
+                if product_name in processed_product_names:
+                    return Response(
+                        {"error_message": f"Product name '{product_name}' already exists in this invoice."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Mark the product name as processed for this invoice
+                processed_product_names.add(product_name)
+
                 # Update or create HSNCode
                 hsn_code_obj, _ = HSNCode.objects.update_or_create(
                     hsn_code=hsn_code,
                     defaults={'gst_rate': gst_rate}
                 )
+
+                existing_product = Product.objects.filter(product_name=product_name).exclude(hsn=hsn_code_obj).first()
+                if existing_product:
+                    return Response(
+                        {"error_message": f"Product name '{product_name}' already exists with a different HSN code."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
                 # Update or create Product
                 product_obj, _ = Product.objects.update_or_create(
@@ -6571,6 +6694,7 @@ def create_expenses2(request, client_pk):
                 **invoice_data
             )
             product_summaries = []  # To store created product summaries
+            processed_product_names = set()
             for row in rows:
                 hsn_code = row.get('hsnCode')
                 gst_rate = safe_decimal(row.get('gstRate', '0'))
@@ -6584,10 +6708,26 @@ def create_expenses2(request, client_pk):
                 sgst = safe_decimal(row.get('sgst', '0'))
                 igst = safe_decimal(row.get('igst', '0'))
 
+                if product_name in processed_product_names:
+                    return Response(
+                        {"error_message": f"Product name '{product_name}' already exists in this invoice."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Mark the product name as processed for this invoice
+                processed_product_names.add(product_name)
+
                 # Handle HSNCode
                 hsn_code_obj, _ = HSNCode.objects.get_or_create(
                     hsn_code=hsn_code, defaults={'gst_rate': gst_rate}
                 )
+
+                existing_product = Product.objects.filter(product_name=product_name).exclude(hsn=hsn_code_obj).first()
+                if existing_product:
+                    return Response(
+                        {"error_message": f"Product name '{product_name}' already exists with a different HSN code."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
                 # Handle Product (existing or new)
                 if product_id:
