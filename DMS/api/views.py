@@ -2349,10 +2349,7 @@ def create_sales_invoice2(request, client_pk):
     except Exception as e:
         error_details = traceback.format_exc()
         return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-    
-    
+   
 @api_view(['DELETE'])
 def delete_sales_invoice(request, client_pk, pk):
     """
