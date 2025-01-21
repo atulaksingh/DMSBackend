@@ -6001,8 +6001,8 @@ def create_expenses2(request, client_pk):
                 "tcs": payload.get("invoiceData[0][tcs]"),
                 "tds": payload.get("invoiceData[0][tds]"),
                 "amount_receivable": payload.get("invoiceData[0][amount_receivable]"),
-                "utilise_edit": payload.get("invoiceData[0][utilise_edit]", "").lower() == "true", #nnnn
-                "utilise_month": payload.get("invoiceData[0][utilise_month]").lower(), #nnnnnn
+                # "utilise_edit": payload.get("invoiceData[0][utilise_edit]", "").lower() == "true", #nnnn
+                # "utilise_month": payload.get("invoiceData[0][utilise_month]").lower(), #nnnnnn
                 
             }
             attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
