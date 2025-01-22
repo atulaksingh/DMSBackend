@@ -408,7 +408,7 @@ def create_owner(request, pk):
 
         # Show errors if the data is not valid
         return Response({
-                'message': 'Fail to create owner',
+                'message': f'Fail to create owner {owner_serializer.errors}',
                 'error_message': owner_serializer.errors,
                 },status=status.HTTP_400_BAD_REQUEST)
 
