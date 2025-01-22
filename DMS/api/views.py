@@ -8218,7 +8218,7 @@ def detail_client(request, pk):
         'SFT': sft_serializer.data,
         'TDS_Payment': tdspayment_serializer.data,
         'TDS_Return': tds_serializer.data,
-        'sales_invoice': sales_serializer.data,
+        # 'sales_invoice': sales_serializer.data,
         'purchase_invoice': purchase_serializer.data,
         'income': income_serializer.data,
         'expenses': expenses_serializer.data,
