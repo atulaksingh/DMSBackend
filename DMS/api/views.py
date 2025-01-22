@@ -8174,7 +8174,9 @@ def detail_client(request, pk):
 
     try:
         sales_serializer = SalesSerializerList(view_sales, many=True)
+        print('ggggggggg')
     except Exception as e:
+        print('sales',sales_serializer.error)
         logger.error(f"Error serializing Sales: {e}")
         raise
 

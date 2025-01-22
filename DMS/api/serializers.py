@@ -4,6 +4,7 @@ from api.models import *
 from rest_framework_simplejwt.tokens import RefreshToken
 from datetime import datetime
 import json
+from decimal import Decimal, InvalidOperation
 
 # File Serializer
 class FileSerializer(serializers.ModelSerializer):
@@ -345,11 +346,11 @@ class ProductSummarySerializerList(serializers.ModelSerializer):
 #             'igst',
 #             'product_amount'
 #         ]
-def validate_decimal(value):
-    try:
-        return Decimal(value) if value is not None else Decimal('0.00')
-    except (ValueError, InvalidOperation):
-        raise serializers.ValidationError("Invalid decimal value")
+# def validate_decimal(value):
+#     try:
+#         return Decimal(value) if value is not None else Decimal('0.00')
+#     except (ValueError, InvalidOperation):
+#         raise serializers.ValidationError("Invalid decimal value")
 
 class SalesSerializerList(serializers.ModelSerializer):
     client_name = serializers.CharField(source="client.client_name", read_only=True)
@@ -367,29 +368,15 @@ class SalesSerializerList(serializers.ModelSerializer):
     country = serializers.CharField(source="client_Location.country", read_only=True)
     product_summaries = ProductSummarySerializerList(many=True, read_only=True)
 
+#lllllllllllll
+    taxable_amount = serializers.DecimalField(max_digits=10, decimal_places=2, coerce_to_string=False, allow_null=True, default=None)
+    totalall_gst = serializers.DecimalField(max_digits=10, decimal_places=2, coerce_to_string=False, allow_null=True, default=None)
+    total_invoice_value = serializers.DecimalField(max_digits=10, decimal_places=2, coerce_to_string=False, allow_null=True, default=None)
+    amount_receivable = serializers.DecimalField(max_digits=10, decimal_places=2, coerce_to_string=False, allow_null=True, default=None)
+    tcs = serializers.DecimalField(max_digits=10, decimal_places=2, coerce_to_string=False, allow_null=True, default=None)
+    tds = serializers.DecimalField(max_digits=10, decimal_places=2, coerce_to_string=False, allow_null=True, default=None)
+    tds_tcs_rate = serializers.DecimalField(max_digits=10, decimal_places=2, coerce_to_string=False, allow_null=True, default=None)
 
-    #LINE################
-    taxable_amount = serializers.DecimalField(
-        allow_null=True, decimal_places=2, max_digits=100, required=False, validators=[validate_decimal]
-    )
-    totalall_gst = serializers.DecimalField(
-        allow_null=True, decimal_places=2, max_digits=100, required=False, validators=[validate_decimal]
-    )
-    total_invoice_value = serializers.DecimalField(
-        allow_null=True, decimal_places=2, max_digits=100, required=False, validators=[validate_decimal]
-    )
-    amount_receivable = serializers.DecimalField(
-        allow_null=True, decimal_places=2, max_digits=100, required=False, validators=[validate_decimal]
-    )
-    tcs = serializers.DecimalField(
-        allow_null=True, decimal_places=2, max_digits=100, required=False, validators=[validate_decimal]
-    )
-    tds = serializers.DecimalField(
-        allow_null=True, decimal_places=2, max_digits=100, required=False, validators=[validate_decimal]
-    )
-    tds_tcs_rate = serializers.DecimalField(
-        allow_null=True, decimal_places=2, max_digits=100, required=False, validators=[validate_decimal]
-    )
     class Meta:
         model = SalesInvoice
         fields = [
@@ -422,6 +409,19 @@ class SalesSerializerList(serializers.ModelSerializer):
             'tds_tcs_rate',
             'product_summaries'
         ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Validate Decimal fields
+        decimal_fields = ['taxable_amount', 'totalall_gst', 'total_invoice_value', 'amount_receivable', 'tcs', 'tds', 'tds_tcs_rate']
+        for field in decimal_fields:
+            try:
+                if data[field] is not None:
+                    data[field] = Decimal(data[field])
+            except (InvalidOperation, ValueError, TypeError):
+                data[field] = 'Invalid Value'
+        return data
+
 
 # Sales Invoice
     # def get_product_summaries(self, obj):
