@@ -8172,11 +8172,11 @@ def detail_client(request, pk):
         logger.error(f"Error serializing TDS_Return: {e}")
         raise
 
-    # try:
-    #     sales_serializer = SalesSerializerList(view_sales, many=True)
-    # except Exception as e:
-    #     logger.error(f"Error serializing Sales: {e}")
-    #     raise
+    try:
+        sales_serializer = SalesSerializerList(view_sales, many=True)
+    except Exception as e:
+        logger.error(f"Error serializing Sales: {e}")
+        raise
 
     try:
         purchase_serializer = PurchaseSerializerList(view_purchase, many=True)
@@ -8218,7 +8218,7 @@ def detail_client(request, pk):
         'SFT': sft_serializer.data,
         'TDS_Payment': tdspayment_serializer.data,
         'TDS_Return': tds_serializer.data,
-        # 'sales_invoice': sales_serializer.data,
+        'sales_invoice': sales_serializer.data,
         'purchase_invoice': purchase_serializer.data,
         'income': income_serializer.data,
         'expenses': expenses_serializer.data,
