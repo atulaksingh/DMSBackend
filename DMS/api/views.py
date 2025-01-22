@@ -8172,11 +8172,11 @@ def detail_client(request, pk):
         logger.error(f"Error serializing TDS_Return: {e}")
         raise
 
-    try:
-        sales_serializer = SalesSerializerList(view_sales, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing Sales: {e}")
-        raise
+    # try:
+    #     sales_serializer = SalesSerializerList(view_sales, many=True)
+    # except Exception as e:
+    #     logger.error(f"Error serializing Sales: {e}")
+    #     raise
 
     try:
         purchase_serializer = PurchaseSerializerList(view_purchase, many=True)
