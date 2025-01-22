@@ -7966,99 +7966,214 @@ def expenses_credit_note_detail_view(request, client_pk, expenses_pk, credit_pk)
         return Response(updated_serializer.data, status=status.HTTP_200_OK)
 
 # ***********************************************Detail page API's*********************************************
-@api_view(['GET'])
-def detail_client(request,pk):
-    client = Client.objects.get(id=pk)
-    view_bank = Bank.objects.filter(client=client)
-    view_owner = Owner.objects.filter(client=client)
-    view_clientuser = CustomUser.objects.filter(client=client)
-    view_companydoc = FileInfo.objects.filter(client=client)
-    view_branch = Branch.objects.filter(client=client)
-    view_customer = Customer.objects.filter(client=client)
-    view_income = IncomeTaxDocument.objects.filter(client=client)
-    view_pf = PF.objects.filter(client=client)
-    view_taxaudit = TaxAudit.objects.filter(client=client)
-    view_air = AIR.objects.filter(client=client)
-    view_sft = SFT.objects.filter(client=client)
-    view_tdspayment = TDSPayment.objects.filter(client=client)
-    view_tds = TDSReturn.objects.filter(client=client)
-    view_sales = SalesInvoice.objects.filter(client=client)
-    view_purchase = PurchaseInvoice.objects.filter(client=client)
-    view_income = Income.objects.filter(client=client)
-    view_expenses = Expenses.objects.filter(client=client)
-    view_zipupload  = ZipUpload.objects.filter(client=client)
+# @api_view(['GET'])
+# def detail_client(request,pk):
+#     client = Client.objects.get(id=pk)
+#     view_bank = Bank.objects.filter(client=client)
+#     view_owner = Owner.objects.filter(client=client)
+#     view_clientuser = CustomUser.objects.filter(client=client)
+#     view_companydoc = FileInfo.objects.filter(client=client)
+#     view_branch = Branch.objects.filter(client=client)
+#     view_customer = Customer.objects.filter(client=client)
+#     view_income = IncomeTaxDocument.objects.filter(client=client)
+#     view_pf = PF.objects.filter(client=client)
+#     view_taxaudit = TaxAudit.objects.filter(client=client)
+#     view_air = AIR.objects.filter(client=client)
+#     view_sft = SFT.objects.filter(client=client)
+#     view_tdspayment = TDSPayment.objects.filter(client=client)
+#     view_tds = TDSReturn.objects.filter(client=client)
+#     view_sales = SalesInvoice.objects.filter(client=client)
+#     view_purchase = PurchaseInvoice.objects.filter(client=client)
+#     view_income = Income.objects.filter(client=client)
+#     view_expenses = Expenses.objects.filter(client=client)
+#     view_zipupload  = ZipUpload.objects.filter(client=client)
     
 
-    # view_attachment = Attachment.objects.filter(client=client)
-    # view_branchdoc = BranchDocument.objects.filter()
+#     # view_attachment = Attachment.objects.filter(client=client)
+#     # view_branchdoc = BranchDocument.objects.filter()
 
-    client_serializer = ClientSerializer(client)
-    bank_serializer = BankSerializer(view_bank, many=True)
-    owner_serializer = OwnerSerializer(view_owner, many=True)
-    clientuser = UserSerializerWithToken(view_clientuser, many=True)
-    companydoc = FileInfoSerializer(view_companydoc, many=True)
-    branch_serializer = BranchSerailizer(view_branch, many=True)
-    customer_serializer = CustomerVendorSerializer(view_customer, many=True)
-    income_serializer = IncomeTaxDocumentSerializer(view_income, many=True)
-    pf_serializer = PfSerializer(view_pf, many=True)
-    taxaudit_serializer = TaxAuditSerializer(view_taxaudit, many=True)
-    air_serializer = AIRSerializer(view_air, many=True)
-    sft_serializer = SFTSerializer(view_sft, many=True)
-    tdspayment_serializer = TDSPaymentSerializer(view_tdspayment, many=True)
-    tds_serializer = TDSReturnSerializer(view_tds, many=True)
+#     client_serializer = ClientSerializer(client)
+#     bank_serializer = BankSerializer(view_bank, many=True)
+#     owner_serializer = OwnerSerializer(view_owner, many=True)
+#     clientuser = UserSerializerWithToken(view_clientuser, many=True)
+#     companydoc = FileInfoSerializer(view_companydoc, many=True)
+#     branch_serializer = BranchSerailizer(view_branch, many=True)
+#     customer_serializer = CustomerVendorSerializer(view_customer, many=True)
+#     income_serializer = IncomeTaxDocumentSerializer(view_income, many=True)
+#     pf_serializer = PfSerializer(view_pf, many=True)
+#     taxaudit_serializer = TaxAuditSerializer(view_taxaudit, many=True)
+#     air_serializer = AIRSerializer(view_air, many=True)
+#     sft_serializer = SFTSerializer(view_sft, many=True)
+#     tdspayment_serializer = TDSPaymentSerializer(view_tdspayment, many=True)
+#     tds_serializer = TDSReturnSerializer(view_tds, many=True)
 
-    view_sales = SalesInvoice.objects.filter(client=client).prefetch_related(
-        'product_summaries__hsn',
-        'product_summaries__product',
-        'product_summaries__prod_description',
-    )
-    view_purchase = PurchaseInvoice.objects.filter(client=client).prefetch_related(
-        'product_summaries__hsn',
-        'product_summaries__product',
-        'product_summaries__prod_description',
-    )
-    view_income = Income.objects.filter(client=client).prefetch_related(
-        'product_summaries__hsn',
-        'product_summaries__product',
-        'product_summaries__prod_description',
-    )
-    view_expenses = Expenses.objects.filter(client=client).prefetch_related(
-        'product_summaries__hsn',
-        'product_summaries__product',
-        'product_summaries__prod_description',
-    )
-    sales_serializer = SalesSerializerList(view_sales, many=True)
-    purchase_serializer = PurchaseSerializerList(view_purchase, many=True)
-    income_serializer = IncomeSerializerList(view_income, many=True)
-    expenses_serializer = ExpensesSerializerList(view_expenses, many=True)
-    zipupload_serializer = ZipUploadSerializer(view_zipupload, many=True)
-    # print(sales_serializer,'llllllllllll')
-    # sales_serializer = SalesSerializerList(view_sales, many=True)
-    # attachment_serializer = AttachmentSerializer(view_attachment, many=True)
+#     view_sales = SalesInvoice.objects.filter(client=client).prefetch_related(
+#         'product_summaries__hsn',
+#         'product_summaries__product',
+#         'product_summaries__prod_description',
+#     )
+#     view_purchase = PurchaseInvoice.objects.filter(client=client).prefetch_related(
+#         'product_summaries__hsn',
+#         'product_summaries__product',
+#         'product_summaries__prod_description',
+#     )
+#     view_income = Income.objects.filter(client=client).prefetch_related(
+#         'product_summaries__hsn',
+#         'product_summaries__product',
+#         'product_summaries__prod_description',
+#     )
+#     view_expenses = Expenses.objects.filter(client=client).prefetch_related(
+#         'product_summaries__hsn',
+#         'product_summaries__product',
+#         'product_summaries__prod_description',
+#     )
+#     sales_serializer = SalesSerializerList(view_sales, many=True)
+#     purchase_serializer = PurchaseSerializerList(view_purchase, many=True)
+#     income_serializer = IncomeSerializerList(view_income, many=True)
+#     expenses_serializer = ExpensesSerializerList(view_expenses, many=True)
+#     zipupload_serializer = ZipUploadSerializer(view_zipupload, many=True)
+#     # print(sales_serializer,'llllllllllll')
+#     # sales_serializer = SalesSerializerList(view_sales, many=True)
+#     # attachment_serializer = AttachmentSerializer(view_attachment, many=True)
 
-    data ={
-        'Client' : client_serializer.data,
-        'Bank' : bank_serializer.data,
-        'Owner' : owner_serializer.data,
-        'ClientUser' : clientuser.data,
-        'Company_Document' : companydoc.data,
-        'Branch' : branch_serializer.data,
-        'Customer_or_Vendor' : customer_serializer.data,
-        'Income_Tax_Document' : income_serializer.data,
-        'PF' : pf_serializer.data,
-        'Tax_Audit' : taxaudit_serializer.data,
-        'AIR' : air_serializer.data,
-        'SFT' : sft_serializer.data,
-        'TDS_Payment' : tdspayment_serializer.data,
-        'TDS_Return' : tds_serializer.data,
-        'sales_invoice' : sales_serializer.data,
-        'purchase_invoice' : purchase_serializer.data,
-        'income' : income_serializer.data,
-        'expenses' : expenses_serializer.data,
-        'zipupload' : zipupload_serializer.data
-        # 'Attachment' : attachment_serializer.data
-    }
-    return Response(data)
+#     data ={
+#         'Client' : client_serializer.data,
+#         'Bank' : bank_serializer.data,
+#         'Owner' : owner_serializer.data,
+#         'ClientUser' : clientuser.data,
+#         'Company_Document' : companydoc.data,
+#         'Branch' : branch_serializer.data,
+#         'Customer_or_Vendor' : customer_serializer.data,
+#         'Income_Tax_Document' : income_serializer.data,
+#         'PF' : pf_serializer.data,
+#         'Tax_Audit' : taxaudit_serializer.data,
+#         'AIR' : air_serializer.data,
+#         'SFT' : sft_serializer.data,
+#         'TDS_Payment' : tdspayment_serializer.data,
+#         'TDS_Return' : tds_serializer.data,
+#         'sales_invoice' : sales_serializer.data,
+#         'purchase_invoice' : purchase_serializer.data,
+#         'income' : income_serializer.data,
+#         'expenses' : expenses_serializer.data,
+#         'zipupload' : zipupload_serializer.data
+#         # 'Attachment' : attachment_serializer.data
+#     }
+#     return Response(data)
+
+
+import logging
+logger = logging.getLogger(__name__)
+
+@api_view(['GET'])
+def detail_client(request, pk):
+    try:
+        client = Client.objects.get(id=pk)
+        logger.info(f"Client ID: {client.id}")
+
+        view_bank = Bank.objects.filter(client=client)
+        view_owner = Owner.objects.filter(client=client)
+        view_clientuser = CustomUser.objects.filter(client=client)
+        view_companydoc = FileInfo.objects.filter(client=client)
+        view_branch = Branch.objects.filter(client=client)
+        view_customer = Customer.objects.filter(client=client)
+        view_income = IncomeTaxDocument.objects.filter(client=client)
+        view_pf = PF.objects.filter(client=client)
+        view_taxaudit = TaxAudit.objects.filter(client=client)
+        view_air = AIR.objects.filter(client=client)
+        view_sft = SFT.objects.filter(client=client)
+        view_tdspayment = TDSPayment.objects.filter(client=client)
+        view_tds = TDSReturn.objects.filter(client=client)
+        view_sales = SalesInvoice.objects.filter(client=client)
+        view_purchase = PurchaseInvoice.objects.filter(client=client)
+        view_income = Income.objects.filter(client=client)
+        view_expenses = Expenses.objects.filter(client=client)
+        view_zipupload = ZipUpload.objects.filter(client=client)
+
+        # Serialize data
+        client_serializer = ClientSerializer(client)
+        bank_serializer = BankSerializer(view_bank, many=True)
+        owner_serializer = OwnerSerializer(view_owner, many=True)
+        clientuser = UserSerializerWithToken(view_clientuser, many=True)
+        companydoc = FileInfoSerializer(view_companydoc, many=True)
+        branch_serializer = BranchSerailizer(view_branch, many=True)
+        customer_serializer = CustomerVendorSerializer(view_customer, many=True)
+        income_serializer = IncomeTaxDocumentSerializer(view_income, many=True)
+        pf_serializer = PfSerializer(view_pf, many=True)
+        taxaudit_serializer = TaxAuditSerializer(view_taxaudit, many=True)
+        air_serializer = AIRSerializer(view_air, many=True)
+        sft_serializer = SFTSerializer(view_sft, many=True)
+        tdspayment_serializer = TDSPaymentSerializer(view_tdspayment, many=True)
+        tds_serializer = TDSReturnSerializer(view_tds, many=True)
+
+        # Prefetch Related Data for Performance
+        view_sales = SalesInvoice.objects.filter(client=client).prefetch_related(
+            'product_summaries__hsn',
+            'product_summaries__product',
+            'product_summaries__prod_description',
+        )
+        view_purchase = PurchaseInvoice.objects.filter(client=client).prefetch_related(
+            'product_summaries__hsn',
+            'product_summaries__product',
+            'product_summaries__prod_description',
+        )
+        view_income = Income.objects.filter(client=client).prefetch_related(
+            'product_summaries__hsn',
+            'product_summaries__product',
+            'product_summaries__prod_description',
+        )
+        view_expenses = Expenses.objects.filter(client=client).prefetch_related(
+            'product_summaries__hsn',
+            'product_summaries__product',
+            'product_summaries__prod_description',
+        )
+
+        sales_serializer = SalesSerializerList(view_sales, many=True)
+        purchase_serializer = PurchaseSerializerList(view_purchase, many=True)
+        income_serializer = IncomeSerializerList(view_income, many=True)
+        expenses_serializer = ExpensesSerializerList(view_expenses, many=True)
+        zipupload_serializer = ZipUploadSerializer(view_zipupload, many=True)
+
+        data = {
+            'Client': client_serializer.data,
+            'Bank': bank_serializer.data,
+            'Owner': owner_serializer.data,
+            'ClientUser': clientuser.data,
+            'Company_Document': companydoc.data,
+            'Branch': branch_serializer.data,
+            'Customer_or_Vendor': customer_serializer.data,
+            'Income_Tax_Document': income_serializer.data,
+            'PF': pf_serializer.data,
+            'Tax_Audit': taxaudit_serializer.data,
+            'AIR': air_serializer.data,
+            'SFT': sft_serializer.data,
+            'TDS_Payment': tdspayment_serializer.data,
+            'TDS_Return': tds_serializer.data,
+            'sales_invoice': sales_serializer.data,
+            'purchase_invoice': purchase_serializer.data,
+            'income': income_serializer.data,
+            'expenses': expenses_serializer.data,
+            'zipupload': zipupload_serializer.data
+        }
+
+        return Response(data)
+
+    except Client.DoesNotExist:
+        return Response({'error': 'Client not found'}, status=404)
+
+    except InvalidOperation as e:
+        logger.error(f"Decimal error: {e}")
+        return Response({'error': f'Invalid decimal value: {e}'}, status=400)
+
+    except Exception as e:
+        logger.error(f"Error in detail_client: {e}", exc_info=True)
+        return Response({'error': f'Unexpected error: {e}'}, status=500)
+
+
+
+
+
+
+
 
 @api_view(['GET'])
 def detail_branch(request, pk, branch_pk):
