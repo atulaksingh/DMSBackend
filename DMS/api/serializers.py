@@ -345,6 +345,11 @@ class ProductSummarySerializerList(serializers.ModelSerializer):
 #             'igst',
 #             'product_amount'
 #         ]
+def validate_decimal(value):
+    try:
+        return Decimal(value) if value is not None else Decimal('0.00')
+    except (ValueError, InvalidOperation):
+        raise serializers.ValidationError("Invalid decimal value")
 
 class SalesSerializerList(serializers.ModelSerializer):
     client_name = serializers.CharField(source="client.client_name", read_only=True)
@@ -362,6 +367,29 @@ class SalesSerializerList(serializers.ModelSerializer):
     country = serializers.CharField(source="client_Location.country", read_only=True)
     product_summaries = ProductSummarySerializerList(many=True, read_only=True)
 
+
+    #LINE################
+    taxable_amount = serializers.DecimalField(
+        allow_null=True, decimal_places=2, max_digits=100, required=False, validators=[validate_decimal]
+    )
+    totalall_gst = serializers.DecimalField(
+        allow_null=True, decimal_places=2, max_digits=100, required=False, validators=[validate_decimal]
+    )
+    total_invoice_value = serializers.DecimalField(
+        allow_null=True, decimal_places=2, max_digits=100, required=False, validators=[validate_decimal]
+    )
+    amount_receivable = serializers.DecimalField(
+        allow_null=True, decimal_places=2, max_digits=100, required=False, validators=[validate_decimal]
+    )
+    tcs = serializers.DecimalField(
+        allow_null=True, decimal_places=2, max_digits=100, required=False, validators=[validate_decimal]
+    )
+    tds = serializers.DecimalField(
+        allow_null=True, decimal_places=2, max_digits=100, required=False, validators=[validate_decimal]
+    )
+    tds_tcs_rate = serializers.DecimalField(
+        allow_null=True, decimal_places=2, max_digits=100, required=False, validators=[validate_decimal]
+    )
     class Meta:
         model = SalesInvoice
         fields = [
