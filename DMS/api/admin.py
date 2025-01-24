@@ -276,6 +276,7 @@ admin.site.register(SFT)
 admin.site.register(AIR)
 admin.site.register(TDSPayment)
 admin.site.register(TDSReturn)
+admin.site.register(ExcelFile)
 # admin.site.register(SalesInvoice)
 admin.site.register(Product) ##############
 admin.site.register(ProductDescription) ###############

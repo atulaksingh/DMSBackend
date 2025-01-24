@@ -212,4 +212,8 @@ urlpatterns = [
 # Zip Upload
     path('create-zipupload/<int:pk>', view=create_zipupload, name='create-zipupload'),
     path('delete-zipupload/<int:client_pk>/<int:pk>', view=delete_zipupload, name='delete-zipupload'),
+
+# Excel File
+    path('create-excel', view=create_excel_file, name='create-excel'),
+    path('get-excel-file/<int:excel_pk>', view=get_excel, name='get-excel')
 ]

@@ -290,7 +290,7 @@ def create_bank(request,pk):
                         file_serializer.save()
 
             return Response({'message':'Bank created successfully', 'data' : serializer.data},status=status.HTTP_201_CREATED)
-    return Response({'message':'Fail to create bank', 'error_message' : serializer.errors},status=status.HTTP_400_BAD_REQUEST)
+    return Response({f'message':'Fail to create bank', 'error_message' : serializer.errors},status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
 @parser_classes([MultiPartParser, FormParser])
@@ -651,42 +651,136 @@ def delete_dashboarduser(request, user_pk):
 # ******************************************Company Document **************************************
 
 @api_view(['POST'])
-def create_companydoc(request,pk):
+@parser_classes([MultiPartParser, FormParser])
+def create_companydoc(request, pk):
     client = Client.objects.get(id=pk)
-    if request.method == 'POST':
-        doc_serializer = CompanyDocSerailizer(data=request.data)
-        if doc_serializer.is_valid():
-            doc_serializer.save(client=client)
-            return Response({
-                'message': 'company document created',
-                'data': doc_serializer.data,
-                },status=status.HTTP_201_CREATED)
-        return Response({
-                'message': 'Fail to create company document',
-                'error_message': doc_serializer.errors,
-                },status=status.HTTP_400_BAD_REQUEST)
-        
+    instance_data = request.data
+    data = {key: value for key, value in instance_data.items()}
+
+    # Save the CompanyDocument
+    serializer = CompanyDocSerailizer(data=data)
+    if serializer.is_valid(raise_exception=True):
+        doc_instance = serializer.save(client=client)
+
+        # Handle file uploads
+        files = request.FILES.getlist('files')
+        if files:
+            for file in files:
+                file_data = {
+                    'company_doc': doc_instance.pk,
+                    'files': file,
+                }
+                file_serializer = FilesSerializer(data=file_data)
+                if file_serializer.is_valid(raise_exception=True):
+                    file_serializer.save()
+
+        # Success response
+        return Response(
+            {
+                'message': 'Company Document created successfully.',
+                'data': serializer.data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    # Error response if serializer fails
+    return Response(
+        {
+            'message': 'Failed to create Company Document.',
+            'error_message': serializer.errors,
+        },
+        status=status.HTTP_400_BAD_REQUEST,
+    )
+
+
+
+# @api_view(['POST'])
+# def create_companydoc(request,pk):
+#     client = Client.objects.get(id=pk)
+#     if request.method == 'POST':
+#         doc_serializer = CompanyDocSerailizer(data=request.data)
+#         if doc_serializer.is_valid():
+#             doc_serializer.save(client=client)
+#             return Response({
+#                 'message': 'company document created',
+#                 'data': doc_serializer.data,
+#                 },status=status.HTTP_201_CREATED)
+#         return Response({
+#                 'message': 'Fail to create company document',
+#                 'error_message': doc_serializer.errors,
+#                 },status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['POST', 'GET'])
-def edit_companydoc(request,pk,companydoc_pk):
-    client = Client.objects.get(id=pk)
-    doc = CompanyDocument.objects.get(id=companydoc_pk)
-    doc_serializer = CompanyDocSerailizer(instance=doc, data=request.data)
+@parser_classes([MultiPartParser, FormParser])
+def edit_companydoc(request, pk, companydoc_pk):
+    try:
+        client = Client.objects.get(id=pk)
+        companydoc = CompanyDocument.objects.get(id=companydoc_pk, client=client)
+    except Client.DoesNotExist:
+        return Response({'error_message': 'Client not found'}, status=status.HTTP_404_NOT_FOUND)
+    except CompanyDocument.DoesNotExist:
+        return Response({'error_message': 'Company Document not found'}, status=status.HTTP_404_NOT_FOUND)
+
     if request.method == 'POST':
-        if doc_serializer.is_valid():
-            doc_serializer.save()
+        # Update branch document fields
+        companydoc_serializer = CompanyDocSerailizer(instance=companydoc, data=request.data)
+        if companydoc_serializer.is_valid():
+            companydoc_serializer.save(client=client)
+
+            # Handle file updates separately
+            if request.FILES.getlist('files'):
+                # Delete the old files if required
+                Files.objects.filter(company_doc=companydoc).delete()
+
+                # Add the new files
+                files = request.FILES.getlist('files')
+                for file in files:
+                    file_data = {
+                        'company_doc': companydoc.pk,
+                        'files': file
+                    }
+                    file_serializer = FilesSerializer(data=file_data)
+                    if file_serializer.is_valid():
+                        file_serializer.save()
+                    else:
+                        return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
             return Response({
-                'message': 'company document updated',
-                'data': doc_serializer.data,
+                'message': 'Company Document updated',
+                'data': companydoc_serializer.data,
                 'status' : status.HTTP_200_OK
             })
-        return Response({
-                'message': 'Fail to update company document',
-                'error_message': doc_serializer.errors,
+        else:
+            return Response({
+                'message': 'Fail to update Company Document',
+                'error_message': companydoc_serializer.errors,
                 },status=status.HTTP_400_BAD_REQUEST)
+
     elif request.method == 'GET':
-        doc_ser = CompanyDocSerailizer(doc)
-        return Response(doc_ser.data)
+        companydoc_serializer = CompanyDocSerailizer(companydoc)
+        return Response(companydoc_serializer.data)       
+
+# @api_view(['POST', 'GET'])
+# def edit_companydoc(request,pk,companydoc_pk):
+#     client = Client.objects.get(id=pk)
+#     doc = CompanyDocument.objects.get(id=companydoc_pk)
+#     doc_serializer = CompanyDocSerailizer(instance=doc, data=request.data)
+#     if request.method == 'POST':
+#         if doc_serializer.is_valid():
+#             doc_serializer.save()
+#             return Response({
+#                 'message': 'company document updated',
+#                 'data': doc_serializer.data,
+#                 'status' : status.HTTP_200_OK
+#             })
+#         return Response({
+#                 'message': 'Fail to update company document',
+#                 'error_message': doc_serializer.errors,
+#                 },status=status.HTTP_400_BAD_REQUEST)
+#     elif request.method == 'GET':
+#         doc_ser = CompanyDocSerailizer(doc)
+#         return Response(doc_ser.data)
 
 @api_view(['GET'])
 def list_companydoc(request,pk):
@@ -4441,12 +4535,13 @@ def update_credit_note(request, client_pk, invoice_pk):
                     "name": credit_note.vendor.name if credit_note.vendor else None,
                     "gst_no": credit_note.vendor.gst_no if credit_note.vendor else None,
                     "pan": credit_note.vendor.pan if credit_note.vendor else None,
-                    "vendor_address": credit_note.vendor.address if credit_note.vendor else None,
+                    "customer_address": credit_note.vendor.address if credit_note.vendor else None,
                     "customer": credit_note.vendor.customer if credit_note.vendor else None,
                     "vendor": credit_note.vendor.vendor if credit_note.vendor else None,
                 },
+                # print('bbbbbbbbbbbbbbbbbbbbbbb',response_data["vendor"])
             }
-            print('bbbbbbbbbbbbbbbbbbbbbbb',response_data["credit_note"])
+            print('bbbbbbbbbbbbbbbbbbbbbbb',response_data["vendor"])
             return Response(response_data, status=status.HTTP_200_OK)
 
         # Handle PUT request
@@ -7547,7 +7642,7 @@ def update_expenses_credit_note(request, client_pk, expenses_pk):
                     "name": credit_note.vendor.name if credit_note.vendor else None,
                     "gst_no": credit_note.vendor.gst_no if credit_note.vendor else None,
                     "pan": credit_note.vendor.pan if credit_note.vendor else None,
-                    "vendor_address": credit_note.vendor.address if credit_note.vendor else None,
+                    "customer_address": credit_note.vendor.address if credit_note.vendor else None,
                     "customer": credit_note.vendor.customer if credit_note.vendor else None,
                     "vendor": credit_note.vendor.vendor if credit_note.vendor else None,
                 },
@@ -7964,6 +8059,34 @@ def expenses_credit_note_detail_view(request, client_pk, expenses_pk, credit_pk)
         # Return the updated object
         updated_serializer = ExpensesCreditNoteSerializer(credit_note)
         return Response(updated_serializer.data, status=status.HTTP_200_OK)
+
+# ************************************************Excel File**************************************************
+
+@api_view(['POST'])
+def create_excel_file(request):
+    if request.method == 'POST':
+        ser = ExcelFileSerializer(data=request.data)
+        if ser.is_valid():
+            ser.save()
+            return Response({
+                'message':  'Excel Upload',
+                'data' : ser.data,
+            }, status=status.HTTP_201_CREATED)
+        else: 
+            return Response({
+                'message' : 'Fail to upload Excel',
+                'error_message' : ser.errors,
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def get_excel(request, excel_pk):
+    excel = ExcelFile.objects.get(id=excel_pk)
+    if request.method == 'GET':
+        ser = ExcelFileSerializer(excel)
+        return Response(ser.data)
+    else:
+        return Response(ser.errors)
+
 
 # ***********************************************Detail page API's*********************************************
 # @api_view(['GET'])

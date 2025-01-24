@@ -126,7 +126,7 @@ class CompanyDocument(models.Model):
     login = models.CharField(max_length=100, null=True, blank=True)
     password = models.CharField(max_length=100, null=True, blank=True)
     remark = models.TextField(null=True, blank=True)
-    file = models.FileField(null=True, blank=True)
+    # file = models.FileField(null=True, blank=True)
 
 
 # Branch Model
@@ -1063,6 +1063,7 @@ class TDSReturn(models.Model):
     # challan_attachment = models.FileField(null=True, blank=True)
 
 class Files(models.Model):
+    company_doc = models.ForeignKey(CompanyDocument, on_delete=models.CASCADE, null=True, blank=True)
     branch_doc = models.ForeignKey(BranchDocument, on_delete=models.CASCADE, null=True, blank=True)
     tax_audit = models.ForeignKey(TaxAudit, on_delete=models.CASCADE, null=True, blank=True)
     air = models.ForeignKey(AIR, on_delete=models.CASCADE, null=True, blank=True)
@@ -1070,6 +1071,9 @@ class Files(models.Model):
     tds = models.ForeignKey(TDSReturn, on_delete=models.CASCADE, null=True, blank=True)
     bank = models.ForeignKey(Bank, on_delete=models.CASCADE, null=True, blank=True)
     files = models.FileField(upload_to='documents',null=True, blank=True)
+
+class ExcelFile(models.Model):
+    file = models.FileField(null=True, blank=True)
 
 
 

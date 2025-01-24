@@ -144,12 +144,23 @@ class UserSerializerWithToken(serializers.ModelSerializer):
         token = RefreshToken.for_user(obj)
         return str(token.access_token)
 
+# class CompanyFilesSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Files
+#         field = '__all__'
+
 
 # Company Document
 class CompanyDocSerailizer(serializers.ModelSerializer):
+    files = serializers.SerializerMethodField()
+
     class Meta:
         model = CompanyDocument
-        fields ='__all__'
+        fields = ['id', 'client', 'document_type', 'login', 'password', 'remark', 'files' ]
+
+    def get_files(self, obj):
+        files = Files.objects.filter(company_doc=obj)
+        return FilesSerializer(files, many=True).data
 
 # Branch
 class BranchSerailizer(serializers.ModelSerializer):
@@ -163,13 +174,6 @@ class OfficeLocationSerializer(serializers.ModelSerializer):
         model = OfficeLocation
         fields = '__all__'
 
-    # def create(self, validated_data):
-    #     branch_id = validated_data.get('branchID')
-    #     if branch_id:
-    #         branch = Branch.objects.get(id=branch_id)
-    #         validated_data['branchID'] = branch  # Set the branch object
-
-    #     return super().create(validated_data)
 class FilesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Files
@@ -1393,6 +1397,13 @@ class ZipUploadSerializer2(serializers.ModelSerializer):
     class Meta:
         model = ZipUpload
         fields = ['client', 'files', 'date']   
+
+#************************************************************Excel File
+
+class ExcelFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExcelFile
+        fields = '__all__'
 
 
  
