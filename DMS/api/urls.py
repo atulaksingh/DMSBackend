@@ -215,5 +215,5 @@ urlpatterns = [
 
 # Excel File
     path('create-excel', view=create_excel_file, name='create-excel'),
-    path('get-excel-file/<int:excel_pk>', view=get_excel, name='get-excel')
+    path('get-excel-file', view=get_excel, name='get-excel')
 ]

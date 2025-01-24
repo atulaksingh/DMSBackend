@@ -8079,13 +8079,25 @@ def create_excel_file(request):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
-def get_excel(request, excel_pk):
-    excel = ExcelFile.objects.get(id=excel_pk)
+def get_excel(request):
+    excel = ExcelFile.objects.all()
     if request.method == 'GET':
-        ser = ExcelFileSerializer(excel)
+        ser = ExcelFileSerializer(excel, many=True)
         return Response(ser.data)
     else:
         return Response(ser.errors)
+
+@api_view(['DELETE'])
+def delete_excel(request, excel_pk):
+    excel = ExcelFile.objects.get(id=excel_pk)
+    if request.method == 'DELETE':
+        excel.delete()
+        return Response({'message': 'Excel Deleted'},status=status.HTTP_200_OK)
+    else :
+        return Response({'error_message':'Fail to Delete Excel'},status=status.HTTP_400_BAD_REQUEST)
+
+
+
 
 
 # ***********************************************Detail page API's*********************************************
