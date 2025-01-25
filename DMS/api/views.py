@@ -981,9 +981,46 @@ def delete_customer(request,pk, customer_pk):
     return Response({'error_message':'Fail to delete Customer or Vendor'},status=status.HTTP_400_BAD_REQUEST)
 
 # **********************************************Branch Document*********************************************
+# @api_view(['POST'])
+# @parser_classes([MultiPartParser, FormParser])
+# def create_branchdoc(request,branch_pk):
+#     branch = Branch.objects.get(id=branch_pk)
+#     instance_data = request.data
+#     data = {key: value for key, value in instance_data.items()}
+
+#     serializer = BranchDocSerailizer(data=data)
+#     if serializer.is_valid(raise_exception=True):
+#         doc_instance = serializer.save(branch=branch)
+#         print(request.data)
+
+#         if request.FILES:
+#             files = dict((request.FILES).lists()).get('files',None)
+#             # files = request.FILES.getlist('files')
+#             if files:
+#                 for file in files:
+#                     file_data = {
+#                         'branch_doc' : doc_instance.pk,
+#                         'files' : file
+#                     }
+#                     file_serializer= FilesSerializer(data=file_data)
+#                     if file_serializer.is_valid(raise_exception=True):
+#                         file_serializer.save()
+#                     else:
+#                         return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#         return Response({
+#             'message': 'Branch Document created',
+#             'data': serializer.data,
+#             },status=status.HTTP_201_CREATED)
+#     else:    
+#         return Response({
+#                 'message': 'Fail to create Branch Document',
+#                 'error_message': serializer.errors,
+#                 },status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(['POST'])
 @parser_classes([MultiPartParser, FormParser])
-def create_branchdoc(request,branch_pk):
+def create_branchdoc(request, branch_pk):
     branch = Branch.objects.get(id=branch_pk)
     instance_data = request.data
     data = {key: value for key, value in instance_data.items()}
@@ -994,26 +1031,29 @@ def create_branchdoc(request,branch_pk):
         print(request.data)
 
         if request.FILES:
-            files = dict((request.FILES).lists()).get('files',None)
+            files = dict((request.FILES).lists()).get('files', None)
             # files = request.FILES.getlist('files')
             if files:
                 for file in files:
                     file_data = {
-                        'branch_doc' : doc_instance.pk,
-                        'files' : file
+                        'branch_doc': doc_instance.pk,
+                        'files': file
                     }
-                    file_serializer= FilesSerializer(data=file_data)
+                    file_serializer = FilesSerializer(data=file_data)
                     if file_serializer.is_valid(raise_exception=True):
                         file_serializer.save()
-
-            return Response({
-                'message': 'Branch Document created',
-                'data': serializer.data,
-                },status=status.HTTP_201_CREATED)
+                    else:
+                        return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response({
-                'message': 'Fail to create Branch Document',
-                'error_message': serializer.errors,
-                },status=status.HTTP_400_BAD_REQUEST)
+            'message': 'Branch Document created',
+            'data': serializer.data,
+        }, status=status.HTTP_201_CREATED)
+    else:    
+        return Response({
+            'message': 'Failed to create Branch Document',
+            'error_message': serializer.errors,
+        }, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['POST', 'GET'])
 @parser_classes([MultiPartParser, FormParser])
