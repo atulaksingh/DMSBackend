@@ -260,12 +260,33 @@
 
 
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 from api.models import *
 
 # Register your models here.
 
 admin.site.register(CompanyDocument)
-admin.site.register(CustomUser)
+# admin.site.register(CustomUser)
+class CustomUserAdmin(UserAdmin):
+    model = CustomUser
+    list_display = ('id', 'name', 'email', 'client', 'customer', 'is_active', 'is_staff')
+    search_fields = ('name', 'email')
+    list_editable = ('is_active', 'is_staff')
+    fieldsets = (
+        (None, {'fields': ('email', 'password')}),
+        ('Personal Info', {'fields': ('name', 'client', 'customer')}),
+        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Important dates', {'fields': ('last_login', 'date_joined')}),
+    )
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('email', 'name', 'password1', 'password2', 'client', 'customer'),
+        }),
+    )
+    ordering = ('id',)
+
+admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(Branch)
 admin.site.register(BranchDocument)
 admin.site.register(OfficeLocation)

@@ -557,32 +557,231 @@ def dashboarduser(request):
         return Response(message, status=status.HTTP_400_BAD_REQUEST)
 
 # Client User Form
-@api_view(['POST'])
-def clientuser(request,pk):
+# @api_view(['POST'])
+# def clientuser(request,pk):
+#     client = get_object_or_404(Client, id=pk)
+#     data = request.data
+#     try:
+#         user = CustomUser.objects.create(first_name=data['first_name'],last_name=data['last_name'],username=data['email'],
+#                                      email=data['email'],password=make_password(data['password']), is_active=False, client=client)
+#         # generate token for email sending
+#         email_subject = "Activate You Account"
+#         message = render_to_string(
+#             "activate.html",
+#             {
+#                 'user': user,
+#                 'domain': '127.0.0.1:8000',
+#                 'uid' : urlsafe_base64_encode(force_bytes(user.pk)),
+#                 'token' : generate_token.make_token(user),
+#             }
+#         )
+#         # print(message)
+#         email_message = EmailMessage(email_subject,message,settings.EMAIL_HOST_USER,[data['email']])
+#         email_message.send()
+#         serializer = UserSerializerWithToken(user, many=False)
+#         return Response({'message':'User Registered kindly activate ur account','data': serializer.data})
+#     except:
+#         message = {'User Already Exist'}
+#         return Response(message, status=status.HTTP_400_BAD_REQUEST)
+
+
+# # Client User Form
+# @api_view(['GET','POST'])
+# def clientuser(request,pk):
+#     client = get_object_or_404(Client, id=pk)
+#     data = request.data
+
+#     if request.method == 'GET':
+#         customer = Customer.objects.filter(client=client)
+#         serializer = CustomerVendorSerializer(customer, many=True)
+#         return Response(serializer.data)
+
+#     elif request.method == 'POST':
+#         data = request.data
+#         customer = None
+#         if 'customer' in data:
+#             # If it's a name
+#             customer_name = data['customer']
+#             customer = Customer.objects.filter(name=customer_name, client=client).first()
+
+#             # If you want to match by customer ID instead of name
+#             if customer is None:
+#                 try:
+#                     customer_id = int(data['customer'])  # Trying to interpret as ID
+#                     customer = Customer.objects.filter(id=customer_id, client=client).first()
+#                 except ValueError:
+#                     return Response({"error": "Invalid customer name or ID!"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         if not customer:
+#             return Response({"error": "customer not found!"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         try:
+#             user = CustomUser.objects.create(
+#                 name=data['name'].strip(),  # Trim spaces to avoid blank names
+#                 username=data['email'],
+#                 email=data['email'],
+#                 password=make_password(data['password']),
+#                 is_active=False,
+#                 client=client,
+#                 customer=customer,
+#             )
+
+#             # generate token for email sending
+#             email_subject = "Activate You Account"
+#             message = render_to_string(
+#                 "activate.html",
+#                 {
+#                     'user': user,
+#                     'domain': '127.0.0.1:8000',
+#                     'uid' : urlsafe_base64_encode(force_bytes(user.pk)),
+#                     'token' : generate_token.make_token(user),
+#                 }
+#             )
+#             # print(message)
+#             email_message = EmailMessage(email_subject,message,settings.EMAIL_HOST_USER,[data['email']])
+#             email_message.send()
+#             serializer = UserSerializerWithToken(user, many=False)
+#             return Response({'message':'User Registered kindly activate ur account','data': serializer.data})
+#         except:
+#             message = {'User Already Exist'}
+#             return Response(message, status=status.HTTP_400_BAD_REQUEST)
+
+# @api_view(['GET', 'POST'])
+# def clientuser(request, pk):
+#     client = get_object_or_404(Client, id=pk)
+#     data = request.data
+
+#     if request.method == 'GET':
+#         customer = Customer.objects.filter(client=client)
+#         serializer = CustomerVendorSerializer(customer, many=True)
+#         return Response(serializer.data)
+
+#     elif request.method == 'POST':
+#         data = request.data
+#         customer = None
+        
+#         if 'customer' in data:
+#             # If it's a name
+#             customer_name = data['customer']
+#             customer = Customer.objects.filter(name=customer_name, client=client).first()
+
+#             # If you want to match by customer ID instead of name
+#             if customer is None:
+#                 try:
+#                     customer_id = int(data['customer'])  # Trying to interpret as ID
+#                     customer = Customer.objects.filter(id=customer_id, client=client).first()
+#                 except ValueError:
+#                     return Response({"error": "Invalid customer name or ID!"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         if not customer:
+#             return Response({"error": "Customer not found!"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Check if the user already exists by email
+#         if CustomUser.objects.filter(email=data['email']).exists():
+#             return Response({"error": "User Already Exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         try:
+#             # Create the user if not already exists
+#             user = CustomUser.objects.create(
+#                 name=data['name'].strip(),  # Trim spaces to avoid blank names
+#                 username=data['email'],
+#                 email=data['email'],
+#                 password=make_password(data['password']),
+#                 is_active=False,
+#                 client=client,
+#                 customer=customer,
+#             )
+
+#             # Generate token for email sending
+#             email_subject = "Activate Your Account"
+#             message = render_to_string(
+#                 "activate.html",
+#                 {
+#                     'user': user,
+#                     'domain': '127.0.0.1:8000',
+#                     'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+#                     'token': generate_token.make_token(user),
+#                 }
+#             )
+
+#             email_message = EmailMessage(
+#                 email_subject,
+#                 message,
+#                 settings.EMAIL_HOST_USER,
+#                 [data['email']]
+#             )
+#             email_message.send()
+
+#             serializer = UserSerializerWithToken(user, many=False)
+#             return Response({'message': 'User Registered, kindly activate your account', 'data': serializer.data})
+
+#         except Exception as e:
+#             # If any error occurs, return this message
+#             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET', 'POST'])
+def clientuser(request, pk):
     client = get_object_or_404(Client, id=pk)
-    data = request.data
-    try:
-        user = CustomUser.objects.create(first_name=data['first_name'],last_name=data['last_name'],username=data['email'],
-                                     email=data['email'],password=make_password(data['password']), is_active=False, client=client)
-        # generate token for email sending
-        email_subject = "Activate You Account"
-        message = render_to_string(
-            "activate.html",
-            {
-                'user': user,
-                'domain': '127.0.0.1:8000',
-                'uid' : urlsafe_base64_encode(force_bytes(user.pk)),
-                'token' : generate_token.make_token(user),
-            }
-        )
-        # print(message)
-        email_message = EmailMessage(email_subject,message,settings.EMAIL_HOST_USER,[data['email']])
-        email_message.send()
-        serializer = UserSerializerWithToken(user, many=False)
-        return Response({'message':'User Registered kindly activate ur account','data': serializer.data})
-    except:
-        message = {'User Already Exist'}
-        return Response(message, status=status.HTTP_400_BAD_REQUEST)
+
+    if request.method == 'GET':
+        customers = Customer.objects.filter(client=client)  # QuerySet (multiple customers)
+        serializer = CustomerVendorSerializer(customers, many=True)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        data = request.data
+        customer = None
+
+        if 'customer' in data:
+            customer_name = data['customer']
+            customer = Customer.objects.filter(name=customer_name, client=client).first()
+
+            if customer is None:
+                try:
+                    customer_id = int(data['customer'])  # Check if customer is given by ID
+                    customer = Customer.objects.filter(id=customer_id, client=client).first()
+                except ValueError:
+                    return Response({"error": "Invalid customer name or ID!"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not customer:
+            return Response({"error": "Customer not found!"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if the user already exists
+        if CustomUser.objects.filter(email=data['email']).exists():
+            return Response({"error": "User already exists!"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Create user only if validation passes
+            user = CustomUser.objects.create(
+                name=data['name'].strip(),
+                username=data['email'],
+                email=data['email'],
+                password=make_password(data['password']),
+                is_active=False,
+                client=client,
+                customer=customer,  # Pass single object, not a list
+            )
+
+            # Generate email activation token
+            email_subject = "Activate Your Account"
+            message = render_to_string(
+                "activate.html",
+                {
+                    'user': user,
+                    'domain': '127.0.0.1:8000',
+                    'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                    'token': generate_token.make_token(user),
+                }
+            )
+            email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [data['email']])
+            email_message.send()
+
+            serializer = UserSerializerWithToken(user, many=False)
+            return Response({'message': 'User Registered. Kindly activate your account.', 'data': serializer.data})
+        except Exception as e:
+            return Response({"error": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 
 # Email Activations
 class ActivateAccountView(View):
@@ -599,20 +798,70 @@ class ActivateAccountView(View):
         else:
             return render(request,"activatefail.html")
 
-# Clientuser Update
+# # Clientuser Update
+# @api_view(['POST', 'GET'])
+# def edit_clientuser(request, pk, user_pk):
+#     client = Client.objects.get(id=pk)
+#     user = CustomUser.objects.get(id = user_pk, client=client)
+#     user_serializer = UserSerializerWithToken(data=request.data, instance=user, partial=True)
+#     if request.method == 'POST':
+#         if user_serializer.is_valid():
+#             user_serializer.save(client=client)
+#             return Response({'message':'Client User Updated'})
+#         return Response(user_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+#     elif request.method == 'GET':
+#         user_ser = UserSerializerWithToken(user)
+#         return Response(user_ser.data)
+
+
 @api_view(['POST', 'GET'])
 def edit_clientuser(request, pk, user_pk):
-    client = Client.objects.get(id=pk)
-    user = CustomUser.objects.get(id = user_pk, client=client)
-    user_serializer = UserSerializerWithToken(data=request.data, instance=user, partial=True)
-    if request.method == 'POST':
-        if user_serializer.is_valid():
-            user_serializer.save(client=client)
-            return Response({'message':'Client User Updated'})
-        return Response(user_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-    elif request.method == 'GET':
-        user_ser = UserSerializerWithToken(user)
-        return Response(user_ser.data)
+    client = get_object_or_404(Client, id=pk)
+    user = get_object_or_404(CustomUser, id=user_pk, client=client)
+
+    if request.method == 'GET':
+        user_serializer = UserSerializerWithToken(user)
+        return Response(user_serializer.data)
+
+    elif request.method == 'POST':
+        data = request.data
+        customer = None
+
+        # Validate customer field
+        if 'customer' in data:
+            customer_name = data['customer']
+            customer = Customer.objects.filter(name=customer_name, client=client).first()
+
+            if customer is None:
+                try:
+                    customer_id = int(data['customer'])  # Check if ID was provided
+                    customer = Customer.objects.filter(id=customer_id, client=client).first()
+                except ValueError:
+                    return Response({"error": "Invalid customer name or ID!"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not customer:
+            return Response({"error": "Customer not found!"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Prevent email duplication
+        if 'email' in data and CustomUser.objects.filter(email=data['email']).exclude(id=user_pk).exists():
+            return Response({"error": "Email already in use!"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user_serializer = UserSerializerWithToken(user, data=data, partial=True)
+            if user_serializer.is_valid():
+                user_serializer.save(client=client, customer=customer)
+                return Response({'message': 'Client User Updated', 'data': user_serializer.data})
+            return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+def list_users_by_client(request, pk):
+    client = get_object_or_404(Client, id=pk)
+    users = CustomUser.objects.filter(client=client)
+    serializer = UserSerializerWithToken(users, many=True)
+    return Response(serializer.data)
+
 
 # DashboardUser Update
 @api_view(['POST', 'GET'])
@@ -1045,6 +1294,9 @@ def create_branchdoc(request, branch_pk):
                     else:
                         return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response({
+
+
+            
             'message': 'Branch Document created',
             'data': serializer.data,
         }, status=status.HTTP_201_CREATED)
@@ -1976,6 +2228,8 @@ def get_sales_invoice_data(request, client_pk, invoice_pk):
         "customer_address": get_safe_attr(customer, 'address'),
         "customer": get_safe_attr(customer, 'customer'),
         "vendor": get_safe_attr(customer, 'vendor'),
+        # "email": get_safe_attr(customer, 'email'),
+        # "contact": get_safe_attr(customer, 'contact'),
     }
 
     # Prepare final response data
@@ -2042,6 +2296,8 @@ def update_sales_invoice(request, client_pk, invoice_pk):
                     "customer_address": sales_invoice.customer.address if sales_invoice.customer else None,
                     "customer": sales_invoice.customer.customer if sales_invoice.customer else None,
                     "vendor": sales_invoice.customer.vendor if sales_invoice.customer else None,
+                    # "email": sales_invoice.customer.email if sales_invoice.customer else None,
+                    # "contact": sales_invoice.customer.contact if sales_invoice.customer else None,
                 },
             }
             print('bbbbbbbbbbbbbbbbbbbbbbb',response_data["sales_invoice"])
@@ -2097,6 +2353,8 @@ def update_sales_invoice(request, client_pk, invoice_pk):
                 "gst_no": request.data.get("vendorData[gst_no]"),
                 "pan": request.data.get("vendorData[pan]"),
                 "customer_address": request.data.get("vendorData[customer_address]"),
+                # "email": request.data.get("vendorData[email]"),
+                # "contact": request.data.get("vendorData[contact]"),
                 "customer": request.data.get("vendorData[customer]").lower() == "true" if request.data.get("vendorData[customer]") else None,
                 "vendor": request.data.get("vendorData[vendor]").lower() == "true" if request.data.get("vendorData[vendor]") else None,
             }

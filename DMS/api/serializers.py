@@ -116,23 +116,53 @@ class OwnerSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 # User Serializer
+# class UserSerializerWithToken(serializers.ModelSerializer):
+#     name = serializers.SerializerMethodField(read_only= True)
+#     token = serializers.SerializerMethodField(read_only = True)
+#     ca_admin = serializers.SerializerMethodField()
+#     cus_admin = serializers.SerializerMethodField()
+
+#     class Meta:
+#         model = CustomUser
+#         fields = ['id','username','email','name','first_name','password','last_name','ca_admin', 'cus_admin', 'token','client']
+
+#     def get_name(self, obj):
+#         firstname = obj.first_name
+#         lastname = obj.last_name
+#         name = firstname + ' ' + lastname
+#         if name==' ':
+#             name = 'Set Your Name'
+#         return name
+
+#     def get_ca_admin(self,obj):
+#         return obj.is_staff
+
+#     def get_cus_admin(self, obj):
+#         return obj.is_staff
+
+#     def get_token(self, obj):
+#         token = RefreshToken.for_user(obj)
+#         return str(token.access_token)
+class CustomerVendorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Customer
+        fields = '__all__'
+
 class UserSerializerWithToken(serializers.ModelSerializer):
-    name = serializers.SerializerMethodField(read_only= True)
+    # name = serializers.SerializerMethodField(read_only= True)
     token = serializers.SerializerMethodField(read_only = True)
     ca_admin = serializers.SerializerMethodField()
     cus_admin = serializers.SerializerMethodField()
+    customer = CustomerVendorSerializer(many=False, read_only=True)
 
     class Meta:
         model = CustomUser
-        fields = ['id','username','email','name','first_name','password','last_name','ca_admin', 'cus_admin', 'token','client']
+        fields = ['id','username','email','name','password','ca_admin', 'cus_admin', 'token','client','customer']
 
-    def get_name(self, obj):
-        firstname = obj.first_name
-        lastname = obj.last_name
-        name = firstname + ' ' + lastname
-        if name==' ':
-            name = 'Set Your Name'
-        return name
+    def validate_name(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Name cannot be blank.")
+        return value
 
     def get_ca_admin(self,obj):
         return obj.is_staff
@@ -193,10 +223,10 @@ class BranchDocSerailizer(serializers.ModelSerializer):
         return FilesSerializer(files, many=True).data
 
 # Customer Or Vendor
-class CustomerVendorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Customer
-        fields = '__all__'
+# class CustomerVendorSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Customer
+#         fields = '__all__'
 
 # Incometax Document
 class IncomeTaxDocumentSerializer(serializers.ModelSerializer):

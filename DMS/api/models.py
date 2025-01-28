@@ -81,6 +81,22 @@ class Owner(models.Model):
     # def __str__(self):
     #     return self.owner_name
 
+# Customer or Vendor Model
+class Customer(models.Model):
+   name = models.CharField(max_length=100, null=True, blank=True)
+   gst_no = models.CharField(max_length=100, null=True, blank=True)
+   pan = models.CharField(max_length=100, null=True, blank=True)
+   address = models.TextField(null=True, blank=True)
+   client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+   customer = models.BooleanField(null=True, blank=True)
+   vendor = models.BooleanField(null=True, blank=True)
+#    email = models.EmailField(null=True, blank=True)
+#    contact = models.IntegerField(null=True, blank=True)
+
+   def __str__(self):
+       return self.name if self.name else "No Name"
+
+
 # User Model
 class CustomUser(AbstractUser):
 
@@ -101,12 +117,15 @@ class CustomUser(AbstractUser):
     )
     # first_name = models.CharField(max_length=100, null=True, blank=True)
     # last_name = models.CharField(max_length=100, null=True, blank=True)
+    first_name = None
+    last_name = None
     name = models.CharField(max_length=50, null=True, blank=True)
     ca_admin = models.BooleanField(default=False, null=True, blank=True)
     ca_user = models.BooleanField(null=True, blank=True)
     cus_admin = models.BooleanField(default=False, null=True, blank=True)
     cus_user = models.BooleanField(null=True, blank=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+    customer = models.ForeignKey('Customer', on_delete=models.CASCADE, null=True, blank=True)
 
 # CompanyDocument Model
 class CompanyDocument(models.Model):
@@ -173,18 +192,18 @@ class BranchDocument(models.Model):
     remark = models.TextField(null=True, blank=True)
     # file = models.FileField(null=True, blank=True)
 
-# Customer or Vendor Model
-class Customer(models.Model):
-   name = models.CharField(max_length=100, null=True, blank=True)
-   gst_no = models.CharField(max_length=100, null=True, blank=True)
-   pan = models.CharField(max_length=100, null=True, blank=True)
-   address = models.TextField(null=True, blank=True)
-   client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
-   customer = models.BooleanField(null=True, blank=True)
-   vendor = models.BooleanField(null=True, blank=True)
+# # Customer or Vendor Model
+# class Customer(models.Model):
+#    name = models.CharField(max_length=100, null=True, blank=True)
+#    gst_no = models.CharField(max_length=100, null=True, blank=True)
+#    pan = models.CharField(max_length=100, null=True, blank=True)
+#    address = models.TextField(null=True, blank=True)
+#    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+#    customer = models.BooleanField(null=True, blank=True)
+#    vendor = models.BooleanField(null=True, blank=True)
 
-   def __str__(self):
-       return self.name if self.name else "No Name"
+#    def __str__(self):
+#        return self.name if self.name else "No Name"
 
 class HSNCode(models.Model):
     hsn_code = models.IntegerField(null=True, blank=True, unique=True)
