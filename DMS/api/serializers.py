@@ -394,6 +394,8 @@ class SalesSerializerList(serializers.ModelSerializer):
     customer_address = serializers.CharField(source="customer.address", read_only=True)
     customer_customer = serializers.CharField(source="customer.customer", read_only=True)
     customer_vendor = serializers.CharField(source="customer.vendor", read_only=True)
+    customer_email = serializers.CharField(source="customer.email", read_only=True) #nnnnn
+    customer_contact = serializers.CharField(source="customer.contact", read_only=True) #nnnnn
     client_location_name = serializers.CharField(source="client_Location.location", read_only=True)
     contact = serializers.CharField(source="client_Location.contact", read_only=True)
     address = serializers.CharField(source="client_Location.address", read_only=True)
@@ -428,6 +430,8 @@ class SalesSerializerList(serializers.ModelSerializer):
             "customer_address",
             "customer_customer",
             "customer_vendor",
+            "customer_email",  #nnnnn
+            "customer_contact",  #nnnnn
             "client_location_name",
             "contact",
             "address",
@@ -455,50 +459,6 @@ class SalesSerializerList(serializers.ModelSerializer):
             except (InvalidOperation, ValueError, TypeError):
                 data[field] = 'Invalid Value'
         return data
-
-
-# Sales Invoice
-    # def get_product_summaries(self, obj):
-    #     # Access related product summaries
-    #     product_summaries = obj.product_summaries.all()
-    #     # Serialize product summaries as needed, e.g., return a list of dictionaries
-    #     return [
-    #         {
-    #             "hsn": ps.hsn.hsn_code if ps.hsn else None,
-    #             "product_name": ps.product.product_name if ps.product else None,
-    #             "description": ps.prod_description,
-    #             # "quantity": ps.quantity,
-    #             # "rate": ps.rate,
-    #             # "amount": ps.amount,
-    #         }
-    #         for ps in product_summaries
-    #     ]
-
-    # def get_product_summaries_names(self, obj):
-    #     # Ensure this returns a list of product names as a serializable value
-    #     return [str(product.product_name) for product in obj.product_summaries.all()]
-
-# class SalesSerializer(serializers.ModelSerializer):
-#     product_summaries = serializers.PrimaryKeyRelatedField(queryset=ProductSummary.objects.all(), many=True)
-
-#     class Meta:
-#         model = SalesInvoice
-#         fields = [
-#             'client_Location',
-#             'customer',
-#             'invoice_no',
-#             'invoice_date',
-#             'invoice_type',
-#             'entry_type',
-#             'taxable_amount',
-#             'total_gst',
-#             'total_invoice_value',
-#             'tds_tcs_rate',
-#             'tds',
-#             'tcs',
-#             'amount_receivable',
-#             'product_summaries'
-#         ]
 
 
 class SalesSerializer2(serializers.ModelSerializer):

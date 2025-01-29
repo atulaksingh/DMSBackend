@@ -90,8 +90,8 @@ class Customer(models.Model):
    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
    customer = models.BooleanField(null=True, blank=True)
    vendor = models.BooleanField(null=True, blank=True)
-#    email = models.EmailField(null=True, blank=True)
-#    contact = models.IntegerField(null=True, blank=True)
+   email = models.EmailField(null=True, blank=True)
+   contact = models.IntegerField(null=True, blank=True)
 
    def __str__(self):
        return self.name if self.name else "No Name"

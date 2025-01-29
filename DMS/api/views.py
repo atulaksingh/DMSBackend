@@ -779,7 +779,7 @@ def clientuser(request, pk):
             serializer = UserSerializerWithToken(user, many=False)
             return Response({'message': 'User Registered. Kindly activate your account.', 'data': serializer.data})
         except Exception as e:
-            return Response({"error": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error_message": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
@@ -828,6 +828,7 @@ def edit_clientuser(request, pk, user_pk):
         customer = None
 
         # Validate customer field
+        print('kkkkkkkkkkk',data)
         if 'customer' in data:
             customer_name = data['customer']
             customer = Customer.objects.filter(name=customer_name, client=client).first()
@@ -837,23 +838,25 @@ def edit_clientuser(request, pk, user_pk):
                     customer_id = int(data['customer'])  # Check if ID was provided
                     customer = Customer.objects.filter(id=customer_id, client=client).first()
                 except ValueError:
-                    return Response({"error": "Invalid customer name or ID!"}, status=status.HTTP_400_BAD_REQUEST)
-
+                    return Response({"error_message": "Invalid customer name or ID!"}, status=status.HTTP_400_BAD_REQUEST)
+        print('kkkkkkkkkkkbbbbb',data)
         if not customer:
-            return Response({"error": "Customer not found!"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error_message": "Customer not found!"}, status=status.HTTP_400_BAD_REQUEST)
 
         # Prevent email duplication
         if 'email' in data and CustomUser.objects.filter(email=data['email']).exclude(id=user_pk).exists():
-            return Response({"error": "Email already in use!"}, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response({"error_message": "Email already in use!"}, status=status.HTTP_400_BAD_REQUEST)
+        # print('kkkkkkkkkkk',data)
         try:
             user_serializer = UserSerializerWithToken(user, data=data, partial=True)
+            # print('kkkkkkkkkkk',data)
             if user_serializer.is_valid():
                 user_serializer.save(client=client, customer=customer)
+                print('jjjjjjjjjjk',data)
                 return Response({'message': 'Client User Updated', 'data': user_serializer.data})
             return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({"error": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error_message": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
 def list_users_by_client(request, pk):
@@ -2228,8 +2231,8 @@ def get_sales_invoice_data(request, client_pk, invoice_pk):
         "customer_address": get_safe_attr(customer, 'address'),
         "customer": get_safe_attr(customer, 'customer'),
         "vendor": get_safe_attr(customer, 'vendor'),
-        # "email": get_safe_attr(customer, 'email'),
-        # "contact": get_safe_attr(customer, 'contact'),
+        "email": get_safe_attr(customer, 'email'),     #nnnnn
+        "contact": get_safe_attr(customer, 'contact'),  #nnnnn
     }
 
     # Prepare final response data
@@ -2296,8 +2299,8 @@ def update_sales_invoice(request, client_pk, invoice_pk):
                     "customer_address": sales_invoice.customer.address if sales_invoice.customer else None,
                     "customer": sales_invoice.customer.customer if sales_invoice.customer else None,
                     "vendor": sales_invoice.customer.vendor if sales_invoice.customer else None,
-                    # "email": sales_invoice.customer.email if sales_invoice.customer else None,
-                    # "contact": sales_invoice.customer.contact if sales_invoice.customer else None,
+                    "email": sales_invoice.customer.email if sales_invoice.customer else None,  #nnnnn
+                    "contact": sales_invoice.customer.contact if sales_invoice.customer else None,   #nnnnn
                 },
             }
             print('bbbbbbbbbbbbbbbbbbbbbbb',response_data["sales_invoice"])
@@ -2353,8 +2356,8 @@ def update_sales_invoice(request, client_pk, invoice_pk):
                 "gst_no": request.data.get("vendorData[gst_no]"),
                 "pan": request.data.get("vendorData[pan]"),
                 "customer_address": request.data.get("vendorData[customer_address]"),
-                # "email": request.data.get("vendorData[email]"),
-                # "contact": request.data.get("vendorData[contact]"),
+                "email": request.data.get("vendorData[email]"),  #nnnnn
+                "contact": request.data.get("vendorData[contact]"),  #nnnnn
                 "customer": request.data.get("vendorData[customer]").lower() == "true" if request.data.get("vendorData[customer]") else None,
                 "vendor": request.data.get("vendorData[vendor]").lower() == "true" if request.data.get("vendorData[vendor]") else None,
             }
@@ -2607,6 +2610,8 @@ def create_sales_invoice2(request, client_pk):
                 "gst_no": payload.get("vendorData[gst_no]"),
                 "pan": payload.get("vendorData[pan]"),
                 "address": payload.get("vendorData[address]"),
+                "email": payload.get("vendorData[email]"), #nnnnn
+                "contact": payload.get("vendorData[contact]"), #nnnnn
                 "customer": payload.get("vendorData[customer]", "").lower() == "true",
                 "vendor": payload.get("vendorData[vendor]", "").lower() == "true",
             }
