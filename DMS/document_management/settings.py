@@ -225,3 +225,5 @@ CORS_ALLOW_ALL_ORIGIN = True
 # CORS_ALLOW_HEADERS = list(default_headers) + [
 #     'X-Custom-Ids',
 # ]
+
+# AUTH_USER_MODEL = 'api.CustomUser'

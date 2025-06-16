@@ -6,6 +6,10 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+# from api.views import ExcelImportView
+# from .views import ExcelImportView
+
+
 # from .views import UpdateSalesInvoiceAPIView
 
 
@@ -33,6 +37,7 @@ urlpatterns = [
     path('user-login', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('users', view=getUsers, name='users'),
     path('list/<int:pk>', view=list_users_by_client, name='list'),
+    path('single-clientuser/<int:pk>/<int:user_pk>',view=single_clientuser, name='single-clientuser'),
     path('user-profile', view=getUserProfile, name='user-profile'),
     path('user-dashboardform', view=dashboarduser, name='dashboard-user'),
     path('user-clientform/<int:pk>', view=clientuser, name='client'),        #***********************
@@ -41,11 +46,12 @@ urlpatterns = [
     path('edit-dashboarduser/<int:user_pk>', view=edit_dashboardUser, name='edit-dashboarduser'),
     path('delete-clientuser/<int:pk>/<int:user_pk>', view=delete_clientuser, name='delete-clientuser'),
     path('delete-dashboarduser/<int:user_pk>', view=delete_dashboarduser, name='delete-dashboarduser'),
+    path('reset-password/<int:pk>/<int:user_pk>', view=reset_clientuser_password, name='reset-password'),  
 
-    path('create-companydoc/<int:pk>', view=create_companydoc, name='create-companydoc'),
-    path('edit-companydoc/<int:pk>/<int:companydoc_pk>', view=edit_companydoc, name='edit-companydoc'),
-    path('list-companydoc/<int:pk>', view=list_companydoc, name='list-companydoc'),
-    path('delete-companydoc/<int:pk>/<int:companydoc_pk>', view=delete_companydoc, name='delete-companydoc'),
+    path('create-companydoc/<int:pk>', view=create_companydoc, name='create-companydoc'),        #***********************
+    path('edit-companydoc/<int:pk>/<int:file_pk>', view=edit_companydoc, name='edit-companydoc'),         #***********************
+    path('list-companydoc/<int:pk>', view=list_companydoc, name='list-companydoc'),        #***********************
+    path('delete-companydoc/<int:pk>/<int:file_pk>', view=delete_companydoc, name='delete-companydoc'),        #***********************
 
     path('create-branch/<int:pk>', view=create_branch, name='create-branch'),
     path('edit-branch/<int:pk>/<int:branch_pk>',view=edit_branch, name='edit-branch'),
@@ -55,6 +61,7 @@ urlpatterns = [
 
     path('create-officelocation/<int:branch_pk>', view=create_officelocation, name='create-officelocation'),
     path('edit-officelocation/<int:branch_pk>/<int:office_pk>',view=edit_officelocation, name='edit-officelocation'),
+    path('single-officelocation/<int:branch_pk>/<int:office_pk>',view=single_officelocation, name='single-officelocation'),
     path('list-officelocation/<int:pk>/<int:branch_pk>',view=list_officelocation, name='list-officelocation'),
     path('delete-officelocation/<int:pk>/<int:branch_pk>/<int:office_pk>', view=delete_officelocation, name='delete-officelocation'),
 
@@ -62,6 +69,7 @@ urlpatterns = [
     path('edit-customer/<int:pk>/<int:customer_pk>',view=edit_customer, name='edit-customer'),
     path('list-customer/<int:pk>',view=list_customer, name='list-customer'),
     path('delete-customer/<int:pk>/<int:customer_pk>', view=delete_customer, name='delete-cutomer'),
+    path('single-customer/<int:pk>/<int:customer_pk>', view=single_customer, name='single-customer'),
 
     path('create-branchdoc/<int:branch_pk>', view=create_branchdoc, name='create-branchdoc'),
     path('edit-branchdoc/<int:branch_pk>/<int:branchdoc_pk>', view=edit_branchdoc, name='edit-branchdoc'),
@@ -75,13 +83,17 @@ urlpatterns = [
     path('delete-incometaxdoc/<int:pk>/<int:income_pk>', view=delete_incometaxdoc, name='delete-incometaxdoc'),
 
     path('create-pf/<int:pk>', view=create_pf, name='create-pf'),
-    path('create-file/<int:pk>', ExcelImportView.as_view(), name='create-pf'),
+    path('create-file/<int:pk>', PFExcelUploaadView.as_view(), name='create-pf'),
     path('edit-pf/<int:pk>/<int:pf_pk>', view=edit_pf, name='edit-pf'),
     path('list-pf/<int:pk>', view=list_pf, name='list-pf'),
     path('delete-pf/<int:pk>/<int:pf_pk>', view=delete_pf, name='delete-pf'),
+    path('pf-summary/<int:pk>', views.pf_field_totals),
+    path('get-pf-totals/<int:pk>', get_pf_totals, name='get_pf_totals'),
+
 
     path('create-taxaudit/<int:pk>', view=create_taxaudit, name='create-taxaudit'),
     path('edit-taxaudit/<int:pk>/<int:taxaudit_pk>', view=edit_taxaudit, name='edit-taxaudit'),
+    path('create-tdsfile/<int:pk>', ExcelImportViewtds.as_view(), name='create-tdspayment'),
     path('list-taxaudit/<int:pk>', view=list_taxaudit, name='list-taxaudit'),
     path('single-taxaudit/<int:pk>/<int:taxaudit_pk>', view=single_taxaudit, name='single-taxaudit'),
     path('delete-taxaudit/<int:pk>/<int:taxaudit_pk>', view=delete_taxaudit, name='delete-taxaudit'),
@@ -98,9 +110,16 @@ urlpatterns = [
     path('single-sft/<int:pk>/<int:sft_pk>', view=single_sft, name='single-sft'),
     path('delete-sft/<int:pk>/<int:sft_pk>', view=delete_sft, name='delete-sft'),
 
+    path('create-others/<int:pk>', view=create_others, name='create-others'),
+    path('edit-others/<int:pk>/<int:others_pk>', view=edit_others, name='edit-others'),
+    path('list-others/<int:pk>', view=list_others, name='list-others'),
+    path('single-others/<int:pk>/<int:others_pk>', view=single_others, name='single-others'),
+    path('delete-others/<int:pk>/<int:others_pk>', view=delete_others, name='delete-others'),
+
     path('create-tdspayment/<int:pk>', view=create_tdspayment, name='create-tdspayment'),
     path('edit-tdspayment/<int:pk>/<int:tdspayment_pk>',view=edit_tdspayment, name='edit-tdspayment'),
     path('list-tdspayment/<int:pk>',view=list_tdspayment, name='list-tdspayment'),
+    # path('create-tdsfile/<int:pk>', ExcelImportView.as_view(), name='create-tdspayment'),
     path('single-tdspayment/<int:pk>/<int:tdspayment_pk>', view=single_tdspayment, name='single-tdspayment'),
     path('delete-tdspayment/<int:pk>/<int:tdspayment_pk>', view=delete_tdspayment, name='delete-tdspayment'),
 
@@ -109,6 +128,22 @@ urlpatterns = [
     path('list-tds/<int:pk>', view=list_tds, name='list-tdsreturn'),
     path('single-tds/<int:pk>/<int:tds_pk>', view=single_tds, name='single-tdsreturn'),
     path('delete-tds/<int:pk>/<int:tds_pk>', view=delete_tds, name='delete-tdsreturn'),
+
+    path('create-tdssection', view=create_tdssection, name='create-tdssection'),
+    path('edit-tdssection/<int:tdssection_pk>', view=edit_tdssection, name='edit-tdssection'),
+    path('create-tdssectionfile', ExcelImportViewtdssection.as_view(), name='create-tdssectionfile'),
+    path('list-tdssection', view=list_tdssection, name='list-tdssection'),
+    path('single-tdssection/<int:tdssection_pk>', view=single_tdssection, name='single-tdssection'),
+    path('delete-tdssection/<int:tdssection_pk>', view=delete_tdssection, name='delete-tdssection'),
+    path('get-tdssection', view=get_create_tdssection, name='get-tdssection'),
+
+    # path('create-tdssection/<int:pk>', view=create_tdssection, name='create-tdssection'),
+    # path('edit-tdssection/<int:pk>/<int:tdssection_pk>', view=edit_tdssection, name='edit-tdssection'),
+    # path('create-tdssectionfile/<int:pk>', ExcelImportViewtdssection.as_view(), name='create-tdssectionfile'),
+    # path('list-tdssection/<int:pk>', view=list_tdssection, name='list-tdssection'),
+    # path('single-tdssection/<int:pk>/<int:tdssection_pk>', view=single_tdssection, name='single-tdssection'),
+    # path('delete-tdssection/<int:pk>/<int:tdssection_pk>', view=delete_tdssection, name='delete-tdssection'),
+    # path('get-tdssection/<int:pk>', view=get_create_tdssection, name='get-tdssection'),
 
     path('get-sales/<int:pk>/', view=create_sales_get, name='get-sales'),  # Note the trailing slash
     path('create-sales/<int:pk>', view=create_sale, name='create-sales'),  # Note the trailing slash
@@ -216,5 +251,16 @@ urlpatterns = [
 
 # Excel File
     path('create-excel', view=create_excel_file, name='create-excel'),
-    path('get-excel-file', view=get_excel, name='get-excel')
+    path('get-excel-file', view=get_excel, name='get-excel'),
+
+# Acknowledgement
+    path('create-acknowledgement/<int:pk>', view=create_acknowledgement, name='create-acknowledgement'),
+    path('edit-acknowledgement/<int:pk>/<int:ack_pk>', view=update_acknowledgement, name='edit-acknowledgement'),
+    path('list-acknowledgement/<int:pk>', view=get_acknowledgement, name='list-acknowledgement'),
+    path('single-acknowledgement/<int:pk>/<int:ack_pk>', view=single_acknowledgement, name='single-acknowledgement'),
+    path('delete-acknowledgement/<int:pk>/<int:ack_pk>', view=delete_acknowledgement, name='delete-acknowledgement'),
+    path('detail-ack/<int:pk>', view=detail_acknowledgement, name='detail-acknowledgement'),
+    path('download-computation-file/<int:pk>/<int:ack_pk>', view=download_computation_file, name='download-computation-file'),
+    path('download-return-file/<int:pk>/<int:ack_pk>', view=download_return_file, name='downlaod-return-file'),
+    path('serve-computation-file/<int:file_id>/', views.serve_computation_file),
 ]

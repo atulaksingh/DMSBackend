@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 import os
+from django.conf import settings
 
 # Create your models here.
 class File(models.Model):
@@ -66,20 +67,35 @@ class Bank(models.Model):
     def __str__(self):
         return self.bank_name
 
-# Owner Model
-class Owner(models.Model):
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
-    owner_name = models.CharField(max_length=100, null=True, blank=True)
-    share = models.IntegerField()
-    pan = models.CharField(max_length=10, null=True, blank=True)
-    aadhar = models.CharField(max_length=12, null=True, blank=True)
-    mobile = models.IntegerField(null=True, blank=True)
-    email = models.EmailField(null=True, blank=True)
-    it_password = models.CharField(max_length=50, null=True, blank=True)
-    isadmin = models.BooleanField(default=False, null=True, blank=True)
+# # Owner Model
+# class Owner(models.Model):
+#     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+#     owner_name = models.CharField(max_length=100, null=True, blank=True)
+#     share = models.IntegerField()
+#     pan = models.CharField(max_length=10, null=True, blank=True)
+#     aadhar = models.CharField(max_length=12, null=True, blank=True)
+#     mobile = models.IntegerField(null=True, blank=True)
+#     email = models.EmailField(null=True, blank=True)
+#     it_password = models.CharField(max_length=50, null=True, blank=True)
+#     isadmin = models.BooleanField(default=False, null=True, blank=True)
+#     username = models.CharField(max_length=50, null=True, blank=True)
+#     is_active = models.BooleanField(default=True)  # Soft delete flag
+#     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
 
+    # user = models.OneToOneField(
+    #     settings.AUTH_USER_MODEL,
+    #     on_delete=models.SET_NULL,  # 🔁 Don't delete user
+    #     null=True,
+    #     blank=True
+    # )
+
+    #def validate_aadhar(self, value):
+    #    if len(value) > 12:
+    #        raise serializers.ValidationError("Aadhar number cannot exceed 12 digits.")
+    #    return value
     # def __str__(self):
     #     return self.owner_name
+
 
 # Customer or Vendor Model
 class Customer(models.Model):
@@ -125,7 +141,31 @@ class CustomUser(AbstractUser):
     cus_admin = models.BooleanField(default=False, null=True, blank=True)
     cus_user = models.BooleanField(null=True, blank=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
-    customer = models.ForeignKey('Customer', on_delete=models.CASCADE, null=True, blank=True)
+    # customer = models.ForeignKey('Customer', on_delete=models.CASCADE, null=True, blank=True)
+
+# Owner Model
+class Owner(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+    owner_name = models.CharField(max_length=100, null=True, blank=True)
+    share = models.IntegerField()
+    pan = models.CharField(max_length=10, null=True, blank=True)
+    aadhar = models.CharField(max_length=12, null=True, blank=True)
+    mobile = models.IntegerField(null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
+    it_password = models.CharField(max_length=50, null=True, blank=True)
+    isadmin = models.BooleanField(default=False, null=True, blank=True)
+    username = models.CharField(max_length=50, null=True, blank=True)
+    is_active = models.BooleanField(default=True)  # Soft delete flag
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
+
+    def delete(self, *args, **kwargs):
+        self.is_active = False
+        self.save()
+
+        # Also deactivate the linked user
+        if self.user:
+            self.user.is_active = False
+            self.user.save()
 
 # CompanyDocument Model
 class CompanyDocument(models.Model):
@@ -205,29 +245,24 @@ class BranchDocument(models.Model):
 #    def __str__(self):
 #        return self.name if self.name else "No Name"
 
+# HSNCode Model
 class HSNCode(models.Model):
     hsn_code = models.IntegerField(null=True, blank=True, unique=True)
+    # hsn_code = models.CharField(max_length=100,null=True, blank=True, unique=True)
     gst_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     def __str__(self):
         return f"{self.hsn_code} - {self.gst_rate}%"
 
+# Product Model
 class Product(models.Model):
     hsn = models.ForeignKey(HSNCode, on_delete=models.CASCADE, null=True, blank=True)
     product_name = models.CharField(max_length=100, null=True, blank=True,unique=True)
     unit_of_measure = models.DecimalField(null=True, blank=True, decimal_places=2, max_digits=10)
-    # class Meta:
-    #     constraints = [
-    #         models.UniqueConstraint(fields=['product_name', 'hsn'], name='unique_product_hsn')
-    #     ]
-
     def __str__(self):
         return self.product_name
-    # class Meta:
-    #     constraints = [
-    #         models.UniqueConstraint(fields=['product_name', 'hsn'], name='unique_product_hsn')
-    #     ]
-
+   
+# Product Description Model
 class ProductDescription(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
@@ -311,8 +346,10 @@ class SalesInvoice(models.Model):
     client_Location = models.ForeignKey(OfficeLocation, on_delete=models.CASCADE, null=True, blank=True)
     attach_invoice = models.FileField(null=True, blank=True)
     attach_e_way_bill = models.FileField(null=True, blank=True)
-    month = models.DateField(null=True, blank=True)
+    # month = models.DateField(null=True, blank=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
+    po_no = models.CharField(max_length=100, null=True, blank=True)
+    po_date = models.DateField(null=True, blank=True)
     invoice_no = models.CharField(max_length=100, null=True, blank=True)
     invoice_date = models.DateField(null=True, blank=True)
     invoice_type = models.CharField(max_length=100, choices=invoice_type, null=True, blank=True)
@@ -334,6 +371,7 @@ class SalesInvoice(models.Model):
         customer_name = self.customer.name if self.customer else "No Customer"
         return f"Sales Invoice {invoice_no} - {customer_name}"
 
+# Product Summary model
 class ProductSummaryPurchase(models.Model):
         hsn = models.ForeignKey(HSNCode,on_delete=models.SET_NULL, null=True, blank=True)
         product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -492,7 +530,9 @@ class DebitNote(models.Model):
     # attach_e_way_bill = models.FileField(null=True, blank=True)
     attach_invoice = models.FileField(upload_to='files/', null=True, blank=True)
     attach_e_way_bill = models.FileField(upload_to='files/', null=True, blank=True)
-    month = models.DateField(null=True, blank=True)
+    # month = models.DateField(null=True, blank=True)
+    po_no = models.CharField(max_length=100, null=True, blank=True)
+    po_date = models.DateField(null=True, blank=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
     invoice_no = models.CharField(max_length=100, null=True, blank=True)
     invoice_date = models.DateField(null=True, blank=True)
@@ -998,6 +1038,7 @@ class PF(models.Model):
     pf_deducted = models.BooleanField(null=True, blank=True)
     date_of_joining = models.DateField(null=True, blank=True)
     status = models.CharField(choices=status, max_length=100, null=True, blank=True)
+    gender = models.CharField(choices=gender, max_length=100, null=True, blank=True)
     month = models.CharField(max_length=100,null=True, blank=True)
     gross_ctc = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     basic_pay = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -1011,7 +1052,7 @@ class PF(models.Model):
     present_days = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
     lwp = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
     leave_adjustment = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
-    gender = models.CharField(choices=gender, max_length=100, null=True, blank=True)
+    # gender = models.CharField(choices=gender, max_length=100, null=True, blank=True)
     basic_pay_monthly = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
     hra_monthly = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
     statutory_bonus_monthly = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
@@ -1035,23 +1076,39 @@ class PF(models.Model):
 # Tax Audit
 class TaxAudit(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
-    financial_year = models.IntegerField(null=True, blank=True)
+    financial_year = models.CharField(max_length=50,null=True, blank=True)
     month = models.CharField(max_length=100,null=True, blank=True)
     # attachment = models.FileField(null=True, blank=True)
 
 # AIR
 class AIR(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
-    financial_year = models.IntegerField(null=True, blank=True)
+    financial_year = models.CharField(max_length=50,null=True, blank=True)
     month = models.CharField(max_length=100,null=True, blank=True)
     # attachment = models.FileField(null=True, blank=True)
 
 # SFT
 class SFT(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
-    financial_year = models.IntegerField(null=True, blank=True)
+    financial_year = models.CharField(max_length=50, null=True, blank=True)
     month = models.CharField(max_length=100,null=True, blank=True)
     # attachment = models.FileField(null=True, blank=True)
+
+# Others
+class Others(models.Model):
+    textchoices = [
+        ('monthly', 'Monthly'),
+        ('minute', 'Minute'),
+        ('other', 'Other')
+    ]
+
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
+    financial_year = models.CharField(max_length=50, null=True, blank=True)
+    month = models.CharField(max_length=100,null=True, blank=True)
+    text = models.CharField(max_length=100, choices=textchoices, null=True)
+    # attachment = models.FileField(null=True, blank=True)
+    
+
 
 #TDS Payment
 class TDSPayment(models.Model):
@@ -1065,9 +1122,11 @@ class TDSPayment(models.Model):
     igst = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
     total_amt = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
     tds_rate = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
-    tds_section = models.CharField(max_length=100 ,null=True, blank=True)
+    tds_section = models.CharField(max_length=1000 ,null=True, blank=True)
     tds_amount = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
     net_amount = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    tds_payment_date = models.DateField(null=True, blank=True)
+    tds_challan_no = models.CharField(max_length=100, null=True, blank=True)
 
 # TDS Return
 class TDSReturn(models.Model):
@@ -1075,21 +1134,87 @@ class TDSReturn(models.Model):
     challan_date = models.DateField(null=True, blank=True)
     challan_no = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
     challan_type = models.CharField(max_length=100 ,null=True, blank=True)
-    tds_section = models.CharField(max_length=100 ,null=True, blank=True)
+    tds_section = models.CharField(max_length=1000 ,null=True, blank=True)
     amount = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
     last_filed_return_ack_no = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
     last_filed_return_ack_date = models.DateField(null=True, blank=True)
     # challan_attachment = models.FileField(null=True, blank=True)
+
+# TDS tds_section
+class TDSSection(models.Model):
+    # client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
+    name = models.CharField(max_length=100 ,null=True, blank=True)
+
+
+#Acknowledgement
+class Acknowledgement(models.Model):
+
+    return_type = [
+        ('gstr_1', 'GSTR_1'),
+        ('gstr_3b', 'GSTR_3B'),
+        ('gstr_4', 'GSTR_4'),
+        ('gstr_5', 'GSTR_5'),
+        ('gstr_5a', 'GSTR_5A'),
+        ('gstr', 'GSTR'),
+        ('gstr_7', 'GSTR_7'),
+        ('gstr_8', 'GSTR_8'),
+        ('gstr_9', 'GSTR_9'),
+        ('gstr_10', 'GSTR_10'),
+        ('gstr_11', 'GSTR_11'),
+        ('cmp_8', 'CMP_8'),
+        ('itc_04', 'ITC_04'),
+        ('income_tax', 'Income_Tax'),
+        ('tax_audit', 'Tax_Audit'),
+        ('air', 'AIR'),
+        ('sft', 'SFT'),
+        ('tds_return', 'TDS_Return'),
+        ('tds_payment', 'TDS_Payment'),
+        ('pf', 'PF'),
+        ('esic', 'ESIC'),
+        ('gst_notice', 'GST_Notice'),
+        ('income_tax_notice', 'Income_Tax_Notice'),
+    ]
+
+    frequency= [
+        ('monthly', 'Monthly'),
+        ('quarterly', 'Quarterly'),
+        ('half_yearly', 'Half_Yearly'),
+        ('yearly', 'Yearly')
+    ]
+
+    REVIEW_CHOICES = [
+        ('accept', 'Accept'),
+        ('to_be_modified', 'To_Be_Modified'),
+        ('remark', 'Remark'),
+    ]
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
+    return_type = models.CharField(max_length=100, choices=return_type, null=True, blank=True)
+    frequency = models.CharField(max_length=100, choices=frequency, null=True, blank=True)
+    return_period = models.CharField(max_length=100, null=True, blank=True)
+    from_date = models.DateField(null=True, blank=True)
+    to_date = models.DateField(null=True, blank=True)
+    client_review = models.CharField(max_length=100, choices=REVIEW_CHOICES, null=True, blank=True)
+    month = models.CharField(max_length=100,null=True, blank=True)
+    remarks = models.TextField(null=True, blank=True)
+    # return_file = models.FileField(null=True, blank=True)
+    # computation_file = models.FileField(null=True, blank=True)
+    status = models.BooleanField(null=True, blank=True, default=False)
+ 
+
 
 class Files(models.Model):
     company_doc = models.ForeignKey(CompanyDocument, on_delete=models.CASCADE, null=True, blank=True)
     branch_doc = models.ForeignKey(BranchDocument, on_delete=models.CASCADE, null=True, blank=True)
     tax_audit = models.ForeignKey(TaxAudit, on_delete=models.CASCADE, null=True, blank=True)
     air = models.ForeignKey(AIR, on_delete=models.CASCADE, null=True, blank=True)
+    others = models.ForeignKey(Others, on_delete=models.CASCADE, null=True, blank=True)
     sft = models.ForeignKey(SFT, on_delete=models.CASCADE, null=True, blank=True)
     tds = models.ForeignKey(TDSReturn, on_delete=models.CASCADE, null=True, blank=True)
     bank = models.ForeignKey(Bank, on_delete=models.CASCADE, null=True, blank=True)
+    ack = models.ForeignKey(Acknowledgement, on_delete=models.CASCADE, null=True, blank=True)
     files = models.FileField(upload_to='documents',null=True, blank=True)
+    return_file = models.FileField(upload_to='documents',null=True, blank=True)
+    computation_file = models.FileField(upload_to='documents',null=True, blank=True)
 
 class ExcelFile(models.Model):
     file = models.FileField(null=True, blank=True)

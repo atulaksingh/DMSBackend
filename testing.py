@@ -95,7 +95,7 @@ print(f"Dropdown now shows: {selected_text}")
 login = driver.find_element(By.NAME, "login")
 login.send_keys("login")
 
-password = driver.find_element(By.NAME, "password")
+password = driver.find_element(By.NAME, "password")\
 password.send_keys("password")
 
 remark = driver.find_element(By.NAME, "remark")
@@ -112,12 +112,6 @@ upload_button.click()
 
 create_button = driver.find_element(By.NAME, "create-btn")
 create_button.click()
-
-
-
-
-
-
 
 time.sleep(10000000)
 driver.close()

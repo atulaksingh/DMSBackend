@@ -2909,7 +2909,7 @@ def safe_decimal(value, default='0'):
 #         rows = request.data.get('rows', [])
 
 #         # Extract form-specific details
-#         off_loc_id = form_data.get('offLocID')
+#         off_loc_id = form_data.get('offLocID'///..././ujnnnmjnhj)
 #         location = form_data.get('location')
 #         branch_id = form_data.get('branchID')
 #         vendor_id = vendor_data.get('vendorID')
@@ -3312,6 +3312,9 @@ def delete_sales_invoice(request, client_pk, pk):
 #             cgst = safe_decimal(row.get('cgst', '0'))
 #             sgst = safe_decimal(row.get('sgst', '0'))
 #             igst = safe_decimal(row.get('igst', '0'))
+
+
+
 
 #             # Validate or create HSNCode
 #             hsn_code_obj = HSNCode.objects.filter(hsn_code=hsn_code).first()

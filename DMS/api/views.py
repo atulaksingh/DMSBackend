@@ -40,6 +40,24 @@ from django.http import QueryDict
 from decimal import Decimal, InvalidOperation
 from django.db import transaction
 import traceback
+from rest_framework import status
+from rest_framework.parsers import MultiPartParser
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from openpyxl import load_workbook
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .models import PF  # Make sure this matches your model import
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .models import PF
+from django.db.models import Sum
+from django.db import models
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from django.db.models import Sum
+from .models import PF
+from django.http import FileResponse, Http404
 
 
 #********************************************* safe_decimal**************************************************
@@ -271,7 +289,14 @@ def create_bank(request,pk):
     instance_data = request.data
     data = {key: value for key, value in instance_data.items()}
 
+    account_number = request.data.get('account_number')
+    if account_number == '':
+        return Response({'error_message': 'Account number is required'}, status=status.HTTP_400_BAD_REQUEST)
+
     serializer = BankSerializer(data=data)
+    # account_number = request.data.get('account_number')
+    # if account_number == '':
+    #     return Response({'error_message': 'Account number is required'}, status=status.HTTP_400_BAD_REQUEST)
     if serializer.is_valid(raise_exception=True):
         bank_instance = serializer.save(client=client)
         print(request.data)
@@ -290,7 +315,10 @@ def create_bank(request,pk):
                         file_serializer.save()
 
             return Response({'message':'Bank created successfully', 'data' : serializer.data},status=status.HTTP_201_CREATED)
-    return Response({f'message':'Fail to create bank', 'error_message' : serializer.errors},status=status.HTTP_400_BAD_REQUEST)
+    return Response({
+        'message':'Fail to create bank', 
+        'error_message' : serializer.errors
+        },status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
 @parser_classes([MultiPartParser, FormParser])
@@ -305,10 +333,15 @@ def edit_bank(request, pk, bank_pk):
 
     if request.method == 'POST':
         # Update branch document fields
-        print('kjjkkj')
+        print('Received raw data:', request.data)
+        print('Received POST data:', request.POST)
+        print('Received FILES data:', request.FILES)
+        print('kjjkkj', request.data)
         bank_serializer = BankSerializer(instance=bank, data=request.data)
         if bank_serializer.is_valid():
+            print('Updated data before save:', request.data)
             bank_serializer.save(client=client)
+            print('Updated data after save:', request.data)
 
             # Handle file updates separately
             if request.FILES.getlist('files'):
@@ -369,11 +402,90 @@ def delete_bank(request,pk, bank_pk):
 
 # **********************************************Owners View's*******************************************
 
-@api_view(['POST', 'GET'])
-def create_owner(request, pk):
+# @api_view(['POST', 'GET'])
+# def create_owner(request, pk):
+#     client = get_object_or_404(Client, id=pk)
+    
+#     if request.method == 'POST':
+#         owner_serializer = OwnerSerializer(data=request.data)
+#         if owner_serializer.is_valid():
+#             # Calculate total shares assigned to the client so far
+#             total_shares = Owner.objects.filter(client=client).aggregate(
+#                 total_share=Coalesce(Sum(F('share')), 0)
+#             )['total_share']
+            
+#             # Calculate remaining shares
+#             remaining_shares = 100 - total_shares
+            
+#             # New share value from the current request
+#             new_share = owner_serializer.validated_data['share']
+
+#             if new_share > remaining_shares:
+#                 # If entered shares are greater than the remaining shares, return an error
+#                 return Response({
+#                     'error_message': f'Cannot assign {new_share}%. Only {remaining_shares}% is left for assigning.'
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+
+#             # if aadhar > 12:
+#             #     return Response({'error_message': 'Aadhar number should be 12 digits'}, status=status.HTTP_400_BAD_REQUEST)
+            
+#             # Save the new owner
+#             owner_serializer.save(client=client)
+            
+#             # Recalculate remaining shares after saving
+#             total_shares += new_share
+#             remaining_shares = 100 - total_shares
+
+#             return Response({
+#                 'message': f'Owner Created Successfully remaining shares are {remaining_shares}',
+#                 'data': owner_serializer.data,
+#                 'remaining_shares': remaining_shares,
+#                 },status=status.HTTP_201_CREATED)
+
+#         # Show errors if the data is not valid
+#         return Response({
+#                 'message': f'Fail to create owner {owner_serializer.errors}',
+#                 'error_message': owner_serializer.errors,
+#                 },status=status.HTTP_400_BAD_REQUEST)
+
+#     elif request.method == 'GET':
+#         # Calculate total shares and remaining shares
+#         total_shares = Owner.objects.filter(client=client).aggregate(
+#             total_share=Coalesce(Sum(F('share')), 0)
+#         )['total_share']
+#         remaining_shares = 100 - total_shares
+
+#         return Response({
+#             'total_shares': total_shares,
+#             'remaining_shares': remaining_shares
+#         }, status=status.HTTP_200_OK)
+
+# @api_view(['POST', 'GET'])
+# def create_owner(request, pk):
     client = get_object_or_404(Client, id=pk)
     
     if request.method == 'POST':
+
+        pan = request.data.get('pan')
+        if pan and len(pan) > 10 or len(pan) < 10:
+            return Response({'error_message': 'PAN number should be at most 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+        aadhar = request.data.get('aadhar')
+        if aadhar and len(aadhar) > 12:
+            return Response({'error_message': 'Aadhar number should be at most 12 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+        mobile = request.data.get('mobile')
+        if mobile and len(mobile) > 10 or len(mobile) < 10:
+            return Response({'error_message': 'Mobile number should be at most 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        share = request.data.get('share')
+        if share == '':
+            return Response({'error_message': f'Share field is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.data.get('username')
+        if user == '':
+            return Response({'error_message' : f'Username field is required'}, status=status.HTTP_400_BAD_REQUEST)
+
         owner_serializer = OwnerSerializer(data=request.data)
         if owner_serializer.is_valid():
             # Calculate total shares assigned to the client so far
@@ -393,6 +505,9 @@ def create_owner(request, pk):
                     'error_message': f'Cannot assign {new_share}%. Only {remaining_shares}% is left for assigning.'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
+            if remaining_shares == 0:
+                return Response({'error_message': f'Cannot Create Owner Cuz their is 0% shares are left'}, status=status.HTTP_400_BAD_REQUEST)
+
             # Save the new owner
             owner_serializer.save(client=client)
             
@@ -401,19 +516,215 @@ def create_owner(request, pk):
             remaining_shares = 100 - total_shares
 
             return Response({
-                'message': f'Owner Created Successfully remaining shares are {remaining_shares}',
+                'message': f'Owner Created Successfully, remaining shares are {remaining_shares}%',
                 'data': owner_serializer.data,
                 'remaining_shares': remaining_shares,
-                },status=status.HTTP_201_CREATED)
+            }, status=status.HTTP_201_CREATED)
 
-        # Show errors if the data is not valid
         return Response({
-                'message': f'Fail to create owner {owner_serializer.errors}',
-                'error_message': owner_serializer.errors,
-                },status=status.HTTP_400_BAD_REQUEST)
+            'message': 'Failed to create owner',
+            'error_message': owner_serializer.errors,
+        }, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'GET':
         # Calculate total shares and remaining shares
+        total_shares = Owner.objects.filter(client=client).aggregate(
+            total_share=Coalesce(Sum(F('share')), 0)
+        )['total_share']
+        remaining_shares = 100 - total_shares
+
+        return Response({
+            'total_shares': total_shares,
+            'remaining_shares': remaining_shares
+        }, status=status.HTTP_200_OK)
+
+# @api_view(['POST', 'GET'])
+# def create_owner(request, pk):
+#     client = get_object_or_404(Client, id=pk)
+
+#     if request.method == 'POST':
+#         data = request.data
+#         pan = request.data.get('pan')
+#         if pan and len(pan) != 10:
+#             return Response({'error_message': 'PAN number should be exactly 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         aadhar = request.data.get('aadhar')
+#         if aadhar and len(aadhar) > 12:
+#             return Response({'error_message': 'Aadhar number should be at most 12 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         mobile = request.data.get('mobile')
+#         if mobile and len(mobile) != 10:
+#             return Response({'error_message': 'Mobile number should be exactly 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         share = request.data.get('share')
+#         if share == '':
+#             return Response({'error_message': 'Share field is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         user = request.data.get('username')
+#         if user == '':
+#             return Response({'error_message': 'Username field is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         owner_serializer = OwnerSerializer(data=request.data)
+
+#         if not owner_serializer.is_valid():
+#             return Response({
+#                 'message': 'Failed to create owner',
+#                 'error_message': owner_serializer.errors,
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Begin atomic transaction to prevent partial saves
+#         with transaction.atomic():
+#             total_shares = Owner.objects.filter(client=client).aggregate(
+#                 total_share=Coalesce(Sum(F('share')), 0)
+#             )['total_share']
+
+#             remaining_shares = 100 - total_shares
+#             new_share = owner_serializer.validated_data['share']
+
+#             if remaining_shares == 0:
+#                 return Response({'error_message': 'Cannot create owner because 0% shares are left'}, status=status.HTTP_400_BAD_REQUEST)
+
+#             if new_share > remaining_shares:
+#                 return Response({
+#                     'error_message': f'Cannot assign {new_share}%. Only {remaining_shares}% is left for assigning.'
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+
+#             # 💡 Generate password from owner name
+#             # owner_name = owner_serializer.validated_data.get('owner_name', '')
+#             # password = f"{owner_name[:4].lower()}@123"
+#             # hashed_password = make_password(password)
+
+#             # # 🔍 Print password in console
+#             # print("Generated Password:", password)
+
+#             owner_serializer.save(client=client)
+
+#             # email = validated_data.get('email')
+#             email = request.data.get('email')
+#             # if not email:
+#             #     return Response({'error_message': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+#             if CustomUser.objects.filter(email=email).exists():
+#                 return Response({'error_message': 'A user with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+
+#             # name = request.data.get('owner_name')  
+#             # password = f"{name[:4].lower()}@123"
+
+
+#             # user = CustomUser.objects.create(
+#             #     username=email,  # Username is same as email
+#             #     email=email,
+#             #     name=name,
+#             #     password=make_password(password) if password else None,  # Secure the password
+#             #     cus_user=True,
+#             #     is_active=False,  # You can adjust this if needed
+#             #     client=client,
+#             # )
+#             # email_subject = "Activate You Account"
+#             # message = render_to_string(
+#             #     "activate.html",
+#             #     {
+#             #         'user': user,
+#             #         'domain': '127.0.0.1:8000',
+#             #         'uid' : urlsafe_base64_encode(force_bytes(user.pk)),
+#             #         'token' : generate_token.make_token(user),
+#             #     }
+#             # )
+#             # # print(message)
+#             # email_message = EmailMessage(email_subject,message,settings.EMAIL_HOST_USER,[data['email']])
+#             # email_message.send()
+#             # serializer = UserSerializerWithToken(user, many=False)
+
+#             # Update remaining shares
+#             remaining_shares -= new_share
+
+#             return Response({
+#                 'message': f'Owner Created Successfully, User Registered kindly activate ur account, remaining shares are {remaining_shares}%',
+#                 'data': owner_serializer.data,
+#                 # 'generated_password': password,
+#                 'remaining_shares': remaining_shares,
+#             }, status=status.HTTP_201_CREATED)
+
+#     elif request.method == 'GET':
+#         total_shares = Owner.objects.filter(client=client).aggregate(
+#             total_share=Coalesce(Sum(F('share')), 0)
+#         )['total_share']
+#         remaining_shares = 100 - total_shares
+
+#         return Response({
+#             'total_shares': total_shares,
+#             'remaining_shares': remaining_shares
+#         }, status=status.HTTP_200_OK)
+
+
+from django.db import transaction
+
+@api_view(['POST', 'GET'])
+def create_owner(request, pk):
+    client = get_object_or_404(Client, id=pk)
+
+    if request.method == 'POST':
+        data = request.data
+        pan = request.data.get('pan')
+        if pan and len(pan) != 10:
+            return Response({'error_message': 'PAN number should be exactly 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+        aadhar = request.data.get('aadhar')
+        if aadhar and len(aadhar) > 12:
+            return Response({'error_message': 'Aadhar number should be at most 12 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+        mobile = request.data.get('mobile')
+        if mobile and len(mobile) != 10:
+            return Response({'error_message': 'Mobile number should be exactly 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+        share = request.data.get('share')
+        if share == '':
+            return Response({'error_message': 'Share field is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.data.get('username')
+        if user == '':
+            return Response({'error_message': 'Username field is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        owner_serializer = OwnerSerializer(data=request.data)
+
+        if not owner_serializer.is_valid():
+            return Response({
+                'message': 'Failed to create owner',
+                'error_message': owner_serializer.errors,
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Begin atomic transaction to prevent partial saves
+        with transaction.atomic():
+            total_shares = Owner.objects.filter(client=client).aggregate(
+                total_share=Coalesce(Sum(F('share')), 0)
+            )['total_share']
+
+            remaining_shares = 100 - total_shares
+            new_share = owner_serializer.validated_data['share']
+
+            if remaining_shares == 0:
+                return Response({'error_message': 'Cannot create owner because 0% shares are left'}, status=status.HTTP_400_BAD_REQUEST)
+
+            if new_share > remaining_shares:
+                return Response({
+                    'error_message': f'Cannot assign {new_share}%. Only {remaining_shares}% is left for assigning.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            owner_serializer.save(client=client)
+
+            # email = request.data.get('email')
+            # if CustomUser.objects.filter(email=email).exists():
+            #     return Response({'error_message': 'A user with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+            remaining_shares -= new_share
+
+            return Response({
+                'message': f'Owner Created Successfully, User Registered kindly activate ur account, remaining shares are {remaining_shares}%',
+                'data': owner_serializer.data,
+                # 'generated_password': password,
+                'remaining_shares': remaining_shares,
+            }, status=status.HTTP_201_CREATED)
+
+    elif request.method == 'GET':
         total_shares = Owner.objects.filter(client=client).aggregate(
             total_share=Coalesce(Sum(F('share')), 0)
         )['total_share']
@@ -429,7 +740,29 @@ def edit_owner(request, pk, owner_pk):
     client = get_object_or_404(Client, id= pk)
     owner = Owner.objects.get(id = owner_pk)
     if request.method == 'POST':
-        owner_serializer = OwnerSerializer(data=request.data, instance = owner)
+        
+        owner_serializer = OwnerSerializer(data=request.data, instance = owner, partial=True)
+
+        pan = request.data.get('pan')
+        if pan and len(pan) > 10 or len(pan) < 10:
+            return Response({'error_message': 'PAN number should be at most 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+        aadhar = request.data.get('aadhar')
+        if aadhar and (len(str(aadhar)) > 12 or len(str(aadhar)) < 12):
+            return Response({'error_message': 'Aadhar number should be at most 12 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+        mobile = request.data.get('mobile')
+        if mobile and (len(str(mobile)) > 10 or len(str(mobile)) < 10):
+            return Response({'error_message': 'Mobile number should be at most 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        share = request.data.get('share')
+        if share == '':
+            return Response({'error_message': f'Share field is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.data.get('username')
+        if user == '':
+            return Response({'error_message' : f'Username field is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
         if owner_serializer.is_valid():
             # Calculate total shares assigned to the client so far
             total_shares = Owner.objects.filter(client=client).aggregate(
@@ -463,6 +796,7 @@ def edit_owner(request, pk, owner_pk):
                     'message': 'Fail to update owner',
                     'error_message': owner_serializer.errors,
                     },status=status.HTTP_400_BAD_REQUEST)
+
     elif request.method == 'GET':
         owner_serializer1 =OwnerSerializer(owner)
         return Response(owner_serializer1.data)
@@ -484,20 +818,48 @@ def single_owner(request, pk, owner_pk):
         print(serializer)
         return Response(serializer.data)
 
+# @api_view(['DELETE'])
+# def delete_owner(request, pk, owner_pk):
+#     client = get_object_or_404(Client, id=pk)
+#     owner = Owner.objects.get(id = owner_pk)
+#     try :
+#         # storing the value of current owner shares in a variable
+#         owner_share = owner.share
+#         owner.delete()
+#         # for loop for providing the remainig shares left
+#         total_shares = sum([owner.share for owner in Owner.objects.all()])
+#         remaining_shares = 100 - total_shares
+#         return Response({'message': f'Owner is deleted.{owner_share}% share is added back. Avaliable shares: {remaining_shares}%'}, status=status.HTTP_200_OK)
+#     except :
+#         return Response({'error_message':'Owner not found'},status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['DELETE'])
 def delete_owner(request, pk, owner_pk):
     client = get_object_or_404(Client, id=pk)
-    owner = Owner.objects.get(id = owner_pk)
-    try :
-        # storing the value of current owner shares in a variable
+    try:
+        owner = Owner.objects.get(id=owner_pk, client=client)
+        
+        if not owner.is_active:
+            return Response({'error_message': 'Owner already inactive.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Save current share and deactivate owner
         owner_share = owner.share
-        owner.delete()
-        # for loop for providing the remainig shares left
-        total_shares = sum([owner.share for owner in Owner.objects.all()])
+        owner.share = 0
+        owner.is_active = False
+        owner.save()
+
+        # Calculate remaining shares
+        total_shares = sum([owner.share for owner in Owner.objects.filter(is_active=True)])
         remaining_shares = 100 - total_shares
-        return Response({'message': f'Owner is deleted.{owner_share}% share is added back. Avaliable shares: {remaining_shares}%'}, status=status.HTTP_200_OK)
-    except :
-        return Response({'error_message':'Owner not found'},status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {
+                'message': f'Owner is disabled. {owner_share}% share is added back. Available shares: {remaining_shares}%',
+            },
+            status=status.HTTP_200_OK
+        )
+    except Owner.DoesNotExist:
+        return Response({'error_message': 'Owner not found'}, status=status.HTTP_400_BAD_REQUEST)
 
 # ******************************************User's Views*******************************************
 
@@ -556,7 +918,7 @@ def dashboarduser(request):
         message = {'User Already Exist'}
         return Response(message, status=status.HTTP_400_BAD_REQUEST)
 
-# Client User Form
+# # Client User Form
 # @api_view(['POST'])
 # def clientuser(request,pk):
 #     client = get_object_or_404(Client, id=pk)
@@ -719,69 +1081,205 @@ def dashboarduser(request):
 #             # If any error occurs, return this message
 #             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET', 'POST'])
-def clientuser(request, pk):
-    client = get_object_or_404(Client, id=pk)
+# @api_view(['GET', 'POST'])
+# def clientuser(request, pk):
+#     client = get_object_or_404(Client, id=pk)
 
+#     # if request.method == 'GET':
+#     #     customers = Customer.objects.filter(client=client)  # QuerySet (multiple customers)
+#     #     serializer = CustomerVendorSerializer(customers, many=True)
+#     #     return Response(serializer.data)
+
+#     elif request.method == 'POST':
+#         data = request.data
+#         # customer = None
+
+#         # if 'customer' in data:
+#         #     customer_name = data['customer']
+#         #     customer = Customer.objects.filter(name=customer_name, client=client).first()
+
+#         #     if customer is None:
+#         #         try:
+#         #             customer_id = int(data['customer'])  # Check if customer is given by ID
+#         #             customer = Customer.objects.filter(id=customer_id, client=client).first()
+#         #         except ValueError:
+#         #             return Response({"error": "Invalid customer name or ID!"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         # if not customer:
+#         #     return Response({"error": "Customer not found!"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Check if the user already exists
+#         if CustomUser.objects.filter(email=data['email']).exists():
+#             return Response({"error": "User already exists!"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         try:
+#             # Create user only if validation passes
+#             user = CustomUser.objects.create(
+#                 name=data['name'].strip(),
+#                 username=data['email'],
+#                 email=data['email'],
+#                 password=make_password(data['password']),
+#                 is_active=False,
+#                 client=client,
+#                 customer=customer,  # Pass single object, not a list
+#             )
+
+#             # Generate email activation token
+#             email_subject = "Activate Your Account"
+#             message = render_to_string(
+#                 "activate.html",
+#                 {
+#                     'user': user,
+#                     'domain': '127.0.0.1:8000',
+#                     'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+#                     'token': generate_token.make_token(user),
+#                 }
+#             )
+#             email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [data['email']])
+#             email_message.send()
+
+#             serializer = UserSerializerWithToken(user, many=False)
+#             return Response({'message': 'User Registered. Kindly activate your account.', 'data': serializer.data})
+#         except Exception as e:
+#             return Response({"error_message": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+# # Email Activations
+# class ActivateAccountView(View):
+#     def get(self, request, uidb64, token):
+#         try:
+#             uid= force_text(urlsafe_base64_decode(uidb64))
+#             user = CustomUser.objects.get(pk=uid)
+#         except Exception as identifier:
+#             user=None
+#         if user is not None and generate_token.check_token(user,token):
+#             user.is_active=True
+#             user.save()
+#             return render(request,"activatesuccess.html")
+#         else:
+#             return render(request,"activatefail.html")
+
+# # # Clientuser Update
+# @api_view(['POST', 'GET'])
+# def edit_clientuser(request, pk, user_pk):
+#     client = Client.objects.get(id=pk)
+#     user = CustomUser.objects.get(id = user_pk, client=client)
+#     user_serializer = UserSerializerWithToken(data=request.data, instance=user, partial=True)
+#     if request.method == 'POST':
+#         if user_serializer.is_valid():
+#             user_serializer.save(client=client)
+#             return Response({'message':'Client User Updated'})
+#         return Response(user_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+#     elif request.method == 'GET':
+#         user_ser = UserSerializerWithToken(user)
+#         return Response(user_ser.data)
+
+@api_view(['GET'])
+def single_clientuser(request, pk, user_pk): 
+    client = Client.objects.get(id = pk)
+    owner = CustomUser.objects.get(id = user_pk, client=client)
     if request.method == 'GET':
-        customers = Customer.objects.filter(client=client)  # QuerySet (multiple customers)
-        serializer = CustomerVendorSerializer(customers, many=True)
+        serializer = UserSerializerWithToken(owner)
+        print(serializer)
         return Response(serializer.data)
 
-    elif request.method == 'POST':
+@api_view(['POST'])
+def reset_clientuser_password(request, pk, user_pk):
+    client = Client.objects.get(id=pk)
+    user = CustomUser.objects.get(id=user_pk, client=client)
+    if request.method == 'POST':
         data = request.data
-        customer = None
+        passwords = request.data.get('password')
+        print("Previous (hashed) password:", passwords)
+        previous_password = request.data.get('previous_password')
+        new_password = request.data.get('new_password')
+        confirm_password = request.data.get('confirm_password')
+        if not user.check_password(previous_password):
+            return Response({'error_message': 'Incorrect previous password !!'}, status=status.HTTP_400_BAD_REQUEST)
+        if new_password != confirm_password:
+            return Response({'error_message': 'New password and confirm password do not match !!'}, status=status.HTTP_400_BAD_REQUEST)
+        user.set_password(new_password)  # Set the new password
+        user.save()
+        user_serializer = UserSerializerWithToken(data=data, instance=user, partial=True)
+        if user_serializer.is_valid():
+            user_serializer.save(client=client)
+            return Response({'message':'Client User Password Updated'})
+        return Response(user_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
-        if 'customer' in data:
-            customer_name = data['customer']
-            customer = Customer.objects.filter(name=customer_name, client=client).first()
+# @api_view(['POST'])
+# def reset_clientuser_password(request, pk, user_pk):
+#     try:
+#         client = Client.objects.get(id=pk)
+#         user = CustomUser.objects.get(id=user_pk, client=client)
+#     except Client.DoesNotExist:
+#         return Response({'error': 'Client not found'}, status=status.HTTP_404_NOT_FOUND)
+#     except CustomUser.DoesNotExist:
+#         return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
-            if customer is None:
-                try:
-                    customer_id = int(data['customer'])  # Check if customer is given by ID
-                    customer = Customer.objects.filter(id=customer_id, client=client).first()
-                except ValueError:
-                    return Response({"error": "Invalid customer name or ID!"}, status=status.HTTP_400_BAD_REQUEST)
+#     data = request.data
+#     previous_password = data.get('previous_password')
+#     new_password = data.get('new_password')
+#     if not user.check_password(previous_password):
+#         return Response({'error': 'Incorrect previous password'}, status=status.HTTP_400_BAD_REQUEST)
+#     user.set_password(new_password)
+#     user.save()
+#     user_serializer = UserSerializerWithToken(user)
+#     return Response({'message': 'Password updated successfully', 'user': user_serializer.data}, status=200)
 
-        if not customer:
-            return Response({"error": "Customer not found!"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Check if the user already exists
+
+@api_view(['POST'])
+def clientuser(request, pk):
+    client = get_object_or_404(Client, id=pk)
+    data = request.data
+    try:
         if CustomUser.objects.filter(email=data['email']).exists():
-            return Response({"error": "User already exists!"}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            # Create user only if validation passes
-            user = CustomUser.objects.create(
-                name=data['name'].strip(),
-                username=data['email'],
-                email=data['email'],
-                password=make_password(data['password']),
-                is_active=False,
-                client=client,
-                customer=customer,  # Pass single object, not a list
-            )
-
-            # Generate email activation token
-            email_subject = "Activate Your Account"
-            message = render_to_string(
-                "activate.html",
-                {
-                    'user': user,
-                    'domain': '127.0.0.1:8000',
-                    'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                    'token': generate_token.make_token(user),
-                }
-            )
-            email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [data['email']])
-            email_message.send()
-
-            serializer = UserSerializerWithToken(user, many=False)
-            return Response({'message': 'User Registered. Kindly activate your account.', 'data': serializer.data})
-        except Exception as e:
-            return Response({"error_message": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error_message': 'User Already Exists'}, status=status.HTTP_400_BAD_REQUEST)
 
 
+        name = data['name']
+        email = data['email']
+
+        # Generate password: first 4 letters of name (or less) + @123
+        name_part = name[:4].lower()
+        generated_password = f"{name_part}@123"
+
+        # Print password for testing
+        print("Generated password:", generated_password)
+        
+        user = CustomUser.objects.create(
+            # first_name=data['first_name'],
+            # last_name=data['last_name'],
+            name = data['name'],
+            username=data['email'],
+            email=data['email'],
+            # password=make_password(data['password']),
+            password=make_password(generated_password),
+            is_active=True,
+            client=client
+        )
+
+        # Generate token for email sending
+        email_subject = "Activate Your Account"
+        message = render_to_string(
+            "activate.html",
+            {
+                'user': user,
+                'domain': '127.0.0.1:8000',
+                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                'token': generate_token.make_token(user),
+            }
+        )
+
+        email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [data['email']])
+        email_message.send()
+
+        serializer = UserSerializerWithToken(user, many=False)
+        return Response({'Message': 'User Registered. Kindly activate your account.', 'Data': serializer.data})
+
+    except Exception as e:
+        return Response({'error_message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 # Email Activations
 class ActivateAccountView(View):
@@ -798,65 +1296,27 @@ class ActivateAccountView(View):
         else:
             return render(request,"activatefail.html")
 
-# # Clientuser Update
-# @api_view(['POST', 'GET'])
-# def edit_clientuser(request, pk, user_pk):
-#     client = Client.objects.get(id=pk)
-#     user = CustomUser.objects.get(id = user_pk, client=client)
-#     user_serializer = UserSerializerWithToken(data=request.data, instance=user, partial=True)
-#     if request.method == 'POST':
-#         if user_serializer.is_valid():
-#             user_serializer.save(client=client)
-#             return Response({'message':'Client User Updated'})
-#         return Response(user_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-#     elif request.method == 'GET':
-#         user_ser = UserSerializerWithToken(user)
-#         return Response(user_ser.data)
-
-
+# Clientuser Update
 @api_view(['POST', 'GET'])
 def edit_clientuser(request, pk, user_pk):
-    client = get_object_or_404(Client, id=pk)
-    user = get_object_or_404(CustomUser, id=user_pk, client=client)
+    client = Client.objects.get(id=pk)
+    user = CustomUser.objects.get(id = user_pk, client=client)
+    # user_serializer = UserSerializerWithToken(data=request.data, instance=user, partial=True)
+    if request.method == 'POST':
+        print("Previous (hashed) password:", user.password)
+        data = request.data.copy()
+        if 'password' in data and data['password']:
+            print("New password entered by user:", data['password'])  
+            data['password'] = make_password(data['password'])      
 
-    if request.method == 'GET':
-        user_serializer = UserSerializerWithToken(user)
-        return Response(user_serializer.data)
-
-    elif request.method == 'POST':
-        data = request.data
-        customer = None
-
-        # Validate customer field
-        print('kkkkkkkkkkk',data)
-        if 'customer' in data:
-            customer_name = data['customer']
-            customer = Customer.objects.filter(name=customer_name, client=client).first()
-
-            if customer is None:
-                try:
-                    customer_id = int(data['customer'])  # Check if ID was provided
-                    customer = Customer.objects.filter(id=customer_id, client=client).first()
-                except ValueError:
-                    return Response({"error_message": "Invalid customer name or ID!"}, status=status.HTTP_400_BAD_REQUEST)
-        print('kkkkkkkkkkkbbbbb',data)
-        if not customer:
-            return Response({"error_message": "Customer not found!"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Prevent email duplication
-        if 'email' in data and CustomUser.objects.filter(email=data['email']).exclude(id=user_pk).exists():
-            return Response({"error_message": "Email already in use!"}, status=status.HTTP_400_BAD_REQUEST)
-        # print('kkkkkkkkkkk',data)
-        try:
-            user_serializer = UserSerializerWithToken(user, data=data, partial=True)
-            # print('kkkkkkkkkkk',data)
-            if user_serializer.is_valid():
-                user_serializer.save(client=client, customer=customer)
-                print('jjjjjjjjjjk',data)
-                return Response({'message': 'Client User Updated', 'data': user_serializer.data})
-            return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({"error_message": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        user_serializer = UserSerializerWithToken(data=data, instance=user, partial=True)
+        if user_serializer.is_valid():
+            user_serializer.save(client=client)
+            return Response({'Message':'Client User Updated'})
+        return Response(user_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'GET':
+        user_ser = UserSerializerWithToken(user)
+        return Response(user_ser.data)
 
 @api_view(['GET'])
 def list_users_by_client(request, pk):
@@ -864,7 +1324,6 @@ def list_users_by_client(request, pk):
     users = CustomUser.objects.filter(client=client)
     serializer = UserSerializerWithToken(users, many=True)
     return Response(serializer.data)
-
 
 # DashboardUser Update
 @api_view(['POST', 'GET'])
@@ -902,73 +1361,86 @@ def delete_dashboarduser(request, user_pk):
 
 # ******************************************Company Document **************************************
 
-@api_view(['POST'])
-@parser_classes([MultiPartParser, FormParser])
-def create_companydoc(request, pk):
-    client = Client.objects.get(id=pk)
-    instance_data = request.data
-    data = {key: value for key, value in instance_data.items()}
-
-    # Save the CompanyDocument
-    serializer = CompanyDocSerailizer(data=data)
-    if serializer.is_valid(raise_exception=True):
-        doc_instance = serializer.save(client=client)
-
-        # Handle file uploads
-        files = request.FILES.getlist('files')
-        if files:
-            for file in files:
-                file_data = {
-                    'company_doc': doc_instance.pk,
-                    'files': file,
-                }
-                file_serializer = FilesSerializer(data=file_data)
-                if file_serializer.is_valid(raise_exception=True):
-                    file_serializer.save()
-
-        # Success response
-        return Response(
-            {
-                'message': 'Company Document created successfully.',
-                'data': serializer.data,
-            },
-            status=status.HTTP_201_CREATED,
-        )
-
-    # Error response if serializer fails
-    return Response(
-        {
-            'message': 'Failed to create Company Document.',
-            'error_message': serializer.errors,
-        },
-        status=status.HTTP_400_BAD_REQUEST,
-    )
-
-
-
 # @api_view(['POST'])
-# def create_companydoc(request,pk):
+# @parser_classes([MultiPartParser, FormParser])
+# def create_companydoc(request, pk):
 #     client = Client.objects.get(id=pk)
-#     if request.method == 'POST':
-#         doc_serializer = CompanyDocSerailizer(data=request.data)
-#         if doc_serializer.is_valid():
-#             doc_serializer.save(client=client)
-#             return Response({
-#                 'message': 'company document created',
-#                 'data': doc_serializer.data,
-#                 },status=status.HTTP_201_CREATED)
-#         return Response({
-#                 'message': 'Fail to create company document',
-#                 'error_message': doc_serializer.errors,
-#                 },status=status.HTTP_400_BAD_REQUEST)
+#     instance_data = request.data
+#     data = {key: value for key, value in instance_data.items()}
 
+#     # Save the CompanyDocument
+#     serializer = FileInfoSerializer(data=data)
+#     if serializer.is_valid(raise_exception=True):
+#         fileinfo = serializer.save(client=client)
+
+#         # Handle file uploads correctly (expecting multiple files)
+#         files = request.FILES.getlist('files')  # This gets a list of files
+#         if files:
+#             file_list = [{'fileinfo': fileinfo.pk, 'files': file} for file in files]
+#             file_serializer = FileSerializer(data=file_list, many=True)  # Pass the list of file data
+#             if file_serializer.is_valid(raise_exception=True):
+#                 file_serializer.save()
+
+#         # Success response
+#         return Response(
+#             {
+#                 'message': 'Company Document created successfully.',
+#                 'data': serializer.data,
+#             },
+#             status=status.HTTP_201_CREATED,
+#         )
+
+#     # Error response if serializer fails
+#     return Response(
+#         {
+#             'message': 'Failed to create Company Document.',
+#             'error_message': serializer.errors,
+#         },
+#         status=status.HTTP_400_BAD_REQUEST,
+#     )
+
+@api_view(['POST'])
+def create_companydoc(request, pk):
+    if request.method == 'POST':
+        client_id = request.data.get('client_id')  # Expecting the client_id in the request
+
+        try:
+            client = Client.objects.get(id=pk)
+        except Client.DoesNotExist:
+            return Response({'message': 'Client not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        fileinfo_serializer = FileInfoSerializer(data=request.data)
+        
+        if fileinfo_serializer.is_valid():
+            fileinfo = fileinfo_serializer.save(client=client)  # Associate with the client
+            
+            files = request.FILES.getlist('files')
+            if files:
+                for file in files:
+                    file_data = {
+                        'fileinfo': fileinfo.pk,
+                        'files': file
+                    }
+                    file_serializer = FileSerializer(data=file_data)
+                    if file_serializer.is_valid():
+                        file_serializer.save()
+            # Return the created fileinfo details
+            return Response({
+                'message': 'FileInfo and associated files created successfully',
+                'data': fileinfo_serializer.data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response({
+            'message': 'Failed to create FileInfo',
+            'error_message': fileinfo_serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
 @parser_classes([MultiPartParser, FormParser])
-def edit_companydoc(request, pk, companydoc_pk):
+def edit_companydoc(request, pk, file_pk):
     try:
         client = Client.objects.get(id=pk)
-        companydoc = CompanyDocument.objects.get(id=companydoc_pk, client=client)
+        fileinfo = FileInfo.objects.get(id=file_pk, client=client)
     except Client.DoesNotExist:
         return Response({'error_message': 'Client not found'}, status=status.HTTP_404_NOT_FOUND)
     except CompanyDocument.DoesNotExist:
@@ -976,23 +1448,25 @@ def edit_companydoc(request, pk, companydoc_pk):
 
     if request.method == 'POST':
         # Update branch document fields
-        companydoc_serializer = CompanyDocSerailizer(instance=companydoc, data=request.data)
-        if companydoc_serializer.is_valid():
-            companydoc_serializer.save(client=client)
+        fileinfo_serializer = FileInfoSerializer(instance=fileinfo, data=request.data)
+        print('before',request.data)
+        if fileinfo_serializer.is_valid():
+            fileinfo_serializer.save(client=client)
+            print('after',request.data)
 
             # Handle file updates separately
             if request.FILES.getlist('files'):
                 # Delete the old files if required
-                Files.objects.filter(company_doc=companydoc).delete()
+                File.objects.filter(fileinfo=fileinfo).delete()
 
                 # Add the new files
                 files = request.FILES.getlist('files')
                 for file in files:
                     file_data = {
-                        'company_doc': companydoc.pk,
+                        'fileinfo': fileinfo.pk,
                         'files': file
                     }
-                    file_serializer = FilesSerializer(data=file_data)
+                    file_serializer = FileSerializer(data=file_data)
                     if file_serializer.is_valid():
                         file_serializer.save()
                     else:
@@ -1000,39 +1474,18 @@ def edit_companydoc(request, pk, companydoc_pk):
 
             return Response({
                 'message': 'Company Document updated',
-                'data': companydoc_serializer.data,
+                'data': fileinfo_serializer.data,
                 'status' : status.HTTP_200_OK
             })
         else:
             return Response({
                 'message': 'Fail to update Company Document',
-                'error_message': companydoc_serializer.errors,
+                'error_message': fileinfo_serializer.errors,
                 },status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'GET':
-        companydoc_serializer = CompanyDocSerailizer(companydoc)
-        return Response(companydoc_serializer.data)       
-
-# @api_view(['POST', 'GET'])
-# def edit_companydoc(request,pk,companydoc_pk):
-#     client = Client.objects.get(id=pk)
-#     doc = CompanyDocument.objects.get(id=companydoc_pk)
-#     doc_serializer = CompanyDocSerailizer(instance=doc, data=request.data)
-#     if request.method == 'POST':
-#         if doc_serializer.is_valid():
-#             doc_serializer.save()
-#             return Response({
-#                 'message': 'company document updated',
-#                 'data': doc_serializer.data,
-#                 'status' : status.HTTP_200_OK
-#             })
-#         return Response({
-#                 'message': 'Fail to update company document',
-#                 'error_message': doc_serializer.errors,
-#                 },status=status.HTTP_400_BAD_REQUEST)
-#     elif request.method == 'GET':
-#         doc_ser = CompanyDocSerailizer(doc)
-#         return Response(doc_ser.data)
+        fileinfo_serializer = FileInfoSerializer(fileinfo)
+        return Response(fileinfo_serializer.data)       
 
 @api_view(['GET'])
 def list_companydoc(request,pk):
@@ -1043,9 +1496,9 @@ def list_companydoc(request,pk):
     return Response(serializer.data)
 
 @api_view(['DELETE'])
-def delete_companydoc(request,pk,companydoc_pk):
+def delete_companydoc(request,pk, file_pk):
     client = Client.objects.get(id=pk)
-    doc = CompanyDocument.objects.get(id=companydoc_pk, client=client)
+    doc = FileInfo.objects.get(id=file_pk, client=client)
     if request.method == 'DELETE':
         doc.delete()
         return Response({'message':"Document Deleted"})
@@ -1156,6 +1609,15 @@ def edit_officelocation(request,branch_pk,office_pk):
         return Response (office_ser.data)
 
 @api_view(['GET'])
+def single_officelocation(request, branch_pk, office_pk):
+    branch = Branch.objects.get(id = branch_pk)
+    owner = OfficeLocation.objects.get(id = office_pk, branch=branch)
+    if request.method == 'GET':
+        serializer = OfficeLocationSerializer(owner)
+        print(serializer)
+        return Response(serializer.data)
+
+@api_view(['GET'])
 def list_officelocation(request,pk, branch_pk):
     client = Client.objects.get(id=pk)
     branch = Branch.objects.get(id = branch_pk, client=client)
@@ -1182,6 +1644,19 @@ def create_customer(request, pk):
     client = Client.objects.get(id=pk)
     if request.method == 'POST':
         customer_serializer = CustomerVendorSerializer(data=request.data)
+        pan = request.data.get('pan')
+        if pan and len(pan) > 10 or len(pan) < 10:
+            return Response({'error_message': 'PAN number should be at most 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+        mobile = request.data.get('contact')
+        if mobile and (len(str(mobile)) > 10 or len(str(mobile)) < 10):
+            return Response({'error_message': 'Mobile number should be at most 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+        email = request.data.get('email')
+        # if email and not re.match(r"[^@]+@[^@]+\.[^@]+", email) or email == '':
+        if email == '':
+            return Response({'error_message': 'Email field is required'}, status=status.HTTP_400_BAD_REQUEST)
+
         if customer_serializer.is_valid():
             customer_serializer.save(client=client)
             return Response({
@@ -1199,6 +1674,20 @@ def edit_customer(request, pk, customer_pk):
     customer = Customer.objects.get(id=customer_pk)
     customer_serializer = CustomerVendorSerializer(instance=customer, data=request.data)
     if request.method == 'POST':
+
+        pan = request.data.get('pan')
+        if pan and len(pan) > 10 or len(pan) < 10:
+            return Response({'error_message': 'PAN number should be at most 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+        mobile = request.data.get('contact')
+        if mobile and (len(str(mobile)) > 10 or len(str(mobile)) < 10):
+            return Response({'error_message': 'Mobile number should be at most 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+        email = request.data.get('email')
+        # if email and not re.match(r"[^@]+@[^@]+\.[^@]+", email) or email == '':
+        if email == '':
+            return Response({'error_message': 'Email field is required'}, status=status.HTTP_400_BAD_REQUEST)
+
         if customer_serializer.is_valid():
             customer_serializer.save(client=client)
             return Response({
@@ -1222,6 +1711,15 @@ def list_customer(request, pk):
         customer_serializer = CustomerVendorSerializer(list_customer, many=True)
         print(customer_serializer)
         return Response(customer_serializer.data)
+
+@api_view(['GET'])
+def single_customer(request, pk, customer_pk):
+    client = Client.objects.get(id = pk)
+    owner = Customer.objects.get(id = customer_pk, client=client)
+    if request.method == 'GET':
+        serializer = CustomerVendorSerializer(owner)
+        print(serializer)
+        return Response(serializer.data)
 
 @api_view(['DELETE'])
 def delete_customer(request,pk, customer_pk):
@@ -1308,7 +1806,6 @@ def create_branchdoc(request, branch_pk):
             'message': 'Failed to create Branch Document',
             'error_message': serializer.errors,
         }, status=status.HTTP_400_BAD_REQUEST)
-
 
 @api_view(['POST', 'GET'])
 @parser_classes([MultiPartParser, FormParser])
@@ -1405,6 +1902,7 @@ def create_incometaxdoc(request,pk):
                 'error_message': income_serializer.errors,
                 },status=status.HTTP_400_BAD_REQUEST)
 @api_view(['POST','GET'])
+
 def edit_incometaxdoc(request, pk, income_pk):
     client = Client.objects.get(id=pk)
     income = IncomeTaxDocument.objects.get(id = income_pk, client=client)
@@ -1444,42 +1942,295 @@ def delete_incometaxdoc(request,pk,income_pk):
     return Response ({'error_message':'Fail to delete Income tax document'}, status=status.HTTP_400_BAD_REQUEST)
 
 #*****************************************************PF*******************************************************
+# @api_view(['POST'])
+# def create_pf(request,pk):
+#     client = Client.objects.get(id = pk)
+#     if request.method == 'POST':
+#         pf_serializer = PfSerializer(data=request.data)
+#         if pf_serializer.is_valid():
+#             pf_serializer.save(client=client)
+#             return Response({
+#                 'message': 'PF created',
+#                 'data': pf_serializer.data,
+#                 },status=status.HTTP_201_CREATED)
+#         return Response({
+#                 'error_message': 'Fail to create PF',
+#                 'error_message': pf_serializer.errors,
+#                 },status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['POST'])
-def create_pf(request,pk):
-    client = Client.objects.get(id = pk)
+def create_pf(request, pk):
+    client = Client.objects.get(id=pk)
+    
     if request.method == 'POST':
+        employee_code = request.data.get('employee_code')
+        uan = request.data.get('uan')
+        pf_number = request.data.get('pf_number')
+        month = request.data.get('month')
+
+        # Check if entry already exists for this combination
+        existing_pf = PF.objects.filter(
+            client=client,
+            employee_code=employee_code,
+            uan=uan,
+            pf_number=pf_number,
+            month=month
+        ).first()
+
+        if existing_pf:
+            return Response({
+                'error_message': f'Data for employee {employee_code} for {month} already exists.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         pf_serializer = PfSerializer(data=request.data)
         if pf_serializer.is_valid():
             pf_serializer.save(client=client)
             return Response({
                 'message': 'PF created',
                 'data': pf_serializer.data,
-                },status=status.HTTP_201_CREATED)
+            }, status=status.HTTP_201_CREATED)
+        
         return Response({
-                'message': 'Fail to create PF',
-                'error_message': pf_serializer.errors,
-                },status=status.HTTP_400_BAD_REQUEST)
+            'error_message': 'Fail to create PF',
+            'errors': pf_serializer.errors,
+        }, status=status.HTTP_400_BAD_REQUEST)
 
-class ExcelImportView(APIView):
+# class ExcelImportView(APIView):
+#     parser_classes = [MultiPartParser]
+
+#     def post(self, request, pk, *args, **kwargs):
+#         # Get the client using the pk from the URL
+#         try:
+#             client = Client.objects.get(pk=pk)
+#         except Client.DoesNotExist:
+#             return Response({"error_message": "Client not found"}, status=404)
+
+#         file = request.FILES['file']
+
+#         # Load the workbook and select the active worksheet
+#         wb = load_workbook(file)
+#         ws = wb.active
+
+#         pf_entries = []
+
+#         # Define the fields in a list to optimize the entry creation
+#         fields = [
+#             'employee_code', 'employee_name', 'uan', 'pf_number', 'pf_deducted',
+#             'date_of_joining', 'status', 'month', 'gross_ctc', 'basic_pay',
+#             'hra', 'statutory_bonus', 'special_allowance', 'pf', 'gratuity',
+#             'total_gross_salary', 'number_of_days_in_month', 'present_days',
+#             'lwp', 'leave_adjustment', 'gender', 'basic_pay_monthly',
+#             'hra_monthly', 'statutory_bonus_monthly', 'special_allowance_monthly',
+#             'total_gross_salary_monthly', 'provident_fund', 'professional_tax',
+#             'advance', 'esic_employee', 'tds', 'total_deduction', 'net_pay',
+#             'advance_esic_employer_cont'
+#         ]
+
+#         # Iterate through the rows in the Excel file and create or update PF objects
+#         for row in ws.iter_rows(min_row=2):  # Skip the header row
+#             # Create a dictionary for the current row
+#             data = {field: row[i].value for i, field in enumerate(fields)}
+
+#             employee_code = data['employee_code']
+#             month = data['month']
+
+#             # Skip rows without essential fields
+#             if not employee_code or not month:
+#                 continue
+
+#             # Check if an entry with the same employee_code and month exists
+#             instance = PF.objects.filter(employee_code=employee_code, month=month).first()
+
+#             if instance:
+#                 # Update existing entry
+#                 for field, value in data.items():
+#                     setattr(instance, field, value)
+#                 instance.save()
+#             else:
+#                 # Create new PF entry and associate it with the client
+#                 pf_entry = PF(client=client, **data)
+#                 pf_entry.save()
+#                 pf_entries.append(pf_entry)
+
+#         return Response({"status": "success", "data": PfSerializer(pf_entries, many=True).data},status=status.HTTP_201_CREATED)
+
+# class ExcelImportView(APIView):
+#     parser_classes = [MultiPartParser]
+
+#     def post(self, request, pk, *args, **kwargs):
+#         try:
+#             client = Client.objects.get(pk=pk)
+#         except Client.DoesNotExist:
+#             return Response({"error_message": "Client not found"}, status=status.HTTP_404_NOT_FOUND)
+
+#         file = request.FILES.get('file')
+#         if not file:
+#             return Response({"error_message": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         wb = load_workbook(file)
+#         ws = wb.active
+
+#         fields = [
+#             'employee_code', 'employee_name', 'uan', 'pf_number', 'pf_deducted',
+#             'date_of_joining', 'status', 'month', 'gross_ctc', 'basic_pay',
+#             'hra', 'statutory_bonus', 'special_allowance', 'pf', 'gratuity',
+#             'total_gross_salary', 'number_of_days_in_month', 'present_days',
+#             'lwp', 'leave_adjustment', 'gender', 'basic_pay_monthly',
+#             'hra_monthly', 'statutory_bonus_monthly', 'special_allowance_monthly',
+#             'total_gross_salary_monthly', 'provident_fund', 'professional_tax',
+#             'advance', 'esic_employee', 'tds', 'total_deduction', 'net_pay',
+#             'advance_esic_employer_cont'
+#         ]
+
+#         for row in ws.iter_rows(min_row=2):  # Skip the header row
+#             data = {field: row[i].value for i, field in enumerate(fields)}
+
+#             employee_code = data.get('employee_code')
+#             month = data.get('month')
+
+#             if not employee_code or not month:
+#                 continue  # Skip invalid rows
+
+#             # Check if employee_code already exists for the given month
+#             if PF.objects.filter(employee_code=employee_code, month=month).exists():
+#                 return Response(
+#                     {"error_message": f"Employee {employee_code} already exists for month {month}"},
+#                     status=status.HTTP_400_BAD_REQUEST
+#                 )
+
+#             # Create new PF entry
+#             PF.objects.create(client=client, **data)
+
+#         return Response({"status": "success", "message": "All entries uploaded successfully"}, status=status.HTTP_201_CREATED)
+
+# @api_view(['POST','GET'])
+# def edit_pf(request, pk, pf_pk):
+#     client = Client.objects.get(id=pk)
+#     # income = IncomeTaxDocument.objects.get(id = pf_pk, client=client)
+#     pf = PF.objects.get(id = pf_pk, client=client)
+#     pf_serializer = PfSerializer(instance=pf, data=request.data)
+#     if request.method == 'POST':
+#         if  pf_serializer.is_valid():
+#             pf_serializer.save()
+#             return Response({
+#                 'message': 'PF updated',
+#                 'data': pf_serializer.data,
+#                 'status' : status.HTTP_200_OK
+#             })
+#         return Response({
+#                 'message': 'Fail to update PF',
+#                 'error_message': pf_serializer.errors,
+#                 },status=status.HTTP_400_BAD_REQUEST)
+#     elif request.method == 'GET':
+#         pf_ser = PfSerializer(pf)
+#         return Response(pf_ser.data)
+
+import re
+
+# class ExcelImportView(APIView):
+#     parser_classes = [MultiPartParser]
+
+#     def post(self, request, pk, *args, **kwargs):
+#         try:
+#             client = Client.objects.get(pk=pk)
+#         except Client.DoesNotExist:
+#             return Response({"error_message": "Client not found"}, status=status.HTTP_404_NOT_FOUND)
+
+#         file = request.FILES.get('file')
+#         if not file:
+#             return Response({"error_message": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         wb = load_workbook(file)
+#         df = pd.read_excel(file)
+#         ws = wb.active
+
+#         fields = [
+#             'employee_code', 'employee_name', 'uan', 'pf_number', 'pf_deducted',
+#             'date_of_joining', 'status', 'month', 'gross_ctc', 'basic_pay',
+#             'hra', 'statutory_bonus', 'special_allowance', 'pf', 'gratuity',
+#             'total_gross_salary', 'number_of_days_in_month', 'present_days',
+#             'lwp', 'leave_adjustment', 'gender', 'basic_pay_monthly',
+#             'hra_monthly', 'statutory_bonus_monthly', 'special_allowance_monthly',
+#             'total_gross_salary_monthly', 'provident_fund', 'professional_tax',
+#             'advance', 'esic_employee', 'tds', 'total_deduction', 'net_pay',
+#             'advance_esic_employer_cont'
+#         ]
+
+        
+#         skipped_rows = []
+#         # month_pattern = re.compile(
+#         #     r'^(jan|feb|mar|apr|many|jun|jul|aug|sep|oct|nov|dec'
+#         #     r' january|february|march|april|may|june|july|august|september|october|november|december)\s+20\d{2}$',
+#         #     re.IGNORECASE
+#         # )
+
+#         # errors = []
+
+#         # for index, row in df.iterrows():
+#         #     row_errors = {}
+#         #     month_value = row.get('Month')
+
+#         #     # emp_code = row.get('Employee_code')
+#         #     emp_code = str(row.get('Employee Code', f'Row {index + 2}')).strip()
+
+
+#         #     if not isinstance(month_value, str) or not month_pattern.match(month_value.strip()):
+#         #         row_errors['Month'] = 'Invalid month format. Use "August 2024" or "Aug 2024".'
+
+            
+#         #     if row_errors:
+#         #         errors.append({'employee_code':emp_code, 'errors': row_errors})
+
+#         # if errors:
+#         #     return Response({'error_message': errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+#         for idx, row in enumerate(ws.iter_rows(min_row=2), start=2):  # row index starts at 2
+#             data = {field: row[i].value for i, field in enumerate(fields)}
+#             employee_code = data.get('employee_code')
+#             uan = data.get('uan')
+#             pf_number = data.get('pf_number')
+#             month = data.get('month')
+
+#             if not (employee_code and uan and pf_number and month):
+#                 skipped_rows.append(idx)
+#                 continue  # Skip incomplete rows
+
+#             if PF.objects.filter(
+#                 employee_code=employee_code,
+#                 uan=uan,
+#                 pf_number=pf_number,
+#                 month=month,
+#                 client=client
+#             ).exists():
+#                 skipped_rows.append(idx)
+#                 continue  # Skip duplicates
+
+#             PF.objects.create(client=client, **data)
+
+#         message = "Upload completed."
+#         if skipped_rows:
+#             message += f" Skipped rows due to duplication or missing data: {skipped_rows}"
+
+#         return Response({"status": "success", "message": message}, status=status.HTTP_201_CREATED)
+
+class PFExcelUploaadView(APIView):
     parser_classes = [MultiPartParser]
-
-    def post(self, request, pk, *args, **kwargs):
-        # Get the client using the pk from the URL
+    def post (self, request, pk, *args, **kwargs):
         try:
             client = Client.objects.get(pk=pk)
         except Client.DoesNotExist:
-            return Response({"error_message": "Client not found"}, status=404)
+            return Response({"error_message" : "Client not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        file = request.FILES.get('file')
+        if not file:
+            return Response({"error_message": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
 
-        file = request.FILES['file']
+        df = pd.read_excel(file)
+        # df.columns = [col.strip().lower().replace(" ", "_") for col in df.columns]
+        df.columns = [re.sub(r'[^\w]+', '_', col.strip().lower()).strip('_') for col in df.columns]
 
-        # Load the workbook and select the active worksheet
-        wb = load_workbook(file)
-        ws = wb.active
-
-        pf_entries = []
-
-        # Define the fields in a list to optimize the entry creation
-        fields = [
+        required_fields = [
             'employee_code', 'employee_name', 'uan', 'pf_number', 'pf_deducted',
             'date_of_joining', 'status', 'month', 'gross_ctc', 'basic_pay',
             'hra', 'statutory_bonus', 'special_allowance', 'pf', 'gratuity',
@@ -1491,53 +2242,166 @@ class ExcelImportView(APIView):
             'advance_esic_employer_cont'
         ]
 
-        # Iterate through the rows in the Excel file and create or update PF objects
-        for row in ws.iter_rows(min_row=2):  # Skip the header row
-            # Create a dictionary for the current row
-            data = {field: row[i].value for i, field in enumerate(fields)}
+        errors = []
+        success = []
 
-            employee_code = data['employee_code']
-            month = data['month']
+        for field in required_fields:
+            if field not in df.columns:
+                return Response({'error': f'Missing required field: {field}'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        for index, row in df.iterrows():
+            data_dict = row.to_dict()
+            exist = PF.objects.filter(
+                client=client, 
+                employee_code = row['employee_code'],
+                uan = row['uan'],
+                pf_number = row['pf_number'],
+                month = row['month']
+            ).exists()
 
-            # Skip rows without essential fields
-            if not employee_code or not month:
+            month = row.get('month')
+            if not re.match(r"^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december)\s\d{4}$",str(month), re.IGNORECASE):
+                # errors.append(f"{row['employee_code']} month field must be in August 2024 or Aug 2024 format")
+                return Response({'error_message':f'Employee Code: {row['employee_code']} month field must be in August 2024 or aug 2024 formate'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Get the raw value from Excel and strip leading/trailing whitespace
+            statu = str(row.get('status', "")).strip().lower()
+
+            # Validate the cleaned value
+            if statu not in ['active', 'inactive']:
+                return Response(
+                    {'error_message': f'Employee Code: {row["employee_code"]} status field must be "active" or "inactive"'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            gen = str(row.get('gender', "")).strip().lower()
+
+            if gen not in ['male', 'female']:
+                return Response(
+                    {'error_message': f'Employee Code: {row["employee_code"]} gender field must be "male" or "female"'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if exist:
+                errors.append(f"\n Employee Code- {row['employee_code']} data already exists.")
                 continue
 
-            # Check if an entry with the same employee_code and month exists
-            instance = PF.objects.filter(employee_code=employee_code, month=month).first()
+            data_dict['status'] = statu
+            data_dict['gender'] = gen
+            print('gggg',data_dict['gender'])
+            
+            PF.objects.create(client=client, **data_dict)      
+            success.append(f"\n {row['employee_code']} Employee") 
 
-            if instance:
-                # Update existing entry
-                for field, value in data.items():
-                    setattr(instance, field, value)
-                instance.save()
+        return Response({
+            "success_message": success,
+            "error_message": errors},
+            status=status.HTTP_207_MULTI_STATUS)
+
+
+@api_view(['GET'])
+def pf_field_totals(request, pk):
+    try:
+        pf_entries = PF.objects.filter(client_id=pk)
+        if not pf_entries.exists():
+            return Response({"message": "No PF data found for this client."}, status=404)
+
+        totals = {}
+        first_entry = pf_entries.first()
+
+        for field in first_entry._meta.get_fields():
+            field_name = field.name
+
+            # Skip ID, foreign keys, reverse relations, etc.
+            if field.auto_created or field.is_relation or field_name in ['id', 'client']:
+                continue
+
+            try:
+                # Check if we can sum the field
+                total = pf_entries.aggregate(total=Sum(field_name))['total']
+                if total is not None:
+                    totals[field_name] = total
+                else:
+                    totals[field_name] = '-'
+            except Exception:
+                totals[field_name] = '-'
+
+        return Response(totals)
+    
+    except Exception as e:
+        return Response({'error_message': str(e)}, status=500)
+
+@api_view(['GET'])
+def get_pf_totals(request, pk):
+    pf_records = PF.objects.filter(client_id=pk)
+
+    # Fields where we return "-"
+    text_fields = [
+        'employee_code', 'employee_name', 'uan', 'pf_number', 
+        'pf_deducted', 'date_of_joining', 'status', 'gender','month',
+    ]
+
+    # Use model to get all field names
+    all_fields = [field.name for field in PF._meta.fields if field.name != 'id' and field.name != 'client']
+
+    result = {}
+
+    for field in all_fields:
+        if field in text_fields:
+            result[field] = "-"
+        else:
+            if pf_records.exists():
+                total = pf_records.aggregate(total=Sum(field)).get("total")
+                result[field] = total if total is not None else 0
             else:
-                # Create new PF entry and associate it with the client
-                pf_entry = PF(client=client, **data)
-                pf_entry.save()
-                pf_entries.append(pf_entry)
+                result[field] = 0
 
-        return Response({"status": "success", "data": PfSerializer(pf_entries, many=True).data})
+    return Response(result)
 
-
-@api_view(['POST','GET'])
+@api_view(['POST', 'GET'])
 def edit_pf(request, pk, pf_pk):
-    client = Client.objects.get(id=pk)
-    # income = IncomeTaxDocument.objects.get(id = pf_pk, client=client)
-    pf = PF.objects.get(id = pf_pk, client=client)
-    pf_serializer = PfSerializer(instance=pf, data=request.data)
+    try:
+        client = Client.objects.get(id=pk)
+        pf = PF.objects.get(id=pf_pk, client=client)
+    except (Client.DoesNotExist, PF.DoesNotExist):
+        return Response({"error_message": "Client or PF record not found"}, status=status.HTTP_404_NOT_FOUND)
+
     if request.method == 'POST':
-        if  pf_serializer.is_valid():
+        new_data = request.data
+        # Check for duplicates only if those fields are being changed
+        employee_code = new_data.get('employee_code')
+        uan = new_data.get('uan')
+        pf_number = new_data.get('pf_number')
+        month = new_data.get('month')
+
+        if employee_code and uan and pf_number and month:
+            exists = PF.objects.filter(
+                employee_code=employee_code,
+                uan=uan,
+                pf_number=pf_number,
+                month=month,
+                client=client
+            ).exclude(id=pf.id).exists()
+
+            if exists:
+                return Response(
+                    {"error_message": f"PF data for employee {employee_code} already exists for month {month}"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        pf_serializer = PfSerializer(instance=pf, data=request.data)
+        if pf_serializer.is_valid():
             pf_serializer.save()
             return Response({
                 'message': 'PF updated',
                 'data': pf_serializer.data,
-                'status' : status.HTTP_200_OK
+                'status': status.HTTP_200_OK
             })
         return Response({
-                'message': 'Fail to update PF',
-                'error_message': pf_serializer.errors,
-                },status=status.HTTP_400_BAD_REQUEST)
+            'message': 'Fail to update PF',
+            'error_message': pf_serializer.errors,
+        }, status=status.HTTP_400_BAD_REQUEST)
+
     elif request.method == 'GET':
         pf_ser = PfSerializer(pf)
         return Response(pf_ser.data)
@@ -1559,6 +2423,7 @@ def delete_pf(request,pk,pf_pk):
         pf.delete()
         return Response({'message':'Pf deleted'})
     return Response ({'error_message':'Fail to delete Pf'}, status=status.HTTP_400_BAD_REQUEST)
+
 # ***********************************************Tax Audit***************************************************
 @api_view(['POST'])
 @parser_classes([MultiPartParser, FormParser])
@@ -1671,39 +2536,77 @@ def delete_taxaudit(request, pk, taxaudit_pk ):
     return Response({'error_message':'Fail to delete Tax Audit'} ,status=status.HTTP_400_BAD_REQUEST)
 
 # ******************************************************AIR****************************************************
+# @api_view(['POST'])
+# @parser_classes([MultiPartParser, FormParser])
+# def create_air(request,pk):
+#     client = Client.objects.get(id=pk)
+#     instance_data = request.data
+#     data = {key: value for key, value in instance_data.items()}
+
+#     serializer = AIRSerializer(data=data)
+#     if serializer.is_valid(raise_exception=True):
+#         air_instance = serializer.save(client=client)
+#         print(request.data)
+
+#         if request.FILES:
+#             files = dict((request.FILES).lists()).get('files',None)
+#             # files = request.FILES.getlist('files')
+#             if files:
+#                 for file in files:
+#                     file_data = {
+#                         'air' : air_instance.pk,
+#                         'files' : file
+#                     }
+#                     file_serializer= FilesSerializer(data=file_data)
+#                     if file_serializer.is_valid(raise_exception=True):
+#                         file_serializer.save()
+
+#             return Response({
+#                 'message': 'AIR created',
+#                 'data': serializer.data,
+#                 },status=status.HTTP_201_CREATED)
+#         return Response({
+#                 'message': 'Fail to create AIR',
+#                 'error_message': serializer.errors,
+#                 },status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['POST'])
 @parser_classes([MultiPartParser, FormParser])
-def create_air(request,pk):
+def create_air(request, pk):
     client = Client.objects.get(id=pk)
     instance_data = request.data
     data = {key: value for key, value in instance_data.items()}
 
+    # Check if files are present
+    files = dict(request.FILES.lists()).get('files', None)
+    if not files:
+        return Response(
+            {'error_message': 'You must upload at least one file.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
     serializer = AIRSerializer(data=data)
     if serializer.is_valid(raise_exception=True):
         air_instance = serializer.save(client=client)
-        print(request.data)
 
-        if request.FILES:
-            files = dict((request.FILES).lists()).get('files',None)
-            # files = request.FILES.getlist('files')
-            if files:
-                for file in files:
-                    file_data = {
-                        'air' : air_instance.pk,
-                        'files' : file
-                    }
-                    file_serializer= FilesSerializer(data=file_data)
-                    if file_serializer.is_valid(raise_exception=True):
-                        file_serializer.save()
+        for file in files:
+            file_data = {
+                'air': air_instance.pk,
+                'files': file
+            }
+            file_serializer = FilesSerializer(data=file_data)
+            if file_serializer.is_valid(raise_exception=True):
+                file_serializer.save()
 
-            return Response({
-                'message': 'AIR created',
-                'data': serializer.data,
-                },status=status.HTTP_201_CREATED)
         return Response({
-                'message': 'Fail to create AIR',
-                'error_message': serializer.errors,
-                },status=status.HTTP_400_BAD_REQUEST)
+            'message': 'AIR created',
+            'data': serializer.data,
+        }, status=status.HTTP_201_CREATED)
+
+    return Response({
+        'message': 'Failed to create AIR',
+        'error_message': serializer.errors,
+    }, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
 @parser_classes([MultiPartParser, FormParser])
@@ -1894,6 +2797,122 @@ def delete_sft(request, pk, sft_pk ):
         return Response({'message':'SFT Delete'})
     return Response({'error_message':'Fail to delete SFT'} ,status=status.HTTP_400_BAD_REQUEST)
 
+# **************************************************OTHERS***************************************************
+@api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
+def create_others(request, pk):
+    client = Client.objects.get(id=pk)
+    instance_data = request.data
+    data = {key: value for key, value in instance_data.items()}
+
+    # Check if files are present
+    files = dict(request.FILES.lists()).get('files', None)
+    if not files:
+        return Response(
+            {'error_message': 'You must upload at least one file.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    serializer = OthersSerializer(data=data)
+    if serializer.is_valid(raise_exception=True):
+        others_instance = serializer.save(client=client)
+
+        for file in files:
+            file_data = {
+                'others': others_instance.pk,
+                'files': file
+            }
+            file_serializer = FilesSerializer(data=file_data)
+            if file_serializer.is_valid(raise_exception=True):
+                file_serializer.save()
+
+        return Response({
+            'message': 'Others created',
+            'data': serializer.data,
+        }, status=status.HTTP_201_CREATED)
+
+    return Response({
+        'message': 'Failed to create Others',
+        'error_message': serializer.errors,
+    }, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST', 'GET'])
+@parser_classes([MultiPartParser, FormParser])
+def edit_others(request, pk, others_pk):
+    try:
+        client = Client.objects.get(id=pk)
+        others = Others.objects.get(id=others_pk, client=client)
+    except Client.DoesNotExist:
+        return Response({'error_message': 'Client not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Others.DoesNotExist:
+        return Response({'error_message': 'Others not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'POST':
+        # Update branch document fields
+        others_serializer = OthersSerializer(instance=others, data=request.data)
+        if others_serializer.is_valid():
+            others_serializer.save(client=client)
+
+            # Handle file updates separately
+            if request.FILES.getlist('files'):
+                # Delete the old files if required
+                Files.objects.filter(others=others).delete()
+
+                # Add the new files
+                files = request.FILES.getlist('files')
+                for file in files:
+                    file_data = {
+                        'others': others.pk,
+                        'files': file
+                    }
+                    file_serializer = FilesSerializer(data=file_data)
+                    if file_serializer.is_valid():
+                        file_serializer.save()
+                    else:
+                        return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({
+                'message': 'Others updated',
+                'data': others_serializer.data,
+                'status' : status.HTTP_200_OK
+            })
+        else:
+            return Response({
+                'message': 'Fail to update Others',
+                'error_message': others_serializer.errors,
+                },status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'GET':
+        others_serializer = OthersSerializer(others)
+        return Response(others_serializer.data)
+
+@api_view(['GET'])
+def list_others(request, pk):
+    client = Client.objects.get(id = pk)
+    if request.method == 'GET':
+        list_others = Others.objects.filter(client=client)
+        others_serializer = OthersSerializer(list_others, many=True)
+        print(others_serializer)
+        return Response(others_serializer.data)
+
+@api_view(['GET'])
+def single_others(request, pk, others_pk):
+    client = Client.objects.get(id=pk)
+    others = Others.objects.get(id = others_pk, client=client)
+    if request.method == 'GET':
+        ser = OthersSerializer(others)
+        print(ser)
+        return Response(ser.data)
+
+@api_view(['DELETE'])
+def delete_others(request, pk, others_pk ):
+    client = Client.objects.get(id = pk)
+    others = Others.objects.get(id = others_pk, client=client)
+    if request.method == 'DELETE':
+        others.delete()
+        return Response({'message':'Others Delete'})
+    return Response({'error_message':'Fail to delete Others'} ,status=status.HTTP_400_BAD_REQUEST)
+
 
 # *************************************************TDS Payment***********************************************
 @api_view(['POST'])
@@ -1911,6 +2930,50 @@ def create_tdspayment(request, pk):
                 'message': 'Fail to create TDS Payment',
                 'error_message': serializer.errors,
                 },status=status.HTTP_400_BAD_REQUEST)
+
+class ExcelImportViewtds(APIView):
+    parser_classes = [MultiPartParser]
+
+    def post(self, request, pk, *args, **kwargs):
+        try:
+            client = Client.objects.get(pk=pk)
+        except Client.DoesNotExist:
+            return Response({"error_message": "Client not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        file = request.FILES.get('file')
+        if not file:
+            return Response({"error_message": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        wb = load_workbook(file)
+        ws = wb.active
+
+        fields = [
+            'client_name', 'date', 'PAN', 'amount', 
+            'cgst', 'sgst', 'igst', 'total_amt', 
+            'tds_rate', 'tds_section', 'tds_amount', 
+            'net_amount', 'tds_payment_date', 'tds_challan_no' 
+        ]
+
+        for row in ws.iter_rows(min_row=2):  # Skip the header row
+            data = {field: row[i].value for i, field in enumerate(fields)}
+
+            # employee_code = data.get('employee_code')
+            # month = data.get('month')
+
+            # if not employee_code or not month:
+            #     continue  # Skip invalid rows
+
+            # # Check if employee_code already exists for the given month
+            # if PF.objects.filter(employee_code=employee_code, month=month).exists():
+            #     return Response(
+            #         {"error_message": f"Employee {employee_code} already exists for month {month}"},
+            #         status=status.HTTP_400_BAD_REQUEST
+            #     )
+
+            # Create new PF entry
+            TDSPayment.objects.create(client=client, **data)
+
+        return Response({"status": "success", "message": "All entries uploaded successfully"}, status=status.HTTP_201_CREATED)
 
 @api_view(['GET', 'POST'])
 def edit_tdspayment(request, pk, tdspayment_pk):
@@ -2069,7 +3132,236 @@ def delete_tds(request, pk, tds_pk ):
     if request.method == 'DELETE':
         tds.delete()
         return Response({'message':'TDS Return Delete'})
-    return Response({'error_message':'Fail to delete TDS Return'} ,status=status.HTTP_400_BAD_REQUEST)
+    return Response({'error_message':'Fail to delete TDS Return'} ,status=status.HTTP_400_BAD_REQUEST) 
+    
+
+# *************************************************TDS Section**************************************************
+
+# @api_view(['POST'])
+# def create_tdssection(request, pk):
+#     client = Client.objects.get(id=pk)
+#     if request.method == 'POST':    
+#         serializer = TDSSectionSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save(client=client)
+#             return Response({
+#                 'message': 'TDS Section created',
+#                 'data': serializer.data,
+#                 },status=status.HTTP_201_CREATED)
+#         return Response({
+#                 'message': 'Fail to create TDS Section',
+#                 'error_message': serializer.errors,
+#                 },status=status.HTTP_400_BAD_REQUEST)
+
+# class ExcelImportViewtdssection(APIView):
+#     parser_classes = [MultiPartParser]
+
+#     def post(self, request, pk, *args, **kwargs):
+#         try:
+#             client = Client.objects.get(pk=pk)
+#         except Client.DoesNotExist:
+#             return Response({"error_message": "Client not found"}, status=status.HTTP_404_NOT_FOUND)
+
+#         file = request.FILES.get('file')
+#         if not file:
+#             return Response({"error_message": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         wb = load_workbook(file)
+#         ws = wb.active
+
+#         fields = [
+#             'name'
+#         ]
+
+#         for row in ws.iter_rows(min_row=2):  # Skip the header row
+#             data = {field: row[i].value for i, field in enumerate(fields)}
+
+#             # employee_code = data.get('employee_code')
+#             # month = data.get('month')
+
+#             # if not employee_code or not month:
+#             #     continue  # Skip invalid rows
+
+#             # # Check if employee_code already exists for the given month
+#             # if PF.objects.filter(employee_code=employee_code, month=month).exists():
+#             #     return Response(
+#             #         {"error_message": f"Employee {employee_code} already exists for month {month}"},
+#             #         status=status.HTTP_400_BAD_REQUEST
+#             #     )
+
+#             # Create new PF entry
+#             TDSSection.objects.create(client=client, **data)
+
+#         return Response({"status": "success", "message": "All entries uploaded successfully"}, status=status.HTTP_201_CREATED)
+
+# @api_view(['POST', 'GET'])
+# def edit_tdssection(request, pk, tdssection_pk):
+#     client = Client.objects.get(id=pk)
+#     section = TDSSection.objects.get(id=tdssection_pk, client=client)
+#     serializer = TDSSectionSerializer(instance=section, data=request.data)
+#     if request.method == 'GET':
+#         tds_serializer = TDSSectionSerializer(section)
+#         print(tds_serializer.data)
+#         return Response (tds_serializer.data)
+#     elif request.method == 'POST':
+#         if serializer.is_valid():
+#             serializer.save(client=client)  
+#             return Response({
+#                 'message': 'TDS Section updated',
+#                 'data': serializer.data,
+#                 'status' : status.HTTP_200_OK
+#             })
+#         return Response({
+#                 'message': 'Fail to update TDS Section',
+#                 'error_message': serializer.errors,
+#                 },status=status.HTTP_400_BAD_REQUEST)
+
+# @api_view(['GET'])
+# def list_tdssection(request, pk):
+#     client = Client.objects.get(id=pk)
+#     if request.method == 'GET':
+#         list_tdssection = TDSSection.objects.filter(client=client)
+#         tds_ser = TDSSectionSerializer(list_tdssection, many = True)
+#         return Response(tds_ser.data)
+        
+# @api_view(['GET'])
+# def single_tdssection(request, pk, tdssection_pk):
+#     client = Client.objects.get(id=pk)
+#     tds = TDSSection.objects.get(id=tdssection_pk)
+#     if request.method == 'GET':
+#         ser = TDSSectionSerializer(tds)
+#         return Response(ser.data)
+
+# @api_view(['DELETE'])
+# def delete_tdssection(request, pk, tdssection_pk):
+#     client = Client.objects.get(id=pk)
+#     tds = TDSSection.objects.get(id=tdssection_pk)
+#     if request.method == 'DELETE':
+#         tds.delete()
+#         return Response({'message':'TDS Section delete'}, status=status.HTTP_200_OK)
+#     return Response({'error_message':'Fail to delete TDS Section'} ,status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def create_tdssection(request):
+    # client = Client.objects.get(id=pk)
+    if request.method == 'POST':    
+        serializer = TDSSectionSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                'message': 'TDS Section created',
+                'data': serializer.data,
+                },status=status.HTTP_201_CREATED)
+        return Response({
+                'message': 'Fail to create TDS Section',
+                'error_message': serializer.errors,
+                },status=status.HTTP_400_BAD_REQUEST)
+
+class ExcelImportViewtdssection(APIView):
+    parser_classes = [MultiPartParser]
+
+    def post(self, request, *args, **kwargs):
+        # try:
+        #     # client = Client.objects.get(pk=pk)
+        # except Client.DoesNotExist:
+        #     return Response({"error_message": "Client not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        file = request.FILES.get('file')
+        if not file:
+            return Response({"error_message": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        wb = load_workbook(file)
+        ws = wb.active
+
+        fields = [
+            'name'
+        ]
+
+        for row in ws.iter_rows(min_row=2):  # Skip the header row
+            data = {field: row[i].value for i, field in enumerate(fields)}
+
+            # employee_code = data.get('employee_code')
+            # month = data.get('month')
+
+            # if not employee_code or not month:
+            #     continue  # Skip invalid rows
+
+            # # Check if employee_code already exists for the given month
+            # if PF.objects.filter(employee_code=employee_code, month=month).exists():
+            #     return Response(
+            #         {"error_message": f"Employee {employee_code} already exists for month {month}"},
+            #         status=status.HTTP_400_BAD_REQUEST
+            #     )
+
+            # Create new PF entry
+            TDSSection.objects.create(**data)
+
+        return Response({"status": "success", "message": "All entries uploaded successfully"}, status=status.HTTP_201_CREATED)
+
+@api_view(['POST', 'GET'])
+def edit_tdssection(request, tdssection_pk):
+    # client = Client.objects.get(id=pk)
+    section = TDSSection.objects.get(id=tdssection_pk)
+    serializer = TDSSectionSerializer(instance=section, data=request.data)
+    if request.method == 'GET':
+        tds_serializer = TDSSectionSerializer(section)
+        print(tds_serializer.data)
+        return Response (tds_serializer.data)
+    elif request.method == 'POST':
+        if serializer.is_valid():
+            serializer.save()  
+            return Response({
+                'message': 'TDS Section updated',
+                'data': serializer.data,
+                'status' : status.HTTP_200_OK
+            })
+        return Response({
+                'message': 'Fail to update TDS Section',
+                'error_message': serializer.errors,
+                },status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def list_tdssection(request):
+    # client = Client.objects.get(id=pk)
+    if request.method == 'GET':
+        list_tdssection = TDSSection.objects.filter()
+        tds_ser = TDSSectionSerializer(list_tdssection, many = True)
+        return Response(tds_ser.data)
+        
+@api_view(['GET'])
+def single_tdssection(request, tdssection_pk):
+    # client = Client.objects.get(id=pk)
+    tds = TDSSection.objects.get(id=tdssection_pk)
+    if request.method == 'GET':
+        ser = TDSSectionSerializer(tds)
+        return Response(ser.data)
+
+@api_view(['GET'])
+def get_create_tdssection(request):
+    # try:
+    #     client = Client.objects.get(id=pk)
+    # except Client.DoesNotExist:
+    #     return Response({'error_message':'Client not Found.'}, status=404)
+
+    if request.method == 'GET':
+        context = {
+            'tds_section':[],
+        }
+        tds_section = TDSSection.objects.all()
+        tds_section_serializer = TDSSectionSerializer(tds_section, many=True)
+        context.update({
+            'tds_section': tds_section_serializer.data,
+        })
+        return Response(context)
+
+@api_view(['DELETE'])
+def delete_tdssection(request, tdssection_pk):
+    # client = Client.objects.get(id=pk)
+    tds = TDSSection.objects.get(id=tdssection_pk)
+    if request.method == 'DELETE':
+        tds.delete()
+        return Response({'message':'TDS Section delete'}, status=status.HTTP_200_OK)
+    return Response({'error_message':'Fail to delete TDS Section'} ,status=status.HTTP_400_BAD_REQUEST)
 
 # ***********************************************Sales*******************************************
 
@@ -2147,12 +3439,12 @@ def create_sale(request, pk):
     client = Client.objects.get(id=pk)
 
     # Check if 'attach_e_way_bill' is in the request files
-    if 'attach_e_way_bill' in request.FILES:
+    if 'attach_invoice' in request.FILES:
         # Iterate through each file in the 'attach_e_way_bill' field
-        for e_way_bill in request.FILES.getlist('attach_e_way_bill'):
+        for e_way_bill in request.FILES.getlist('attach_invoice'):
             # Prepare data for each file
             sale_data = {
-                'attach_e_way_bill': e_way_bill,  # The file being uploaded
+                'attach_invoice': e_way_bill,  # The file being uploaded
                 'client': client.id,  # Associate the file with the client
             }
 
@@ -2170,7 +3462,6 @@ def create_sale(request, pk):
         return Response({'message': 'Sales E-way bill(s) uploaded successfully.'}, status=status.HTTP_201_CREATED)
     else:
         return Response({'error_message': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
-
 
 @api_view(['GET'])
 def get_sales_invoice_data(request, client_pk, invoice_pk):
@@ -2245,7 +3536,6 @@ def get_sales_invoice_data(request, client_pk, invoice_pk):
 
     return Response(response_data, status=status.HTTP_200_OK)
 
-# update view
 @api_view(['GET', 'PUT'])
 def update_sales_invoice(request, client_pk, invoice_pk):
 
@@ -2278,8 +3568,23 @@ def update_sales_invoice(request, client_pk, invoice_pk):
                 for summary in product_summaries
             ]
 
+            if sales_invoice.po_date:
+                formatted_po = sales_invoice.po_date.strftime("%d-%m-%Y")  # Directly format date
+            else:
+                formatted_po = None
+
+            if sales_invoice.invoice_date:
+                formatted_invoice_date = sales_invoice.invoice_date.strftime("%d-%m-%Y")  # Directly format date
+            else:
+                formatted_invoice_date = None
+
             response_data = {
-                "sales_invoice": sales_invoice_data,
+                "sales_invoice": {
+                    **sales_invoice_data,
+                    "po_date" : formatted_po,
+                    "invoice_date" : formatted_invoice_date
+                    
+                    },
                 "product_summaries": product_summary_data,
                 "client_location": {
                     "id": sales_invoice.client_Location.id if sales_invoice.client_Location else None,
@@ -2366,7 +3671,9 @@ def update_sales_invoice(request, client_pk, invoice_pk):
             invoice_data = {
                 "invoice_no": request.data.get("invoiceData[0][invoice_no]"),
                 "invoice_date": request.data.get("invoiceData[0][invoice_date]"),
-                "month": request.data.get("invoiceData[0][month]"),
+                "po_no": request.data.get("invoiceData[0][po_no]"),
+                "po_date": request.data.get("invoiceData[0][po_date]"),
+                # "month": request.data.get("invoiceData[0][month]"),
                 "invoice_type": request.data.get("invoiceData[0][invoice_type]"),
                 "entry_type": request.data.get("invoiceData[0][entry_type]"),
                 "taxable_amount": request.data.get("invoiceData[0][taxable_amount]"),
@@ -2379,6 +3686,20 @@ def update_sales_invoice(request, client_pk, invoice_pk):
                 "attach_invoice": request.data.get("invoiceData[0][attach_invoice]"),
                 "attach_e_way_bill": request.data.get("invoiceData[0][attach_e_way_bill]"),
             }
+
+            if invoice_data["invoice_date"]:
+                try:
+                    invoice_data["invoice_date"] = datetime.strptime(invoice_data["invoice_date"], "%d-%m-%Y").date()
+                except ValueError:
+                    return Response({"error_message": "Invalid Invoice date format, expected DD-MM-YYYY."}, status=status.HTTP_400_BAD_REQUEST)
+            print("Final invoice date:", invoice_data["invoice_date"])
+
+            if invoice_data["po_date"]:
+                try:
+                    invoice_data["po_date"] = datetime.strptime(invoice_data["po_date"], "%d-%m-%Y").date()
+                except ValueError:
+                    return Response({"error_message": "Invalid PO date format, expected DD-MM-YYYY."},status=status.HTTP_400_BAD_REQUEST)
+
 
             attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
             attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
@@ -2576,7 +3897,6 @@ def update_sales_invoice(request, client_pk, invoice_pk):
         # print({"Error in update_sales_invoice" : str(e)})
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 @api_view(['POST'])
 def create_sales_invoice2(request, client_pk):
     try:
@@ -2618,7 +3938,9 @@ def create_sales_invoice2(request, client_pk):
             invoice_data = {
                 "invoice_no": payload.get("invoiceData[0][invoice_no]"),
                 "invoice_date": payload.get("invoiceData[0][invoice_date]"),
-                "month": payload.get("invoiceData[0][month]"),
+                "po_no": payload.get("invoiceData[0][po_no]"),
+                "po_date": payload.get("invoiceData[0][po_date]"),
+                # "month": payload.get("invoiceData[0][month]"),
                 "invoice_type": payload.get("invoiceData[0][invoice_type]"),
                 "entry_type": payload.get("invoiceData[0][entry_type]"),
                 "taxable_amount": payload.get("invoiceData[0][taxable_amount]"),
@@ -2629,6 +3951,22 @@ def create_sales_invoice2(request, client_pk):
                 "tds": payload.get("invoiceData[0][tds]"),
                 "amount_receivable": payload.get("invoiceData[0][amount_receivable]"),
             }
+            if invoice_data["invoice_date"]:
+                try:
+                    invoice_data["invoice_date"] = datetime.strptime(invoice_data["invoice_date"], "%d-%m-%Y").date()
+                except ValueError:
+                    return Response({"error_message": "Invalid date format, expected DD-MM-YYYY."}, status=status.HTTP_400_BAD_REQUEST)
+            print("Final invoice date:", invoice_data["invoice_date"])
+
+            if invoice_data["po_date"]:
+                try:
+                    invoice_data["po_date"] = datetime.strptime(invoice_data["po_date"], "%d-%m-%Y").date()
+                except ValueError:
+                    return Response({"error_message": "Invalid PO date format, expected DD-MM-YYYY."},status=status.HTTP_400_BAD_REQUEST)
+
+            print("Final month:", invoice_data["po_date"])
+
+
             attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
             attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
 
@@ -2780,7 +4118,6 @@ def delete_sales_invoice(request, client_pk, pk):
         # print({"Error in update_sales_invoice" : str(e)})
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 @api_view(['GET', 'PATCH'])
 def sales_invoice_detail_view(request, client_pk, invoice_pk):
     try:
@@ -2801,7 +4138,9 @@ def sales_invoice_detail_view(request, client_pk, invoice_pk):
         # Update fields from the request payload
         sales_invoice.invoice_no = data.get('invoice_no', sales_invoice.invoice_no)
         sales_invoice.invoice_date = data.get('invoice_date', sales_invoice.invoice_date)
-        sales_invoice.month = data.get('month', sales_invoice.month)
+        sales_invoice.po_no = data.get('po_no', sales_invoice.po_no)
+        sales_invoice.po_date = data.get('po_date', sales_invoice.po_date)
+        # sales_invoice.month = data.get('month', sales_invoice.month)
         sales_invoice.invoice_type = data.get('invoice_type', sales_invoice.invoice_type)
         sales_invoice.entry_type = data.get('entry_type', sales_invoice.entry_type)
         sales_invoice.taxable_amount = safe_decimal(data.get('taxable_amount', sales_invoice.taxable_amount))
@@ -2885,6 +4224,7 @@ def sales_invoice_detail_view(request, client_pk, invoice_pk):
         updated_serializer = SalesSerializer(sales_invoice)
         return Response(updated_serializer.data, status=status.HTTP_200_OK)
 
+
 # **************************************************Purchase***************************************************
 @api_view(['GET','POST'])
 def create_purchase_get(request, pk):
@@ -2952,12 +4292,12 @@ def create_purchase(request, pk):
     client = Client.objects.get(id=pk)
 
     # Check if 'attach_e_way_bill' is in the request files
-    if 'attach_e_way_bill' in request.FILES:
-        # Iterate through each file in the 'attach_e_way_bill' field
-        for e_way_bill in request.FILES.getlist('attach_e_way_bill'):
+    if 'attach_invoice' in request.FILES:
+        # Iterate through each file in the 'attach_invoice' field
+        for e_way_bill in request.FILES.getlist('attach_invoice'):
             # Prepare data for each file
             purchase_data = {
-                'attach_e_way_bill': e_way_bill,  # The file being uploaded
+                'attach_invoice': e_way_bill,  # The file being uploaded
                 'client': client.id,  # Associate the file with the client
             }
 
@@ -3026,6 +4366,8 @@ def get_purchase_invoice_data(request, client_pk, invoice_pk):
         "vendor_address": get_safe_attr(vendor, 'address'),
         "customer": get_safe_attr(vendor, 'customer'),
         "vendor": get_safe_attr(vendor, 'vendor'),
+        "email": get_safe_attr(vendor, 'email'),
+        "contact": get_safe_attr(vendor, 'contact'),
     }
     response_data = {
         'purchase_invoice' : purchase_invoice_data,
@@ -3061,9 +4403,31 @@ def update_purchase_invoice(request, client_pk, invoice_pk):
                 }
                 for summary in product_summaries
             ]
+
+            if purchase_invoice.month:
+                formatted_month = purchase_invoice.month.strftime("%d-%m-%Y")  # Directly format date
+            else:
+                formatted_month = None
+
+            if purchase_invoice.invoice_date:
+                formatted_invoice_date = purchase_invoice.invoice_date.strftime("%d-%m-%Y")  # Directly format date
+            else:
+                formatted_invoice_date = None
+
+            if purchase_invoice.utilise_month:
+                formatted_utilise = purchase_invoice.utilise_month.strftime("%d-%m-%Y")
+            else:
+                formatted_utilise = None
+
             
             response_data ={
-                "purchase_invoice" : purchase_invoice_data,
+                # "purchase_invoice" : purchase_invoice_data,
+                "purchase_invoice": {
+                    **purchase_invoice_data,
+                    "month": formatted_month,  # Ensure month is sent in dd/mm/yyyy format
+                    "invoice_date" : formatted_invoice_date,
+                    "utilise_month" : formatted_utilise,
+                },
                 "product_summaries" : product_summary_data,
                 "client_location": {
                     "id": purchase_invoice.client_Location.id if purchase_invoice.client_Location else None,
@@ -3083,6 +4447,8 @@ def update_purchase_invoice(request, client_pk, invoice_pk):
                     "vendor_address": purchase_invoice.vendor.address if purchase_invoice.vendor else None,
                     "customer": purchase_invoice.vendor.customer if purchase_invoice.vendor else None,
                     "vendor": purchase_invoice.vendor.vendor if purchase_invoice.vendor else None,
+                    "email": purchase_invoice.vendor.email if purchase_invoice.vendor else None,
+                    "contact": purchase_invoice.vendor.contact if purchase_invoice.vendor else None,
                 },
             }
             #  print('bbbbbbbbbbbbbbbbbbbbbbb',response_data["sales_invoice"])
@@ -3124,7 +4490,9 @@ def update_purchase_invoice(request, client_pk, invoice_pk):
                 "name": request.data.get("vendorData[name]"),
                 "gst_no": request.data.get("vendorData[gst_no]"),
                 "pan": request.data.get("vendorData[pan]"),
-                "vendor_address": request.data.get("vendorData[vendor_address]"),
+                "vendor_address": request.data.get("vendorData[vendor_address]"),  #nnnnnnnnn
+                "email": request.data.get("vendorData[email]"),  #nnnnnnnnn
+                "contact": request.data.get("vendorData[contact]"),  #nnnnnnnnn
                 "customer": request.data.get("vendorData[customer]").lower() == "true" if request.data.get("vendorData[customer]") else None,
                 "vendor": request.data.get("vendorData[vendor]").lower() == "true" if request.data.get("vendorData[vendor]") else None,
             }
@@ -3147,6 +4515,27 @@ def update_purchase_invoice(request, client_pk, invoice_pk):
                 "utilise_month": payload.get("invoiceData[0][utilise_month]"), #nnnnnn
 
             }
+
+            if invoice_data["invoice_date"]:
+                try:
+                    invoice_data["invoice_date"] = datetime.strptime(invoice_data["invoice_date"], "%d-%m-%Y").date()
+                except ValueError:
+                    return Response({"error_message": "Invalid Invoice date format, expected DD-MM-YYYY."}, status=status.HTTP_400_BAD_REQUEST)
+            print("Final invoice date:", invoice_data["invoice_date"])
+
+            if invoice_data["month"]:
+                try:
+                    invoice_data["month"] = datetime.strptime(invoice_data["month"], "%d-%m-%Y").date()
+                except ValueError:
+                    return Response({"error_message": "Invalid Month date format, expected DD-MM-YYYY."},status=status.HTTP_400_BAD_REQUEST)
+
+            if invoice_data["utilise_month"]:
+                try:
+                    invoice_data["utilise_month"] = datetime.strptime(invoice_data["utilise_month"], "%d-%m-%Y").date()
+                except ValueError:
+                    return Response({"error_message": "Invalid Utilise Month date format, expected DD-MM-YYYY."},status=status.HTTP_400_BAD_REQUEST)
+
+            print("Final month:", invoice_data["month"])
             attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
             attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
             data = request.data
@@ -3329,6 +4718,7 @@ def update_purchase_invoice(request, client_pk, invoice_pk):
                     )
                     
                 purchase_invoice.client_Location = location_obj
+                print('my payload',request.data)
                 purchase_invoice.save()
                 
                 
@@ -3346,14 +4736,14 @@ def update_purchase_invoice(request, client_pk, invoice_pk):
         # print({"Error in update_sales_invoice" : str(e)})
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 @api_view(['POST'])
 def create_purchase_invoice2(request, client_pk):
     try:
         with transaction.atomic():
             data = request.data
             payload = request.data
-            print('payload',payload)
+            # print('payload',payload)
+            # print('aaaaaaaaaaaaaa',invoice_data)
 
             rows_data = defaultdict(dict)
             for key, value in payload.items():
@@ -3362,6 +4752,8 @@ def create_purchase_invoice2(request, client_pk):
                     field_name = key.split('[')[2].split(']')[0]
                     rows_data[int(row_index)][field_name] = value
             rows = [rows_data[index] for index in sorted(rows_data.keys())]
+            # print('aaaaaaaaaaaaaa',invoice_data)
+            print('aaaaaaaaaaaaaacccc',request.data)
             
             form_data = {
                 "offLocID" : payload.get("formData[offLocID]"),
@@ -3378,12 +4770,15 @@ def create_purchase_invoice2(request, client_pk):
                 "gst_no" : payload.get("vendorData[gst_no]"),
                 "pan" : payload.get("vendorData[pan]"),
                 "address" : payload.get("vendorData[vendor_address]"), #nnnnnnnnn
+                "email" : payload.get("vendorData[email]"),  #nnnnnnnnn
+                "contact" : payload.get("vendorData[contact]"),  #nnnnnnnnn
                 "customer" : payload.get("vendorData[customer]", "").lower() == "true",
                 "vendor" : payload.get("vendorData[vendor]", "").lower() == "true",
             }
             invoice_data = {
                 "invoice_no" : payload.get("invoiceData[0][invoice_no]"),
                 "invoice_date" : payload.get("invoiceData[0][invoice_date]"),
+                # "invoice_date": payload.get("invoiceData[0][invoice_date]") or payload.get("selectedInvoiceDate"),
                 "month" : payload.get("invoiceData[0][month]"),
                 "invoice_type" : payload.get("invoiceData[0][invoice_type]"),
                 "entry_type" : payload.get("invoiceData[0][entry_type]"),
@@ -3398,8 +4793,24 @@ def create_purchase_invoice2(request, client_pk):
                 # "utilise_month": payload.get("invoiceData[0][utilise_month]").lower(), #nnnnnn
                 
             }
+            if invoice_data["invoice_date"]:
+                try:
+                    invoice_data["invoice_date"] = datetime.strptime(invoice_data["invoice_date"], "%d-%m-%Y").date()
+                except ValueError:
+                    return Response({"error_message": "Invalid date format, expected DD-MM-YYYY."}, status=status.HTTP_400_BAD_REQUEST)
+            print("Final invoice date:", invoice_data["invoice_date"])
+
+            if invoice_data["month"]:
+                try:
+                    invoice_data["month"] = datetime.strptime(invoice_data["month"], "%d-%m-%Y").date()
+                except ValueError:
+                    return Response({"error_message": "Invalid Month date format, expected DD-MM-YYYY."},status=status.HTTP_400_BAD_REQUEST)
+
+            print("Final month:", invoice_data["month"])
+
             attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
             attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
+            print('aaaaaaaaaaaaaad',invoice_data)
 
             vendor_obj = None
             if vendor_data.get("gst_no"):
@@ -3469,6 +4880,7 @@ def create_purchase_invoice2(request, client_pk):
                 )
 
                 # Create ProductSummary
+                # print('aaaaaaaaaaaaaad',invoice_data)
                 product_summary = ProductSummaryPurchase(
                     hsn=hsn_code_obj,
                     product=product_obj,
@@ -3519,7 +4931,6 @@ def create_purchase_invoice2(request, client_pk):
         # print({"Error in update_sales_invoice" : str(e)})
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 @api_view(['GET','PATCH'])
 def purchase_invoice_detail_view(request, client_pk, invoice_pk):
     try:
@@ -3547,6 +4958,7 @@ def purchase_invoice_detail_view(request, client_pk, invoice_pk):
         purchase_invoice.amount_receivable = safe_decimal(data.get('amount_receivable', purchase_invoice.amount_receivable))
         purchase_invoice.utilise_edit = data.get('utilise_edit', purchase_invoice.utilise_edit)
         purchase_invoice.utilise_month = data.get('utilise_month', purchase_invoice.utilise_month)
+
 
         rows = data.get('rows',[])
         product_summaries = []
@@ -3647,8 +5059,6 @@ def delete_purchase_invoice(request, client_pk, pk):
         # print({"Error in update_sales_invoice" : str(e)})
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-
 # ******************************************************Debit Note******************************************************
 @api_view(['GET', 'POST'])
 def create_debit_note_get(request, pk):
@@ -3726,12 +5136,12 @@ def create_debit_note(request, client_pk, invoice_pk):
     sales = SalesInvoice.objects.get(id=invoice_pk, client=client)
 
     # Check if 'attach_e_way_bill' is in the request files
-    if 'attach_e_way_bill' in request.FILES:
+    if 'attach_invoice' in request.FILES:
         # Iterate through each file in the 'attach_e_way_bill' field
-        for e_way_bill in request.FILES.getlist('attach_e_way_bill'):
+        for e_way_bill in request.FILES.getlist('attach_invoice'):
             # Prepare data for each file
             debitnote_data = {
-                'attach_e_way_bill': e_way_bill,  # The file being uploaded
+                'attach_invoice': e_way_bill,  # The file being uploaded
                 'client': client.id,  # Associate the file with the client
                 'sales_invoice' : sales.id,
             }
@@ -3810,6 +5220,8 @@ def get_debit_note_data(request, client_pk, invoice_pk, debit_pk):
         "customer_address": get_safe_attr(customer, 'address'),
         "customer": get_safe_attr(customer, 'customer'),
         "vendor": get_safe_attr(customer, 'vendor'),
+        "email": get_safe_attr(customer, 'email'),
+        "contact": get_safe_attr(customer, 'contact'),
     }
 
     # Prepare final response data
@@ -3821,7 +5233,6 @@ def get_debit_note_data(request, client_pk, invoice_pk, debit_pk):
     }
 
     return Response(response_data, status=status.HTTP_200_OK)
-
 
 @api_view(['GET', 'POST'])
 def update_debit_note(request, client_pk, invoice_pk):
@@ -3912,235 +5323,266 @@ def update_debit_note(request, client_pk, invoice_pk):
                     "customer_address": debit_note.customer.address if debit_note.customer else None,
                     "customer": debit_note.customer.customer if debit_note.customer else None,
                     "vendor": debit_note.customer.vendor if debit_note.customer else None,
+                    "email": debit_note.customer.email if debit_note.customer else None,
+                    "contact": debit_note.customer.contact if debit_note.customer else None,
                 },
             }
             return Response(response_data, status=status.HTTP_200_OK)
 
         # Handle PUT request
         elif request.method == 'POST':
-            payload = request.data
-            data = request.data
+            try:
+                with transaction.atomic(): 
+                    payload = request.data
+                    data = request.data
 
-             # Fetch the Client
-            client = Client.objects.filter(pk=client_pk).first()
-            if not client:
-                return Response({"error_message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
+                    # Fetch the Client
+                    client = Client.objects.filter(pk=client_pk).first()
+                    if not client:
+                        return Response({"error_message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
 
-            # Fetch the Sales Invoice
-            sales_invoice = SalesInvoice.objects.filter(client_id=client_pk, id=invoice_pk) \
-                .select_related('client_Location', 'customer') \
-                .prefetch_related('product_summaries__hsn', 'product_summaries__prod_description') \
-                .first()
+                    # Fetch the Sales Invoice
+                    sales_invoice = SalesInvoice.objects.filter(client_id=client_pk, id=invoice_pk) \
+                        .select_related('client_Location', 'customer') \
+                        .prefetch_related('product_summaries__hsn', 'product_summaries__prod_description') \
+                        .first()
 
-            if not sales_invoice:
-                return Response({"error_message": "Sales Invoice not found or does not belong to the client."},
-                                status=status.HTTP_404_NOT_FOUND)
+                    if not sales_invoice:
+                        return Response({"error_message": "Sales Invoice not found or does not belong to the client."},
+                                        status=status.HTTP_404_NOT_FOUND)
 
-            # Calculate remaining units
-            debit_notes = DebitNote.objects.filter(sales_invoice=sales_invoice)
-            product_unit_sums = defaultdict(int)
+                    # Calculate remaining units
+                    debit_notes = DebitNote.objects.filter(sales_invoice=sales_invoice)
+                    product_unit_sums = defaultdict(int)
 
-            for dn in debit_notes:
-                for product_summary in dn.product_summaries.all():
-                    product_name = product_summary.product_name()
-                    product_unit = product_summary.unit() or 0
-                    product_unit_sums[product_name] += product_unit
+                    for dn in debit_notes:
+                        for product_summary in dn.product_summaries.all():
+                            product_name = product_summary.product_name()
+                            product_unit = product_summary.unit() or 0
+                            product_unit_sums[product_name] += product_unit
 
-            remaining_units = {}
-            for product in sales_invoice.product_summaries.all():
-                product_name = product.product_name()
-                si_unit = product.unit() or 0
-                dn_unit_sum = product_unit_sums[product_name]
-                remaining_units[product_name] = si_unit - dn_unit_sum
+                    remaining_units = {}
+                    for product in sales_invoice.product_summaries.all():
+                        product_name = product.product_name()
+                        si_unit = product.unit() or 0
+                        dn_unit_sum = product_unit_sums[product_name]
+                        remaining_units[product_name] = si_unit - dn_unit_sum
 
-            print('gggggggggg',remaining_units)
-            
-            # Validations..........
-            if all(unit == 0 for unit in remaining_units.values()):
-                return Response(
-                    {"message": "Cannot create a new Debit Note. All product remaining units are 0."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            for product_name, unit in remaining_units.items():
-                if unit is None:
-                    return Response({"message" : f"Remaining units for product '{product_name}' is missing or undefined."}, status=status.HTTP_400_BAD_REQUEST)
-                if unit < 0:
-                    return Response({"message" : f"Remaining units for prooooooooooooduct '{product_name}' cannot be negative. Current value: {unit}"}, status=status.HTTP_400_BAD_REQUEST)
-
-            # Extract rows dynamically
-            rows_data = defaultdict(dict)
-            for key, value in payload.items():
-                if key.startswith("rows["):
-                    row_index = key.split('[')[1].split(']')[0]
-                    field_name = key.split('[')[2].split(']')[0]
-                    rows_data[int(row_index)][field_name] = value
-            rows = [rows_data[index] for index in sorted(rows_data.keys())]
-
-            # Extract form data, vendor data, and invoice data
-            form_data = {
-                "offLocID": payload.get("formData[offLocID]"),
-                "location": payload.get("formData[location]"),
-                "contact": payload.get("formData[contact]"),
-                "address": payload.get("formData[address]"),
-                "city": payload.get("formData[city]"),
-                "state": payload.get("formData[state]"),
-                "country": payload.get("formData[country]"),
-                "branchID": payload.get("formData[branchID]"),
-            }
-            vendor_data = {
-                "name": payload.get("vendorData[name]"),
-                "gst_no": payload.get("vendorData[gst_no]"),
-                "pan": payload.get("vendorData[pan]"),
-                "customer_address": payload.get("vendorData[customer_address]"),
-                "customer": payload.get("vendorData[customer]", "").lower() == "true",
-                "vendor": payload.get("vendorData[vendor]", "").lower() == "true",
-            }
-            invoice_data = {
-                "invoice_no": payload.get("invoiceData[0][invoice_no]"),
-                "invoice_date": payload.get("invoiceData[0][invoice_date]"),
-                "month": payload.get("invoiceData[0][month]"),
-                "invoice_type": payload.get("invoiceData[0][invoice_type]"),
-                "entry_type": payload.get("invoiceData[0][entry_type]"),
-                "taxable_amount": payload.get("invoiceData[0][taxable_amount]"),
-                "totalall_gst": payload.get("invoiceData[0][totalall_gst]"),
-                "total_invoice_value": payload.get("invoiceData[0][total_invoice_value]"),
-                "tds_tcs_rate": payload.get("invoiceData[0][tds_tcs_rate]"),
-                "tcs": payload.get("invoiceData[0][tcs]"),
-                "tds": payload.get("invoiceData[0][tds]"),
-                "amount_receivable": payload.get("invoiceData[0][amount_receivable]"),
-            }
-            attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
-            attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
-
-            # Handle Vendor creation or update
-            vendor_obj = None
-            if vendor_data.get("gst_no"):
-                existing_vendor = Customer.objects.filter(client=client, gst_no=vendor_data["gst_no"]).first()
-                if existing_vendor:
-                    vendor_serializer = CustomerVendorSerializer(existing_vendor, data=vendor_data, partial=True)
-                    if vendor_serializer.is_valid():
-                        vendor_obj = vendor_serializer.save()
-                    else:
-                        return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    vendor_serializer = CustomerVendorSerializer(data=vendor_data)
-                    if vendor_serializer.is_valid():
-                        vendor_obj = vendor_serializer.save(client=client)
-                    else:
-                        return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-            if any(unit is None for unit in remaining_units.values()):
-                return Response({"message" : f"Remaining units for product {product} is missing."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            else:
-                debit_note_serializer = DebitNoteSerializer(data=data)
-
-                if debit_note_serializer.is_valid():
-                    location_obj = None
-                    if form_data["offLocID"]:
-                        location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
-                        if not location_obj:
-                            return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
-                    else:
-                        branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
-                        if not branch_instance:
-                            return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
-                                            status=status.HTTP_404_NOT_FOUND)
-                        location_obj, _ = OfficeLocation.objects.get_or_create(
-                            location=form_data.get("location"),
-                            contact=form_data.get("contact"),
-                            address=form_data.get("address"),
-                            city=form_data.get("city"),
-                            state=form_data.get("state"),
-                            country=form_data.get("country"),
-                            branch=branch_instance
+                    print('gggggggggg',remaining_units)
+                    
+                    # Validations..........
+                    if all(unit == 0 for unit in remaining_units.values()):
+                        return Response(
+                            {"message": "Cannot create a new Debit Note. All product remaining units are 0."},
+                            status=status.HTTP_400_BAD_REQUEST
                         )
+                    
+                    for product_name, unit in remaining_units.items():
+                        if unit is None:
+                            return Response({"message" : f"Remaining units for product '{product_name}' is missing or undefined."}, status=status.HTTP_400_BAD_REQUEST)
+                        if unit < 0:
+                            return Response({"message" : f"Remaining units for prooooooooooooduct '{product_name}' cannot be negative. Current value: {unit}"}, status=status.HTTP_400_BAD_REQUEST)
 
-                    for row in rows:
-                        product_name = row.get('product')
-                        unit_value = safe_decimal(row.get('unit', '0'))
-                        
-                        # Skip rows with unit value as 0 or negative
-                        if unit_value <= 0:
-                            continue  # Skip processing this row
-                        
-                        # Validate remaining units for the product
-                        if product_name in remaining_units:
-                            if remaining_units[product_name] < unit_value:
-                                return Response(
-                                    {
-                                        "message": f"Not enough units remaining for the product '{product_name}'. "
-                                                f"Available: {remaining_units[product_name]}, Requested: {unit_value}."
-                                    },
-                                    status=status.HTTP_400_BAD_REQUEST
+                    # Extract rows dynamically
+                    rows_data = defaultdict(dict)
+                    for key, value in payload.items():
+                        if key.startswith("rows["):
+                            row_index = key.split('[')[1].split(']')[0]
+                            field_name = key.split('[')[2].split(']')[0]
+                            rows_data[int(row_index)][field_name] = value
+                    rows = [rows_data[index] for index in sorted(rows_data.keys())]
+
+                    # Extract form data, vendor data, and invoice data
+                    form_data = {
+                        "offLocID": payload.get("formData[offLocID]"),
+                        "location": payload.get("formData[location]"),
+                        "contact": payload.get("formData[contact]"),
+                        "address": payload.get("formData[address]"),
+                        "city": payload.get("formData[city]"),
+                        "state": payload.get("formData[state]"),
+                        "country": payload.get("formData[country]"),
+                        "branchID": payload.get("formData[branchID]"),
+                    }
+                    vendor_data = {
+                        "name": payload.get("vendorData[name]"),
+                        "gst_no": payload.get("vendorData[gst_no]"),
+                        "pan": payload.get("vendorData[pan]"),
+                        "customer_address": payload.get("vendorData[customer_address]"),
+                        "email": payload.get("vendorData[email]"),
+                        "contact": payload.get("vendorData[contact]"),
+                        "customer": payload.get("vendorData[customer]", "").lower() == "true",
+                        "vendor": payload.get("vendorData[vendor]", "").lower() == "true",
+                    }
+                    invoice_data = {
+                        "invoice_no": payload.get("invoiceData[0][invoice_no]"),
+                        "invoice_date": payload.get("invoiceData[0][invoice_date]"),
+                        # "month": payload.get("invoiceData[0][month]"),
+                        "po_date": payload.get("invoiceData[0][po_date]"),
+                        "po_no": payload.get("invoiceData[0][po_no]"),
+                        "invoice_type": payload.get("invoiceData[0][invoice_type]"),
+                        "entry_type": payload.get("invoiceData[0][entry_type]"),
+                        "taxable_amount": payload.get("invoiceData[0][taxable_amount]"),
+                        "totalall_gst": payload.get("invoiceData[0][totalall_gst]"),
+                        "total_invoice_value": payload.get("invoiceData[0][total_invoice_value]"),
+                        "tds_tcs_rate": payload.get("invoiceData[0][tds_tcs_rate]"),
+                        "tcs": payload.get("invoiceData[0][tcs]"),
+                        "tds": payload.get("invoiceData[0][tds]"),
+                        "amount_receivable": payload.get("invoiceData[0][amount_receivable]"),
+                    }
+
+                    if invoice_data["invoice_date"]:
+                        try:
+                            invoice_data["invoice_date"] = datetime.strptime(invoice_data["invoice_date"], "%d-%m-%Y").date()
+                        except ValueError:
+                            return Response({"error_message": "Invalid Invoice date format, expected DD-MM-YYYY."}, status=status.HTTP_400_BAD_REQUEST)
+                    print("Final invoice date:", invoice_data["invoice_date"])
+
+                    if invoice_data["po_date"]:
+                        try:
+                            invoice_data["po_date"] = datetime.strptime(invoice_data["po_date"], "%d-%m-%Y").date()
+                        except ValueError:
+                            return Response({"error_message": "Invalid PO date format, expected DD-MM-YYYY."},status=status.HTTP_400_BAD_REQUEST)
+
+                    # if invoice_data["utilise_month"]:
+                    #     try:
+                    #         invoice_data["utilise_month"] = datetime.strptime(invoice_data["utilise_month"], "%d-%m-%Y").date()
+                    #     except ValueError:
+                    #         return Response({"error_message": "Invalid Utilise Month date format, expected DD-MM-YYYY."},status=status.HTTP_400_BAD_REQUEST)
+
+            # print("Final month:", invoice_data["month"])
+                    attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
+                    attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
+
+                    # Handle Vendor creation or update
+                    vendor_obj = None
+                    if vendor_data.get("gst_no"):
+                        existing_vendor = Customer.objects.filter(client=client, gst_no=vendor_data["gst_no"]).first()
+                        if existing_vendor:
+                            vendor_serializer = CustomerVendorSerializer(existing_vendor, data=vendor_data, partial=True)
+                            if vendor_serializer.is_valid():
+                                vendor_obj = vendor_serializer.save()
+                            else:
+                                return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                        else:
+                            vendor_serializer = CustomerVendorSerializer(data=vendor_data)
+                            if vendor_serializer.is_valid():
+                                vendor_obj = vendor_serializer.save(client=client)
+                            else:
+                                return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+                    if any(unit is None for unit in remaining_units.values()):
+                        return Response({"message" : f"Remaining units for product {product} is missing."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    else:
+                        debit_note_serializer = DebitNoteSerializer(data=data)
+
+                        if debit_note_serializer.is_valid():
+                            location_obj = None
+                            if form_data["offLocID"]:
+                                location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
+                                if not location_obj:
+                                    return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+                            else:
+                                branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
+                                if not branch_instance:
+                                    return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+                                                    status=status.HTTP_404_NOT_FOUND)
+                                location_obj, _ = OfficeLocation.objects.get_or_create(
+                                    location=form_data.get("location"),
+                                    contact=form_data.get("contact"),
+                                    address=form_data.get("address"),
+                                    city=form_data.get("city"),
+                                    state=form_data.get("state"),
+                                    country=form_data.get("country"),
+                                    branch=branch_instance
                                 )
-                            
-                            # Deduct the used units from the remaining_units
-                            remaining_units[product_name] -= unit_value
-                        else:
-                            return Response(
-                                {"message": f"Product '{product_name}' not found in remaining units."},
-                                status=status.HTTP_400_BAD_REQUEST
-                            )
-        
-                # if not debit_note_serializer.is_valid():
-                    debit_note = DebitNote.objects.create(
-                    client=client,
-                    sales_invoice=sales_invoice,
-                    client_Location=location_obj,
-                    customer=vendor_obj,
-                    attach_invoice=attach_invoice,
-                    attach_e_way_bill=attach_e_way_bill,
-                    **invoice_data
-                    )
-        
-                    product_summaries = []
-                    for row in rows:
-                        product_name = row.get('product')
-                        unit_value = safe_decimal(row.get('unit', '0'))
-                        hsn_code = row.get('hsnCode')
-                        gst_rate = safe_decimal(row.get('gstRate', '0'))
-                        product_id = row.get('product_id')
-                        description_text = row.get('description', '')
-                        rate_value = safe_decimal(row.get('rate', '0'))
-                        amount = safe_decimal(row.get('product_amount', '0'))
-                        cgst = safe_decimal(row.get('cgst', '0'))
-                        sgst = safe_decimal(row.get('sgst', '0'))
-                        igst = safe_decimal(row.get('igst', '0'))
 
-                        hsn_code_obj, _ = HSNCode.objects.get_or_create(
-                            hsn_code=hsn_code, defaults={'gst_rate': gst_rate}
-                        )
+                            for row in rows:
+                                product_name = row.get('product')
+                                unit_value = safe_decimal(row.get('unit', '0'))
+                                
+                                # Skip rows with unit value as 0 or negative
+                                if unit_value <= 0:
+                                    continue  # Skip processing this row
+                                
+                                # Validate remaining units for the product
+                                if product_name in remaining_units:
+                                    if remaining_units[product_name] < unit_value:
+                                        return Response(
+                                            {
+                                                "message": f"Not enough units remaining for the product '{product_name}'. "
+                                                        f"Available: {remaining_units[product_name]}, Requested: {unit_value}."
+                                            },
+                                            status=status.HTTP_400_BAD_REQUEST
+                                        )
+                                    
+                                    # Deduct the used units from the remaining_units
+                                    remaining_units[product_name] -= unit_value
+                                else:
+                                    return Response(
+                                        {"message": f"Product '{product_name}' not found in remaining units."},
+                                        status=status.HTTP_400_BAD_REQUEST
+                                    )
+                
+                        # if not debit_note_serializer.is_valid():
+                            debit_note = DebitNote.objects.create(
+                            client=client,
+                            sales_invoice=sales_invoice,
+                            client_Location=location_obj,
+                            customer=vendor_obj,
+                            attach_invoice=attach_invoice,
+                            attach_e_way_bill=attach_e_way_bill,
+                            **invoice_data
+                            )
+                
+                            product_summaries = []
+                            for row in rows:
+                                product_name = row.get('product')
+                                unit_value = safe_decimal(row.get('unit', '0'))
+                                hsn_code = row.get('hsnCode')
+                                gst_rate = safe_decimal(row.get('gstRate', '0'))
+                                product_id = row.get('product_id')
+                                description_text = row.get('description', '')
+                                rate_value = safe_decimal(row.get('rate', '0'))
+                                amount = safe_decimal(row.get('product_amount', '0'))
+                                cgst = safe_decimal(row.get('cgst', '0'))
+                                sgst = safe_decimal(row.get('sgst', '0'))
+                                igst = safe_decimal(row.get('igst', '0'))
 
-                        if product_id:
-                            product_obj = Product.objects.filter(id=product_id).first()
-                            if not product_obj:
-                                return Response({"message": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
-                        else:
-                            product_obj, _ = Product.objects.get_or_create(
-                                product_name=product_name, hsn=hsn_code_obj, defaults={'unit_of_measure': unit_value}
-                            )
-                            product_description_obj = ProductDescription.objects.create(
-                                product=product_obj,
-                                description=description_text,
-                                unit=unit_value,
-                                rate=rate_value,
-                                product_amount=amount,
-                                cgst=cgst,
-                                sgst=sgst,
-                                igst=igst,
-                            )
-                            l = product_description_obj.unit
-                            product_summary = ProductSummaryDebitNote.objects.create(
-                                hsn=hsn_code_obj,
-                                product=product_obj,
-                                prod_description=product_description_obj
-                            )
-                            product_summaries.append(product_summary)
-                            debit_note.product_summaries.add(product_summary)
-                            
-                        debit_note.save()
-                    return Response({"message": "Debit Note created successfully."}, status=status.HTTP_200_OK)
+                                hsn_code_obj, _ = HSNCode.objects.get_or_create(
+                                    hsn_code=hsn_code, defaults={'gst_rate': gst_rate}
+                                )
+
+                                if product_id:
+                                    product_obj = Product.objects.filter(id=product_id).first()
+                                    if not product_obj:
+                                        return Response({"message": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                                else:
+                                    product_obj, _ = Product.objects.get_or_create(
+                                        product_name=product_name, hsn=hsn_code_obj, defaults={'unit_of_measure': unit_value}
+                                    )
+                                    product_description_obj = ProductDescription.objects.create(
+                                        product=product_obj,
+                                        description=description_text,
+                                        unit=unit_value,
+                                        rate=rate_value,
+                                        product_amount=amount,
+                                        cgst=cgst,
+                                        sgst=sgst,
+                                        igst=igst,
+                                    )
+                                    l = product_description_obj.unit
+                                    product_summary = ProductSummaryDebitNote.objects.create(
+                                        hsn=hsn_code_obj,
+                                        product=product_obj,
+                                        prod_description=product_description_obj
+                                    )
+                                    product_summaries.append(product_summary)
+                                    debit_note.product_summaries.add(product_summary)
+                                    
+                                debit_note.save()
+                            return Response({"message": "Debit Note created successfully."}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({"error": str(e)}, status=400)
 
     # except Exception as e:
     #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -4148,7 +5590,6 @@ def update_debit_note(request, client_pk, invoice_pk):
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 @api_view(['GET', 'PATCH'])
 def debit_note_detail_view(request, client_pk, invoice_pk, debit_pk):
@@ -4170,7 +5611,8 @@ def debit_note_detail_view(request, client_pk, invoice_pk, debit_pk):
         # Update fields from the request payload
         debit_note.invoice_no = data.get('invoice_no', debit_note.invoice_no)
         debit_note.invoice_date = data.get('invoice_date', debit_note.invoice_date)
-        debit_note.month = data.get('month', debit_note.month)
+        debit_note.po_no = data.get('po_no', debit_note.po_no)
+        debit_note.po_date = data.get('po_date', debit_note.po_date)
         debit_note.invoice_type = data.get('invoice_type', debit_note.invoice_type)
         debit_note.entry_type = data.get('entry_type', debit_note.entry_type)
         debit_note.taxable_amount = safe_decimal(data.get('taxable_amount', debit_note.taxable_amount))
@@ -4253,8 +5695,7 @@ def debit_note_detail_view(request, client_pk, invoice_pk, debit_pk):
         # Return the updated object
         updated_serializer = DebitNoteSerializer(debit_note)
         return Response(updated_serializer.data, status=status.HTTP_200_OK)
-    
-    
+       
 @api_view(['DELETE'])
 def delete_debit_note(request, client_pk, invoice_pk, pk):
     """
@@ -4294,7 +5735,6 @@ def delete_debit_note(request, client_pk, invoice_pk, pk):
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 @api_view(['POST'])
 def create_debit_note2(request, client_pk, invoice_pk):
@@ -4345,11 +5785,14 @@ def create_debit_note2(request, client_pk, invoice_pk):
             "customer_address": payload.get("vendorData[customer_address]"),
             "customer": payload.get("vendorData[customer]", "").lower() == "true",
             "vendor": payload.get("vendorData[vendor]", "").lower() == "true",
+            "email": payload.get("vendorData[email]"),
+            "contact": payload.get("vendorData[contact]"),
         }
         invoice_data = {
             "invoice_no": payload.get("invoiceData[0][invoice_no]"),
             "invoice_date": payload.get("invoiceData[0][invoice_date]"),
-            "month": payload.get("invoiceData[0][month]"),
+            "po_no": payload.get("invoiceData[0][po_no]"),
+            "po_date": payload.get("invoiceData[0][po_date]"),
             "invoice_type": payload.get("invoiceData[0][invoice_type]"),
             "entry_type": payload.get("invoiceData[0][entry_type]"),
             "taxable_amount": payload.get("invoiceData[0][taxable_amount]"),
@@ -4428,7 +5871,9 @@ def create_debit_note2(request, client_pk, invoice_pk):
                 **{
                     "invoice_no": payload.get("invoiceData[0][invoice_no]"),
                     "invoice_date": payload.get("invoiceData[0][invoice_date]"),
-                    "month": payload.get("invoiceData[0][month]"),
+                    # "month": payload.get("invoiceData[0][month]"),
+                    "po_no": payload.get("invoiceData[0][po_no]"),
+                    "po_date": payload.get("invoiceData[0][po_date]"),
                     "invoice_type": payload.get("invoiceData[0][invoice_type]"),
                     "entry_type": payload.get("invoiceData[0][entry_type]"),
                     "taxable_amount": payload.get("invoiceData[0][taxable_amount]"),
@@ -4459,9 +5904,6 @@ def create_debit_note2(request, client_pk, invoice_pk):
         # print({"Error in update_sales_invoice" : str(e)})
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-
- 
 # ******************************************************Credit Note****************************************************   
 
 @api_view(['GET', 'POST'])
@@ -4579,6 +6021,8 @@ def create_credit_note2(request, client_pk, invoice_pk):
             "customer_address": payload.get("vendorData[customer_address]"),
             "customer": payload.get("vendorData[customer]", "").lower() == "true",
             "vendor": payload.get("vendorData[vendor]", "").lower() == "true",
+            "email": payload.get("vendorData[email]"),
+            "contact": payload.get("vendorData[contact]"),
         }
         invoice_data = {
             "invoice_no": payload.get("invoiceData[0][invoice_no]"),
@@ -4715,20 +6159,19 @@ def create_credit_note2(request, client_pk, invoice_pk):
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    
+  
 @api_view(['POST'])
 def create_credit_note(request, client_pk, invoice_pk):
     client = Client.objects.get(id=client_pk)
     purchase = PurchaseInvoice.objects.get(id=invoice_pk, client=client)
 
     # Check if 'attach_e_way_bill' is in the request files
-    if 'attach_e_way_bill' in request.FILES:
+    if 'attach_invoice' in request.FILES:
         # Iterate through each file in the 'attach_e_way_bill' field
-        for e_way_bill in request.FILES.getlist('attach_e_way_bill'):
+        for e_way_bill in request.FILES.getlist('attach_invoice'):
             # Prepare data for each file
             creditnote_data = {
-                'attach_e_way_bill': e_way_bill,  # The file being uploaded
+                'attach_invoice': e_way_bill,  # The file being uploaded
                 'client': client.id,  # Associate the file with the client
                 'purchase_invoice' : purchase.id,
             }
@@ -4748,7 +6191,6 @@ def create_credit_note(request, client_pk, invoice_pk):
     else:
         return Response({'error_message': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
     
-
 @api_view(['GET', 'POST'])
 def update_credit_note(request, client_pk, invoice_pk):
 
@@ -4841,6 +6283,8 @@ def update_credit_note(request, client_pk, invoice_pk):
                     "customer_address": credit_note.vendor.address if credit_note.vendor else None,
                     "customer": credit_note.vendor.customer if credit_note.vendor else None,
                     "vendor": credit_note.vendor.vendor if credit_note.vendor else None,
+                    "email": credit_note.vendor.email if credit_note.vendor else None,
+                    "contact": credit_note.vendor.contact if credit_note.vendor else None,
                 },
                 # print('bbbbbbbbbbbbbbbbbbbbbbb',response_data["vendor"])
             }
@@ -4849,245 +6293,268 @@ def update_credit_note(request, client_pk, invoice_pk):
 
         # Handle PUT request
         elif request.method == 'POST':
-            payload = request.data
-            data = request.data
-            # print('payload', payload)
+            try:
+                with transaction.atomic(): 
+                    payload = request.data
+                    data = request.data
+                    # print('payload', payload)
 
-            # Fetch the Client
-            client = Client.objects.filter(pk=client_pk).first()
-            if not client:
-                return Response({"message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
+                    # Fetch the Client
+                    client = Client.objects.filter(pk=client_pk).first()
+                    if not client:
+                        return Response({"message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
 
-            # Fetch the Purchase Invoice
-            purchase_invoice = PurchaseInvoice.objects.filter(client_id=client_pk, id=invoice_pk )\
-                .select_related('client_Location', 'vendor') \
-                .prefetch_related('product_summaries__hsn', 'product_summaries__prod_description') \
-                .first()
-            if not purchase_invoice:
-                return Response({"message": "Credit Note not found."}, status=status.HTTP_404_NOT_FOUND)
+                    # Fetch the Purchase Invoice
+                    purchase_invoice = PurchaseInvoice.objects.filter(client_id=client_pk, id=invoice_pk )\
+                        .select_related('client_Location', 'vendor') \
+                        .prefetch_related('product_summaries__hsn', 'product_summaries__prod_description') \
+                        .first()
+                    if not purchase_invoice:
+                        return Response({"message": "Credit Note not found."}, status=status.HTTP_404_NOT_FOUND)
 
-            debit_notes = CreditNote.objects.filter(purchase_invoice=purchase_invoice)
-            product_unit_sums = defaultdict(int)
+                    debit_notes = CreditNote.objects.filter(purchase_invoice=purchase_invoice)
+                    product_unit_sums = defaultdict(int)
 
-            for dn in debit_notes:
-                for product_summary in dn.product_summaries.all():
-                    product_name = product_summary.product_name()
-                    product_unit = product_summary.unit() or 0  # Agar unit None ho toh 0 lelo
-                    product_unit_sums[product_name] += product_unit
+                    for dn in debit_notes:
+                        for product_summary in dn.product_summaries.all():
+                            product_name = product_summary.product_name()
+                            product_unit = product_summary.unit() or 0  # Agar unit None ho toh 0 lelo
+                            product_unit_sums[product_name] += product_unit
 
-            remaining_units = {}
-            for product in purchase_invoice.product_summaries.all():
-                product_name = product.product_name()
-                si_unit = product.unit() or 0  # Sales Invoice ke unit
-                dn_unit_sum = product_unit_sums[product_name]  # Debit Notes ka unit sum
-                remaining_units[product_name] = si_unit - dn_unit_sum  # Remaining units
+                    remaining_units = {}
+                    for product in purchase_invoice.product_summaries.all():
+                        product_name = product.product_name()
+                        si_unit = product.unit() or 0  # Sales Invoice ke unit
+                        dn_unit_sum = product_unit_sums[product_name]  # Debit Notes ka unit sum
+                        remaining_units[product_name] = si_unit - dn_unit_sum  # Remaining units
 
-            print('gggggggg',remaining_units)
+                    print('gggggggg',remaining_units)
 
-            
-            # Validations..........
-            if all(unit == 0 for unit in remaining_units.values()):
-                return Response(
-                    {"message": "Cannot create a new Credit Note. All product remaining units are 0."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            for product_name, unit in remaining_units.items():
-                if unit is None:
-                    return Response({"message" : f"Remaining units for product '{product_name}' is missing or undefined."}, status=status.HTTP_400_BAD_REQUEST)
-                if unit < 0:
-                    return Response({"message" : f"Remaining units for prooooooooooooduct '{product_name}' cannot be negative. Current value: {unit}"}, status=status.HTTP_400_BAD_REQUEST)
-
-
-            # Extract rows dynamically
-            rows_data = defaultdict(dict)
-            for key, value in payload.items():
-                if key.startswith("rows["):  # Check if the key corresponds to rows
-                    row_index = key.split('[')[1].split(']')[0]
-                    field_name = key.split('[')[2].split(']')[0]
-                    rows_data[int(row_index)][field_name] = value
-            rows = [rows_data[index] for index in sorted(rows_data.keys())]
-            print('rows', rows)
-
-            # Extract form data, vendor data, and invoice data
-            form_data = {
-                "offLocID": payload.get("formData[offLocID]"),
-                "location": payload.get("formData[location]"),
-                "contact": payload.get("formData[contact]"),
-                "address": payload.get("formData[address]"),
-                "city": payload.get("formData[city]"),
-                "state": payload.get("formData[state]"),
-                "country": payload.get("formData[country]"),
-                "branchID": payload.get("formData[branchID]"),
-            }
-            vendor_data = {
-                "name": payload.get("vendorData[name]"),
-                "gst_no": payload.get("vendorData[gst_no]"),
-                "pan": payload.get("vendorData[pan]"),
-                "customer_address": payload.get("vendorData[customer_address]"),
-                "customer": payload.get("vendorData[customer]", "").lower() == "true",
-                "vendor": payload.get("vendorData[vendor]", "").lower() == "true",
-            }
-            invoice_data = {
-                "invoice_no": payload.get("invoiceData[0][invoice_no]"),
-                "invoice_date": payload.get("invoiceData[0][invoice_date]"),
-                "month": payload.get("invoiceData[0][month]"),
-                "invoice_type": payload.get("invoiceData[0][invoice_type]"),
-                "entry_type": payload.get("invoiceData[0][entry_type]"),
-                "taxable_amount": payload.get("invoiceData[0][taxable_amount]"),
-                "totalall_gst": payload.get("invoiceData[0][totalall_gst]"),
-                "total_invoice_value": payload.get("invoiceData[0][total_invoice_value]"),
-                "tds_tcs_rate": payload.get("invoiceData[0][tds_tcs_rate]"),
-                "tcs": payload.get("invoiceData[0][tcs]"),
-                "tds": payload.get("invoiceData[0][tds]"),
-                "amount_receivable": payload.get("invoiceData[0][amount_receivable]"),
-                "utilise_edit": payload.get("invoiceData[0][utilise_edit]", "").lower() == "true", #nnnn
-                "utilise_month": payload.get("invoiceData[0][utilise_month]"), #nnnnnn
-                
-            }
-            attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
-            attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
-
-            # Handle Vendor creation or update
-            vendor_obj = None
-            if vendor_data.get("gst_no"):
-                existing_vendor = Customer.objects.filter(client=client, gst_no=vendor_data["gst_no"]).first()
-                if existing_vendor:
-                    vendor_serializer = CustomerVendorSerializer(existing_vendor, data=vendor_data, partial=True)
-                    if vendor_serializer.is_valid():
-                        vendor_obj = vendor_serializer.save()
-                    else:
-                        return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    vendor_serializer = CustomerVendorSerializer(data=vendor_data)
-                    if vendor_serializer.is_valid():
-                        vendor_obj = vendor_serializer.save(client=client)
-                    else:
-                        return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-            if any(unit is None for unit in remaining_units.values()):
-                return Response({"message" : f"Remaining units for product {product} is missing."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            else:
-                credit_note_serializer = CreditNoteSerializer(data=data)
-
-                if credit_note_serializer.is_valid():
-                    # Handle Office Location creation or selection
-                    location_obj = None
-                    if form_data["offLocID"]:
-                        location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
-                        if not location_obj:
-                            return Response({"message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
-                    else:
-                        branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
-                        if not branch_instance:
-                            return Response({"message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
-                                            status=status.HTTP_404_NOT_FOUND)
-                        location_obj, _ = OfficeLocation.objects.get_or_create(
-                            location=form_data.get("location"),
-                            contact=form_data.get("contact"),
-                            address=form_data.get("address"),
-                            city=form_data.get("city"),
-                            state=form_data.get("state"),
-                            country=form_data.get("country"),
-                            branch=branch_instance
+                    
+                    # Validations..........
+                    if all(unit == 0 for unit in remaining_units.values()):
+                        return Response(
+                            {"message": "Cannot create a new Credit Note. All product remaining units are 0."},
+                            status=status.HTTP_400_BAD_REQUEST
                         )
-                    for row in rows:
-                        product_name = row.get('product')
-                        unit_value = safe_decimal(row.get('unit', '0'))
+                    
+                    for product_name, unit in remaining_units.items():
+                        if unit is None:
+                            return Response({"message" : f"Remaining units for product '{product_name}' is missing or undefined."}, status=status.HTTP_400_BAD_REQUEST)
+                        if unit < 0:
+                            return Response({"message" : f"Remaining units for prooooooooooooduct '{product_name}' cannot be negative. Current value: {unit}"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+                    # Extract rows dynamically
+                    rows_data = defaultdict(dict)
+                    for key, value in payload.items():
+                        if key.startswith("rows["):  # Check if the key corresponds to rows
+                            row_index = key.split('[')[1].split(']')[0]
+                            field_name = key.split('[')[2].split(']')[0]
+                            rows_data[int(row_index)][field_name] = value
+                    rows = [rows_data[index] for index in sorted(rows_data.keys())]
+                    print('rows', rows)
+
+                    # Extract form data, vendor data, and invoice data
+                    form_data = {
+                        "offLocID": payload.get("formData[offLocID]"),
+                        "location": payload.get("formData[location]"),
+                        "contact": payload.get("formData[contact]"),
+                        "address": payload.get("formData[address]"),
+                        "city": payload.get("formData[city]"),
+                        "state": payload.get("formData[state]"),
+                        "country": payload.get("formData[country]"),
+                        "branchID": payload.get("formData[branchID]"),
+                    }
+                    vendor_data = {
+                        "name": payload.get("vendorData[name]"),
+                        "gst_no": payload.get("vendorData[gst_no]"),
+                        "pan": payload.get("vendorData[pan]"),
+                        "customer_address": payload.get("vendorData[customer_address]"),
+                        "email": payload.get("vendorData[email]"),
+                        "contact": payload.get("vendorData[contact]"),
+                        "customer": payload.get("vendorData[customer]", "").lower() == "true",
+                        "vendor": payload.get("vendorData[vendor]", "").lower() == "true",
+                    }
+                    invoice_data = {
+                        "invoice_no": payload.get("invoiceData[0][invoice_no]"),
+                        "invoice_date": payload.get("invoiceData[0][invoice_date]"),
+                        "month": payload.get("invoiceData[0][month]"),
+                        "invoice_type": payload.get("invoiceData[0][invoice_type]"),
+                        "entry_type": payload.get("invoiceData[0][entry_type]"),
+                        "taxable_amount": payload.get("invoiceData[0][taxable_amount]"),
+                        "totalall_gst": payload.get("invoiceData[0][totalall_gst]"),
+                        "total_invoice_value": payload.get("invoiceData[0][total_invoice_value]"),
+                        "tds_tcs_rate": payload.get("invoiceData[0][tds_tcs_rate]"),
+                        "tcs": payload.get("invoiceData[0][tcs]"),
+                        "tds": payload.get("invoiceData[0][tds]"),
+                        "amount_receivable": payload.get("invoiceData[0][amount_receivable]"),
+                        "utilise_edit": payload.get("invoiceData[0][utilise_edit]", "").lower() == "true", #nnnn
+                        "utilise_month": payload.get("invoiceData[0][utilise_month]"), #nnnnnn
                         
-                        # Skip rows with unit value as 0 or negative
-                        if unit_value <= 0:
-                            continue  # Skip processing this row
-                        
-                        # Validate remaining units for the product
-                        if product_name in remaining_units:
-                            if remaining_units[product_name] < unit_value:
-                                return Response(
-                                    {
-                                        "message": f"Not enough units remaining for the product '{product_name}'. "
-                                                f"Available: {remaining_units[product_name]}, Requested: {unit_value}."
-                                    },
-                                    status=status.HTTP_400_BAD_REQUEST
+                    }
+                    if invoice_data["invoice_date"]:
+                        try:
+                            invoice_data["invoice_date"] = datetime.strptime(invoice_data["invoice_date"], "%d-%m-%Y").date()
+                        except ValueError:
+                            return Response({"error_message": "Invalid Invoice date format, expected DD-MM-YYYY."}, status=status.HTTP_400_BAD_REQUEST)
+                    print("Final invoice date:", invoice_data["invoice_date"])
+
+                    if invoice_data["month"]:
+                        try:
+                            invoice_data["month"] = datetime.strptime(invoice_data["month"], "%d-%m-%Y").date()
+                        except ValueError:
+                            return Response({"error_message": "Invalid Month date format, expected DD-MM-YYYY."},status=status.HTTP_400_BAD_REQUEST)
+
+                    if invoice_data["utilise_month"]:
+                        try:
+                            invoice_data["utilise_month"] = datetime.strptime(invoice_data["utilise_month"], "%d-%m-%Y").date()
+                        except ValueError:
+                            return Response({"error_message": "Invalid Utilise Month date format, expected DD-MM-YYYY."},status=status.HTTP_400_BAD_REQUEST)
+
+                    print("Final month:", invoice_data["month"])
+                    attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
+                    attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
+
+                    # Handle Vendor creation or update
+                    vendor_obj = None
+                    if vendor_data.get("gst_no"):
+                        existing_vendor = Customer.objects.filter(client=client, gst_no=vendor_data["gst_no"]).first()
+                        if existing_vendor:
+                            vendor_serializer = CustomerVendorSerializer(existing_vendor, data=vendor_data, partial=True)
+                            if vendor_serializer.is_valid():
+                                vendor_obj = vendor_serializer.save()
+                            else:
+                                return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                        else:
+                            vendor_serializer = CustomerVendorSerializer(data=vendor_data)
+                            if vendor_serializer.is_valid():
+                                vendor_obj = vendor_serializer.save(client=client)
+                            else:
+                                return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+                    if any(unit is None for unit in remaining_units.values()):
+                        return Response({"message" : f"Remaining units for product {product} is missing."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    else:
+                        credit_note_serializer = CreditNoteSerializer(data=data)
+
+                        if credit_note_serializer.is_valid():
+                            # Handle Office Location creation or selection
+                            location_obj = None
+                            if form_data["offLocID"]:
+                                location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
+                                if not location_obj:
+                                    return Response({"message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+                            else:
+                                branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
+                                if not branch_instance:
+                                    return Response({"message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+                                                    status=status.HTTP_404_NOT_FOUND)
+                                location_obj, _ = OfficeLocation.objects.get_or_create(
+                                    location=form_data.get("location"),
+                                    contact=form_data.get("contact"),
+                                    address=form_data.get("address"),
+                                    city=form_data.get("city"),
+                                    state=form_data.get("state"),
+                                    country=form_data.get("country"),
+                                    branch=branch_instance
                                 )
-                            
-                            # Deduct the used units from the remaining_units
-                            remaining_units[product_name] -= unit_value
-                        else:
-                            return Response(
-                                {"message": f"Product '{product_name}' not found in remaining units."},
-                                status=status.HTTP_400_BAD_REQUEST
-                            )
+                            for row in rows:
+                                product_name = row.get('product')
+                                unit_value = safe_decimal(row.get('unit', '0'))
+                                
+                                # Skip rows with unit value as 0 or negative
+                                if unit_value <= 0:
+                                    continue  # Skip processing this row
+                                
+                                # Validate remaining units for the product
+                                if product_name in remaining_units:
+                                    if remaining_units[product_name] < unit_value:
+                                        return Response(
+                                            {
+                                                "message": f"Not enough units remaining for the product '{product_name}'. "
+                                                        f"Available: {remaining_units[product_name]}, Requested: {unit_value}."
+                                            },
+                                            status=status.HTTP_400_BAD_REQUEST
+                                        )
+                                    
+                                    # Deduct the used units from the remaining_units
+                                    remaining_units[product_name] -= unit_value
+                                else:
+                                    return Response(
+                                        {"message": f"Product '{product_name}' not found in remaining units."},
+                                        status=status.HTTP_400_BAD_REQUEST
+                                    )
 
-                    # Create the Debit Note
-                    credit_note = CreditNote.objects.create(
-                        client=client,
-                        purchase_invoice=purchase_invoice,
-                        client_Location=location_obj,
-                        vendor=vendor_obj,
-                        attach_invoice=attach_invoice,
-                        attach_e_way_bill=attach_e_way_bill,
-                        **invoice_data
-                    )
-                    product_summaries = []
-                    for row in rows:
-                        product_name = row.get('product')
-                        unit_value = safe_decimal(row.get('unit', '0'))
-                        hsn_code = row.get('hsnCode')
-                        gst_rate = safe_decimal(row.get('gstRate', '0'))
-                        product_id = row.get('product_id')
-                        description_text = row.get('description', '')
-                        rate_value = safe_decimal(row.get('rate', '0'))
-                        amount = safe_decimal(row.get('product_amount', '0'))
-                        cgst = safe_decimal(row.get('cgst', '0'))
-                        sgst = safe_decimal(row.get('sgst', '0'))
-                        igst = safe_decimal(row.get('igst', '0'))
-
-                        hsn_code_obj, _ = HSNCode.objects.get_or_create(
-                            hsn_code=hsn_code, defaults={'gst_rate': gst_rate}
-                        )
-
-                        if product_id:
-                            product_obj = Product.objects.filter(id=product_id).first()
-                            if not product_obj:
-                                return Response({"message": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
-                        else:
-                            product_obj, _ = Product.objects.get_or_create(
-                                product_name=product_name, hsn=hsn_code_obj, defaults={'unit_of_measure': unit_value}
+                            # Create the Debit Note
+                            credit_note = CreditNote.objects.create(
+                                client=client,
+                                purchase_invoice=purchase_invoice,
+                                client_Location=location_obj,
+                                vendor=vendor_obj,
+                                attach_invoice=attach_invoice,
+                                attach_e_way_bill=attach_e_way_bill,
+                                **invoice_data
                             )
-                            product_description_obj = ProductDescription.objects.create(
-                                product=product_obj,
-                                description=description_text,
-                                unit=unit_value,
-                                rate=rate_value,
-                                product_amount=amount,
-                                cgst=cgst,
-                                sgst=sgst,
-                                igst=igst,
-                            )
-                            l = product_description_obj.unit
-                            product_summary = ProductSummaryCreditNote.objects.create(
-                                hsn=hsn_code_obj,
-                                product=product_obj,
-                                prod_description=product_description_obj
-                            )
-                            product_summaries.append(product_summary)
-                            credit_note.product_summaries.add(product_summary)
-                            
-                        credit_note.save()
-                    return Response({"message": "Credit Note created successfully."}, status=status.HTTP_200_OK)
-                else: 
-                    return Response({"message": credit_note_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                            product_summaries = []
+                            for row in rows:
+                                product_name = row.get('product')
+                                unit_value = safe_decimal(row.get('unit', '0'))
+                                hsn_code = row.get('hsnCode')
+                                gst_rate = safe_decimal(row.get('gstRate', '0'))
+                                product_id = row.get('product_id')
+                                description_text = row.get('description', '')
+                                rate_value = safe_decimal(row.get('rate', '0'))
+                                amount = safe_decimal(row.get('product_amount', '0'))
+                                cgst = safe_decimal(row.get('cgst', '0'))
+                                sgst = safe_decimal(row.get('sgst', '0'))
+                                igst = safe_decimal(row.get('igst', '0'))
 
-    # except Exception as e:
-    #     print("Error in update_credit_note:", str(e))
-    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                                hsn_code_obj, _ = HSNCode.objects.get_or_create(
+                                    hsn_code=hsn_code, defaults={'gst_rate': gst_rate}
+                                )
+
+                                if product_id:
+                                    product_obj = Product.objects.filter(id=product_id).first()
+                                    if not product_obj:
+                                        return Response({"message": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                                else:
+                                    product_obj, _ = Product.objects.get_or_create(
+                                        product_name=product_name, hsn=hsn_code_obj, defaults={'unit_of_measure': unit_value}
+                                    )
+                                    product_description_obj = ProductDescription.objects.create(
+                                        product=product_obj,
+                                        description=description_text,
+                                        unit=unit_value,
+                                        rate=rate_value,
+                                        product_amount=amount,
+                                        cgst=cgst,
+                                        sgst=sgst,
+                                        igst=igst,
+                                    )
+                                    l = product_description_obj.unit
+                                    product_summary = ProductSummaryCreditNote.objects.create(
+                                        hsn=hsn_code_obj,
+                                        product=product_obj,
+                                        prod_description=product_description_obj
+                                    )
+                                    product_summaries.append(product_summary)
+                                    credit_note.product_summaries.add(product_summary)
+                                    
+                                credit_note.save()
+                            return Response({"message": "Credit Note created successfully."}, status=status.HTTP_200_OK)
+                        else: 
+                            return Response({"message": credit_note_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                # else:
+                #     raise Exception("Client data is invalid!")  # Force rollback
+            except Exception as e:
+                return Response({"error": str(e)}, status=400)
+
     except Exception as e:
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    
-    
 @api_view(['DELETE'])
 def delete_credit_note(request, client_pk, invoice_pk, credit_pk):
     """
@@ -5298,18 +6765,17 @@ def create_income_get(request, pk):
             })
         return Response(context)
 
-    
 @api_view(['POST'])
 def create_income(request, pk):
     client = Client.objects.get(id=pk)
 
     # Check if 'attach_e_way_bill' is in the request files
-    if 'attach_e_way_bill' in request.FILES:
+    if 'attach_invoice' in request.FILES:
         # Iterate through each file in the 'attach_e_way_bill' field
-        for e_way_bill in request.FILES.getlist('attach_e_way_bill'):
+        for e_way_bill in request.FILES.getlist('attach_invoice'):
             # Prepare data for each file
             income_data = {
-                'attach_e_way_bill': e_way_bill,  # The file being uploaded
+                'attach_invoice': e_way_bill,  # The file being uploaded
                 'client': client.id,  # Associate the file with the client
             }
 
@@ -5327,7 +6793,6 @@ def create_income(request, pk):
         return Response({'message': 'Income E-way bill(s) uploaded successfully.'}, status=status.HTTP_200_OK)
     else:
         return Response({'error_message': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
-
 
 @api_view(['GET', 'PUT'])
 def update_income(request, client_pk, invoice_pk):
@@ -5361,8 +6826,21 @@ def update_income(request, client_pk, invoice_pk):
                 for summary in product_summaries
             ]
 
+            if income.month:
+                formatted_month = income.month.strftime("%d-%m-%Y")  # Directly format date
+            else:
+                formatted_month = None
+
+            if income.invoice_date:
+                formatted_invoice_date = income.invoice_date.strftime("%d-%m-%Y")  # Directly format date
+            else:
+                formatted_invoice_date = None
+
             response_data = {
-                "income": income_data,
+                "income": {
+                    **income_data,
+                    "month": formatted_month,  # Ensure month is sent in dd/mm/yyyy format
+                    "invoice_date" : formatted_invoice_date,},
                 "product_summaries": product_summary_data,
                 "client_location": {
                     "id": income.client_Location.id if income.client_Location else None,
@@ -5382,6 +6860,8 @@ def update_income(request, client_pk, invoice_pk):
                     "customer_address": income.customer.address if income.customer else None,
                     "customer": income.customer.customer if income.customer else None,
                     "vendor": income.customer.vendor if income.customer else None,
+                    "email": income.customer.email if income.customer else None,
+                    "contact": income.customer.contact if income.customer else None,
                 },
             }
             # print('bbbbbbbbbbbbbbbbbbbbbbb',response_data["income"])
@@ -5437,6 +6917,8 @@ def update_income(request, client_pk, invoice_pk):
                 "gst_no": request.data.get("vendorData[gst_no]"),
                 "pan": request.data.get("vendorData[pan]"),
                 "customer_address": request.data.get("vendorData[customer_address]"),
+                "email": request.data.get("vendorData[email]"),
+                "contact": request.data.get("vendorData[contact]"),
                 "customer": request.data.get("vendorData[customer]").lower() == "true" if request.data.get("vendorData[customer]") else None,
                 "vendor": request.data.get("vendorData[vendor]").lower() == "true" if request.data.get("vendorData[vendor]") else None,
             }
@@ -5458,6 +6940,20 @@ def update_income(request, client_pk, invoice_pk):
                 "attach_invoice": request.data.get("invoiceData[0][attach_invoice]"),
                 "attach_e_way_bill": request.data.get("invoiceData[0][attach_e_way_bill]"),
             }
+
+            if invoice_data["invoice_date"]:
+                try:
+                    invoice_data["invoice_date"] = datetime.strptime(invoice_data["invoice_date"], "%d-%m-%Y").date()
+                except ValueError:
+                    return Response({"error_message": "Invalid Invoice date format, expected DD-MM-YYYY."}, status=status.HTTP_400_BAD_REQUEST)
+            print("Final invoice date:", invoice_data["invoice_date"])
+
+            if invoice_data["month"]:
+                try:
+                    invoice_data["month"] = datetime.strptime(invoice_data["month"], "%d-%m-%Y").date()
+                except ValueError:
+                    return Response({"error_message": "Invalid Month date format, expected DD-MM-YYYY."},status=status.HTTP_400_BAD_REQUEST)
+
 
             attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
             attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
@@ -5690,6 +7186,8 @@ def create_income2(request, client_pk):
                 "gst_no": payload.get("vendorData[gst_no]"),
                 "pan": payload.get("vendorData[pan]"),
                 "address": payload.get("vendorData[customer_address]"),
+                "email": payload.get("vendorData[email]"),
+                "contact": payload.get("vendorData[contact]"),
                 "customer": payload.get("vendorData[customer]", "").lower() == "true",
                 "vendor": payload.get("vendorData[vendor]", "").lower() == "true",
             }
@@ -5707,6 +7205,22 @@ def create_income2(request, client_pk):
                 "tds": payload.get("invoiceData[0][tds]"),
                 "amount_receivable": payload.get("invoiceData[0][amount_receivable]"),
             }
+
+            if invoice_data["invoice_date"]:
+                try:
+                    invoice_data["invoice_date"] = datetime.strptime(invoice_data["invoice_date"], "%d-%m-%Y").date()
+                except ValueError:
+                    return Response({"error_message": "Invalid date format, expected DD-MM-YYYY."}, status=status.HTTP_400_BAD_REQUEST)
+            print("Final invoice date:", invoice_data["invoice_date"])
+
+            if invoice_data["month"]:
+                try:
+                    invoice_data["month"] = datetime.strptime(invoice_data["month"], "%d-%m-%Y").date()
+                except ValueError:
+                    return Response({"error_message": "Invalid Month date format, expected DD-MM-YYYY."},status=status.HTTP_400_BAD_REQUEST)
+
+            print("Final month:", invoice_data["month"])
+
             attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
             attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
 
@@ -5828,8 +7342,6 @@ def create_income2(request, client_pk):
         error_details = traceback.format_exc()
         return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-    
 @api_view(['DELETE'])
 def delete_income(request, client_pk, pk):
     """
@@ -5864,7 +7376,6 @@ def delete_income(request, client_pk, pk):
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 @api_view(['GET', 'PATCH'])
 def income_detail_view(request, client_pk, invoice_pk):
@@ -6032,19 +7543,18 @@ def create_expenses_get(request, pk):
                 'branch_serializer' : branch_serializer.data
             })
         return Response(context)
-
     
 @api_view(['POST'])
 def create_expenses(request, pk):
     client = Client.objects.get(id=pk)
 
     # Check if 'attach_e_way_bill' is in the request files
-    if 'attach_e_way_bill' in request.FILES:
+    if 'attach_invoice' in request.FILES:
         # Iterate through each file in the 'attach_e_way_bill' field
-        for e_way_bill in request.FILES.getlist('attach_e_way_bill'):
+        for e_way_bill in request.FILES.getlist('attach_invoice'):
             # Prepare data for each file
             expenses_data = {
-                'attach_e_way_bill': e_way_bill,  # The file being uploaded
+                'attach_invoice': e_way_bill,  # The file being uploaded
                 'client': client.id,  # Associate the file with the client
             }
 
@@ -6062,12 +7572,11 @@ def create_expenses(request, pk):
         return Response({'message': 'Expenses E-way bill(s) uploaded successfully.'}, status=status.HTTP_201_CREATED)
     else:
         return Response({'error_message': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
-    
-    
+        
 @api_view(['GET','PUT'])
 def update_expenses(request, client_pk, invoice_pk):
     try:
-        print('my payload',request.data)
+        # print('my payload',request.data)
         if request.method == 'GET':
             expenses = Expenses.objects.filter(client_id=client_pk, id= invoice_pk).first()
             if not expenses:
@@ -6090,9 +7599,29 @@ def update_expenses(request, client_pk, invoice_pk):
                 }
                 for summary in product_summaries
             ]
+
+            if expenses.month:
+                formatted_month = expenses.month.strftime("%d-%m-%Y")  # Directly format date
+            else:
+                formatted_month = None
+
+            if expenses.invoice_date:
+                formatted_invoice_date = expenses.invoice_date.strftime("%d-%m-%Y")  # Directly format date
+            else:
+                formatted_invoice_date = None
+
+            if expenses.utilise_month:
+                formatted_utilise = expenses.utilise_month.strftime("%d-%m-%Y")
+            else:
+                formatted_utilise = None
             
             response_data ={
-                "expenses" : expenses_data,
+                "expenses" : {
+                    **expenses_data,
+                    "month": formatted_month,  # Ensure month is sent in dd/mm/yyyy format
+                    "invoice_date" : formatted_invoice_date,
+                    "utilise_month" : formatted_utilise,
+                    },
                 "product_summaries" : product_summary_data,
                 "client_location": {
                     "id": expenses.client_Location.id if expenses.client_Location else None,
@@ -6112,6 +7641,8 @@ def update_expenses(request, client_pk, invoice_pk):
                     "vendor_address": expenses.vendor.address if expenses.vendor else None,
                     "customer": expenses.vendor.customer if expenses.vendor else None,
                     "vendor": expenses.vendor.vendor if expenses.vendor else None,
+                    "email": expenses.vendor.email if expenses.vendor else None,
+                    "contact": expenses.vendor.contact if expenses.vendor else None,
                 },
             }
             #  print('bbbbbbbbbbbbbbbbbbbbbbb',response_data["sales_invoice"])
@@ -6152,6 +7683,8 @@ def update_expenses(request, client_pk, invoice_pk):
                 "gst_no": request.data.get("vendorData[gst_no]"),
                 "pan": request.data.get("vendorData[pan]"),
                 "vendor_address": request.data.get("vendorData[vendor_address]"),
+                "email": request.data.get("vendorData[email]"),
+                "contact": request.data.get("vendorData[contact]"),
                 "customer": request.data.get("vendorData[customer]").lower() == "true" if request.data.get("vendorData[customer]") else None,
                 "vendor": request.data.get("vendorData[vendor]").lower() == "true" if request.data.get("vendorData[vendor]") else None,
             }
@@ -6174,6 +7707,28 @@ def update_expenses(request, client_pk, invoice_pk):
                 "utilise_month": payload.get("invoiceData[0][utilise_month]"), #nnnnnn
 
             }
+
+            if invoice_data["invoice_date"]:
+                try:
+                    invoice_data["invoice_date"] = datetime.strptime(invoice_data["invoice_date"], "%d-%m-%Y").date()
+                except ValueError:
+                    return Response({"error_message": "Invalid Invoice date format, expected DD-MM-YYYY."}, status=status.HTTP_400_BAD_REQUEST)
+            print("Final invoice date:", invoice_data["invoice_date"])
+
+            if invoice_data["month"]:
+                try:
+                    invoice_data["month"] = datetime.strptime(invoice_data["month"], "%d-%m-%Y").date()
+                except ValueError:
+                    return Response({"error_message": "Invalid Month date format, expected DD-MM-YYYY."},status=status.HTTP_400_BAD_REQUEST)
+
+            if invoice_data["utilise_month"]:
+                try:
+                    invoice_data["utilise_month"] = datetime.strptime(invoice_data["utilise_month"], "%d-%m-%Y").date()
+                except ValueError:
+                    return Response({"error_message": "Invalid Utilise Month date format, expected DD-MM-YYYY."},status=status.HTTP_400_BAD_REQUEST)
+
+            print("Final month:", invoice_data["month"])
+
             attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
             attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
             if attach_invoice:
@@ -6385,6 +7940,8 @@ def create_expenses2(request, client_pk):
                 "address" : payload.get("vendorData[vendor_address]"), #nnnnnnnnn
                 "customer" : payload.get("vendorData[customer]", "").lower() == "true",
                 "vendor" : payload.get("vendorData[vendor]", "").lower() == "true",
+                "email" : payload.get("vendorData[email]"),
+                "contact" : payload.get("vendorData[contact]"),
             }
             invoice_data = {
                 "invoice_no" : payload.get("invoiceData[0][invoice_no]"),
@@ -6403,6 +7960,23 @@ def create_expenses2(request, client_pk):
                 # "utilise_month": payload.get("invoiceData[0][utilise_month]").lower(), #nnnnnn
                 
             }
+
+            if invoice_data["invoice_date"]:
+                try:
+                    invoice_data["invoice_date"] = datetime.strptime(invoice_data["invoice_date"], "%d-%m-%Y").date()
+                except ValueError:
+                    return Response({"error_message": "Invalid date format, expected DD-MM-YYYY."}, status=status.HTTP_400_BAD_REQUEST)
+            print("Final invoice date:", invoice_data["invoice_date"])
+
+            if invoice_data["month"]:
+                try:
+                    invoice_data["month"] = datetime.strptime(invoice_data["month"], "%d-%m-%Y").date()
+                except ValueError:
+                    return Response({"error_message": "Invalid Month date format, expected DD-MM-YYYY."},status=status.HTTP_400_BAD_REQUEST)
+
+            print("Final month:", invoice_data["month"])
+
+
             attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
             attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
 
@@ -6526,7 +8100,6 @@ def create_expenses2(request, client_pk):
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 @api_view(['GET','PATCH'])
 def expenses_detail_view(request, client_pk, invoice_pk):
@@ -6723,8 +8296,6 @@ def delete_zipupload(request, client_pk, pk):
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    
     
 # ******************************************************Income Debit Note******************************************************
 @api_view(['GET', 'POST'])
@@ -6803,12 +8374,12 @@ def create_income_debit_note(request, client_pk, income_pk):
     income = Income.objects.get(id=income_pk, client=client)
 
     # Check if 'attach_e_way_bill' is in the request files
-    if 'attach_e_way_bill' in request.FILES:
+    if 'attach_invoice' in request.FILES:
         # Iterate through each file in the 'attach_e_way_bill' field
-        for e_way_bill in request.FILES.getlist('attach_e_way_bill'):
+        for e_way_bill in request.FILES.getlist('attach_invoice'):
             # Prepare data for each file
             debitnote_data = {
-                'attach_e_way_bill': e_way_bill,  # The file being uploaded
+                'attach_invoice': e_way_bill,  # The file being uploaded
                 'client': client.id,  # Associate the file with the client
                 'income' : income.id,
             }
@@ -6966,7 +8537,24 @@ def update_income_debit_note(request, client_pk, income_pk):
                 for summary in product_summaries
             ]
 
+            # if debit_notes.month:
+            #     formatted_month = debit_notes.month.strftime("%d-%m-%Y")  # Directly format date
+            # else:
+            #     formatted_month = None
+
+            # if debit_notes.invoice_date:
+            #     formatted_invoice_date = debit_notes.invoice_date.strftime("%d-%m-%Y")  # Directly format date
+            # else:
+            #     formatted_invoice_date = None
+
+
             response_data = {
+                # "debit_note": {
+                # **debit_note_data,
+                # "month": formatted_month,  # Ensure month is sent in dd/mm/yyyy format
+                # "invoice_date" : formatted_invoice_date,},
+                # "product_summaries": product_summary_data,
+                # "remaining_units": remaining_units,
                 "debit_note": debit_note_data,
                 "product_summaries": product_summary_data,
                 "remaining_units": remaining_units,
@@ -6985,6 +8573,8 @@ def update_income_debit_note(request, client_pk, income_pk):
                     "name": debit_note.customer.name if debit_note.customer else None,
                     "gst_no": debit_note.customer.gst_no if debit_note.customer else None,
                     "pan": debit_note.customer.pan if debit_note.customer else None,
+                    "email": debit_note.customer.email if debit_note.customer else None,
+                    "contact": debit_note.customer.contact if debit_note.customer else None,
                     "customer_address": debit_note.customer.address if debit_note.customer else None,
                     "customer": debit_note.customer.customer if debit_note.customer else None,
                     "vendor": debit_note.customer.vendor if debit_note.customer else None,
@@ -6994,251 +8584,279 @@ def update_income_debit_note(request, client_pk, income_pk):
 
         # Handle PUT request
         elif request.method == 'POST':
-            payload = request.data
-            data = request.data
+            try:
+                with transaction.atomic(): 
+                    payload = request.data
+                    data = request.data
 
-             # Fetch the Client
-            client = Client.objects.filter(pk=client_pk).first()
-            if not client:
-                return Response({"error_message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
+                    # Fetch the Client
+                    client = Client.objects.filter(pk=client_pk).first()
+                    if not client:
+                        return Response({"error_message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
 
-            # Fetch the Sales Invoice
-            income = Income.objects.filter(client_id=client_pk, id=income_pk) \
-                .select_related('client_Location', 'customer') \
-                .prefetch_related('product_summaries__hsn', 'product_summaries__prod_description') \
-                .first()
+                    # Fetch the Sales Invoice
+                    income = Income.objects.filter(client_id=client_pk, id=income_pk) \
+                        .select_related('client_Location', 'customer') \
+                        .prefetch_related('product_summaries__hsn', 'product_summaries__prod_description') \
+                        .first()
 
-            if not income:
-                return Response({"error_message": "Income not found or does not belong to the client."},
-                                status=status.HTTP_404_NOT_FOUND)
+                    if not income:
+                        return Response({"error_message": "Income not found or does not belong to the client."},
+                                        status=status.HTTP_404_NOT_FOUND)
 
-            # Calculate remaining units
-            debit_notes = IncomeDebitNote.objects.filter(income=income)
-            product_unit_sums = defaultdict(int)
+                    # Calculate remaining units
+                    debit_notes = IncomeDebitNote.objects.filter(income=income)
+                    product_unit_sums = defaultdict(int)
 
-            for dn in debit_notes:
-                for product_summary in dn.product_summaries.all():
-                    product_name = product_summary.product_name()
-                    product_unit = product_summary.unit() or 0
-                    product_unit_sums[product_name] += product_unit
+                    for dn in debit_notes:
+                        for product_summary in dn.product_summaries.all():
+                            product_name = product_summary.product_name()
+                            product_unit = product_summary.unit() or 0
+                            product_unit_sums[product_name] += product_unit
 
-            remaining_units = {}
-            for product in income.product_summaries.all():
-                product_name = product.product_name()
-                si_unit = product.unit() or 0
-                dn_unit_sum = product_unit_sums[product_name]
-                remaining_units[product_name] = si_unit - dn_unit_sum
+                    remaining_units = {}
+                    for product in income.product_summaries.all():
+                        product_name = product.product_name()
+                        si_unit = product.unit() or 0
+                        dn_unit_sum = product_unit_sums[product_name]
+                        remaining_units[product_name] = si_unit - dn_unit_sum
 
-            print('gggggggggg',remaining_units)
-            
-            # Validations..........
-            if all(unit == 0 for unit in remaining_units.values()):
-                return Response(
-                    {"message": "Cannot create a new Income Debit Note. All product remaining units are 0."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            for product_name, unit in remaining_units.items():
-                if unit is None:
-                    return Response({"message" : f"Remaining units for product '{product_name}' is missing or undefined."}, status=status.HTTP_400_BAD_REQUEST)
-                if unit < 0:
-                    return Response({"message" : f"Remaining units for prooooooooooooduct '{product_name}' cannot be negative. Current value: {unit}"}, status=status.HTTP_400_BAD_REQUEST)
-
-            # Extract rows dynamically
-            rows_data = defaultdict(dict)
-            for key, value in payload.items():
-                if key.startswith("rows["):
-                    row_index = key.split('[')[1].split(']')[0]
-                    field_name = key.split('[')[2].split(']')[0]
-                    rows_data[int(row_index)][field_name] = value
-            rows = [rows_data[index] for index in sorted(rows_data.keys())]
-
-            # Extract form data, vendor data, and invoice data
-            form_data = {
-                "offLocID": payload.get("formData[offLocID]"),
-                "location": payload.get("formData[location]"),
-                "contact": payload.get("formData[contact]"),
-                "address": payload.get("formData[address]"),
-                "city": payload.get("formData[city]"),
-                "state": payload.get("formData[state]"),
-                "country": payload.get("formData[country]"),
-                "branchID": payload.get("formData[branchID]"),
-            }
-            vendor_data = {
-                "name": payload.get("vendorData[name]"),
-                "gst_no": payload.get("vendorData[gst_no]"),
-                "pan": payload.get("vendorData[pan]"),
-                "customer_address": payload.get("vendorData[customer_address]"),
-                "customer": payload.get("vendorData[customer]", "").lower() == "true",
-                "vendor": payload.get("vendorData[vendor]", "").lower() == "true",
-            }
-            invoice_data = {
-                "invoice_no": payload.get("invoiceData[0][invoice_no]"),
-                "invoice_date": payload.get("invoiceData[0][invoice_date]"),
-                "month": payload.get("invoiceData[0][month]"),
-                "invoice_type": payload.get("invoiceData[0][invoice_type]"),
-                "entry_type": payload.get("invoiceData[0][entry_type]"),
-                "taxable_amount": payload.get("invoiceData[0][taxable_amount]"),
-                "totalall_gst": payload.get("invoiceData[0][totalall_gst]"),
-                "total_invoice_value": payload.get("invoiceData[0][total_invoice_value]"),
-                "tds_tcs_rate": payload.get("invoiceData[0][tds_tcs_rate]"),
-                "tcs": payload.get("invoiceData[0][tcs]"),
-                "tds": payload.get("invoiceData[0][tds]"),
-                "amount_receivable": payload.get("invoiceData[0][amount_receivable]"),
-            }
-            attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
-            attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
-
-            # Handle Office Location creation or selection
-            # location_obj = None
-            # if form_data["offLocID"]:
-            #     location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
-            #     if not location_obj:
-            #         return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
-            # else:
-            #     branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
-            #     if not branch_instance:
-            #         return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
-            #                         status=status.HTTP_404_NOT_FOUND)
-            #     location_obj = OfficeLocation.objects.create(
-            #         location=form_data.get("location"),
-            #         contact=form_data.get("contact"),
-            #         address=form_data.get("address"),
-            #         city=form_data.get("city"),
-            #         state=form_data.get("state"),
-            #         country=form_data.get("country"),
-            #         branch=branch_instance
-            #     )
-
-            # Handle Vendor creation or update
-            vendor_obj = None
-            if vendor_data.get("gst_no"):
-                existing_vendor = Customer.objects.filter(client=client, gst_no=vendor_data["gst_no"]).first()
-                if existing_vendor:
-                    vendor_serializer = CustomerVendorSerializer(existing_vendor, data=vendor_data, partial=True)
-                    if vendor_serializer.is_valid():
-                        vendor_obj = vendor_serializer.save()
-                    else:
-                        return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    vendor_serializer = CustomerVendorSerializer(data=vendor_data)
-                    if vendor_serializer.is_valid():
-                        vendor_obj = vendor_serializer.save(client=client)
-                    else:
-                        return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-            if any(unit is None for unit in remaining_units.values()):
-                return Response({"message" : f"Remaining units for product {product} is missing."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            else:
-                debit_note_serializer = IncomeDebitNoteSerializer(data=data)
-
-                if debit_note_serializer.is_valid():
-                    location_obj = None
-                    if form_data["offLocID"]:
-                        location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
-                        if not location_obj:
-                            return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
-                    else:
-                        branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
-                        if not branch_instance:
-                            return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
-                                            status=status.HTTP_404_NOT_FOUND)
-                        location_obj, _ = OfficeLocation.objects.get_or_create(
-                            location=form_data.get("location"),
-                            contact=form_data.get("contact"),
-                            address=form_data.get("address"),
-                            city=form_data.get("city"),
-                            state=form_data.get("state"),
-                            country=form_data.get("country"),
-                            branch=branch_instance
+                    print('gggggggggg',remaining_units)
+                    
+                    # Validations..........
+                    if all(unit == 0 for unit in remaining_units.values()):
+                        return Response(
+                            {"message": "Cannot create a new Income Debit Note. All product remaining units are 0."},
+                            status=status.HTTP_400_BAD_REQUEST
                         )
+                    
+                    for product_name, unit in remaining_units.items():
+                        if unit is None:
+                            return Response({"message" : f"Remaining units for product '{product_name}' is missing or undefined."}, status=status.HTTP_400_BAD_REQUEST)
+                        if unit < 0:
+                            return Response({"message" : f"Remaining units for prooooooooooooduct '{product_name}' cannot be negative. Current value: {unit}"}, status=status.HTTP_400_BAD_REQUEST)
 
-                    for row in rows:
-                        product_name = row.get('product')
-                        unit_value = safe_decimal(row.get('unit', '0'))
-                        
-                        # Skip rows with unit value as 0 or negative
-                        if unit_value <= 0:
-                            continue  # Skip processing this row
-                        
-                        # Validate remaining units for the product
-                        if product_name in remaining_units:
-                            if remaining_units[product_name] < unit_value:
-                                return Response(
-                                    {
-                                        "message": f"Not enough units remaining for the product '{product_name}'. "
-                                                f"Available: {remaining_units[product_name]}, Requested: {unit_value}."
-                                    },
-                                    status=status.HTTP_400_BAD_REQUEST
+                    # Extract rows dynamically
+                    rows_data = defaultdict(dict)
+                    for key, value in payload.items():
+                        if key.startswith("rows["):
+                            row_index = key.split('[')[1].split(']')[0]
+                            field_name = key.split('[')[2].split(']')[0]
+                            rows_data[int(row_index)][field_name] = value
+                    rows = [rows_data[index] for index in sorted(rows_data.keys())]
+
+                    # Extract form data, vendor data, and invoice data
+                    form_data = {
+                        "offLocID": payload.get("formData[offLocID]"),
+                        "location": payload.get("formData[location]"),
+                        "contact": payload.get("formData[contact]"),
+                        "address": payload.get("formData[address]"),
+                        "city": payload.get("formData[city]"),
+                        "state": payload.get("formData[state]"),
+                        "country": payload.get("formData[country]"),
+                        "branchID": payload.get("formData[branchID]"),
+                    }
+                    vendor_data = {
+                        "name": payload.get("vendorData[name]"),
+                        "gst_no": payload.get("vendorData[gst_no]"),
+                        "pan": payload.get("vendorData[pan]"),
+                        "customer_address": payload.get("vendorData[customer_address]"),
+                        "email": payload.get("vendorData[email]"),
+                        "contact": payload.get("vendorData[contact]"),
+                        "customer": payload.get("vendorData[customer]", "").lower() == "true",
+                        "vendor": payload.get("vendorData[vendor]", "").lower() == "true",
+                    }
+                    invoice_data = {
+                        "invoice_no": payload.get("invoiceData[0][invoice_no]"),
+                        "invoice_date": payload.get("invoiceData[0][invoice_date]"),
+                        "month": payload.get("invoiceData[0][month]"),
+                        "invoice_type": payload.get("invoiceData[0][invoice_type]"),
+                        "entry_type": payload.get("invoiceData[0][entry_type]"),
+                        "taxable_amount": payload.get("invoiceData[0][taxable_amount]"),
+                        "totalall_gst": payload.get("invoiceData[0][totalall_gst]"),
+                        "total_invoice_value": payload.get("invoiceData[0][total_invoice_value]"),
+                        "tds_tcs_rate": payload.get("invoiceData[0][tds_tcs_rate]"),
+                        "tcs": payload.get("invoiceData[0][tcs]"),
+                        "tds": payload.get("invoiceData[0][tds]"),
+                        "amount_receivable": payload.get("invoiceData[0][amount_receivable]"),
+                    }
+                    if invoice_data["invoice_date"]:
+                        try:
+                            invoice_data["invoice_date"] = datetime.strptime(invoice_data["invoice_date"], "%d-%m-%Y").date()
+                        except ValueError:
+                            return Response({"error_message": "Invalid Invoice date format, expected DD-MM-YYYY."}, status=status.HTTP_400_BAD_REQUEST)
+                    print("Final invoice date:", invoice_data["invoice_date"])
+
+                    if invoice_data["month"]:
+                        try:
+                            invoice_data["month"] = datetime.strptime(invoice_data["month"], "%d-%m-%Y").date()
+                        except ValueError:
+                            return Response({"error_message": "Invalid Month date format, expected DD-MM-YYYY."},status=status.HTTP_400_BAD_REQUEST)
+
+                    # if invoice_data["utilise_month"]:
+                    #     try:
+                    #         invoice_data["utilise_month"] = datetime.strptime(invoice_data["utilise_month"], "%d-%m-%Y").date()
+                    #     except ValueError:
+                    #         return Response({"error_message": "Invalid Utilise Month date format, expected DD-MM-YYYY."},status=status.HTTP_400_BAD_REQUEST)
+
+                    # print("Final month:", invoice_data["month"])
+
+
+                    attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
+                    attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
+
+                    # Handle Office Location creation or selection
+                    # location_obj = None
+                    # if form_data["offLocID"]:
+                    #     location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
+                    #     if not location_obj:
+                    #         return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+                    # else:
+                    #     branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
+                    #     if not branch_instance:
+                    #         return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+                    #                         status=status.HTTP_404_NOT_FOUND)
+                    #     location_obj = OfficeLocation.objects.create(
+                    #         location=form_data.get("location"),
+                    #         contact=form_data.get("contact"),
+                    #         address=form_data.get("address"),
+                    #         city=form_data.get("city"),
+                    #         state=form_data.get("state"),
+                    #         country=form_data.get("country"),
+                    #         branch=branch_instance
+                    #     )
+
+                    # Handle Vendor creation or update
+                    vendor_obj = None
+                    if vendor_data.get("gst_no"):
+                        existing_vendor = Customer.objects.filter(client=client, gst_no=vendor_data["gst_no"]).first()
+                        if existing_vendor:
+                            vendor_serializer = CustomerVendorSerializer(existing_vendor, data=vendor_data, partial=True)
+                            if vendor_serializer.is_valid():
+                                vendor_obj = vendor_serializer.save()
+                            else:
+                                return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                        else:
+                            vendor_serializer = CustomerVendorSerializer(data=vendor_data)
+                            if vendor_serializer.is_valid():
+                                vendor_obj = vendor_serializer.save(client=client)
+                            else:
+                                return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+                    if any(unit is None for unit in remaining_units.values()):
+                        return Response({"message" : f"Remaining units for product {product} is missing."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    else:
+                        debit_note_serializer = IncomeDebitNoteSerializer(data=data)
+
+                        if debit_note_serializer.is_valid():
+                            location_obj = None
+                            if form_data["offLocID"]:
+                                location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
+                                if not location_obj:
+                                    return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+                            else:
+                                branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
+                                if not branch_instance:
+                                    return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+                                                    status=status.HTTP_404_NOT_FOUND)
+                                location_obj, _ = OfficeLocation.objects.get_or_create(
+                                    location=form_data.get("location"),
+                                    contact=form_data.get("contact"),
+                                    address=form_data.get("address"),
+                                    city=form_data.get("city"),
+                                    state=form_data.get("state"),
+                                    country=form_data.get("country"),
+                                    branch=branch_instance
                                 )
-                            
-                            # Deduct the used units from the remaining_units
-                            remaining_units[product_name] -= unit_value
-                        else:
-                            return Response(
-                                {"message": f"Product '{product_name}' not found in remaining units."},
-                                status=status.HTTP_400_BAD_REQUEST
-                            )
-        
-                # if not debit_note_serializer.is_valid():
-                    debit_note = IncomeDebitNote.objects.create(
-                    client=client,
-                    # sales_invoice=sales_invoice,
-                    income = income,
-                    client_Location=location_obj,
-                    customer=vendor_obj,
-                    attach_invoice=attach_invoice,
-                    attach_e_way_bill=attach_e_way_bill,
-                    **invoice_data
-                    )
-        
-                    product_summaries = []
-                    for row in rows:
-                        product_name = row.get('product')
-                        unit_value = safe_decimal(row.get('unit', '0'))
-                        hsn_code = row.get('hsnCode')
-                        gst_rate = safe_decimal(row.get('gstRate', '0'))
-                        product_id = row.get('product_id')
-                        description_text = row.get('description', '')
-                        rate_value = safe_decimal(row.get('rate', '0'))
-                        amount = safe_decimal(row.get('product_amount', '0'))
-                        cgst = safe_decimal(row.get('cgst', '0'))
-                        sgst = safe_decimal(row.get('sgst', '0'))
-                        igst = safe_decimal(row.get('igst', '0'))
 
-                        hsn_code_obj, _ = HSNCode.objects.get_or_create(
-                            hsn_code=hsn_code, defaults={'gst_rate': gst_rate}
-                        )
+                            for row in rows:
+                                product_name = row.get('product')
+                                unit_value = safe_decimal(row.get('unit', '0'))
+                                
+                                # Skip rows with unit value as 0 or negative
+                                if unit_value <= 0:
+                                    continue  # Skip processing this row
+                                
+                                # Validate remaining units for the product
+                                if product_name in remaining_units:
+                                    if remaining_units[product_name] < unit_value:
+                                        return Response(
+                                            {
+                                                "message": f"Not enough units remaining for the product '{product_name}'. "
+                                                        f"Available: {remaining_units[product_name]}, Requested: {unit_value}."
+                                            },
+                                            status=status.HTTP_400_BAD_REQUEST
+                                        )
+                                    
+                                    # Deduct the used units from the remaining_units
+                                    remaining_units[product_name] -= unit_value
+                                else:
+                                    return Response(
+                                        {"message": f"Product '{product_name}' not found in remaining units."},
+                                        status=status.HTTP_400_BAD_REQUEST
+                                    )
+                
+                        # if not debit_note_serializer.is_valid():
+                            debit_note = IncomeDebitNote.objects.create(
+                            client=client,
+                            # sales_invoice=sales_invoice,
+                            income = income,
+                            client_Location=location_obj,
+                            customer=vendor_obj,
+                            attach_invoice=attach_invoice,
+                            attach_e_way_bill=attach_e_way_bill,
+                            **invoice_data
+                            )
+                
+                            product_summaries = []
+                            for row in rows:
+                                product_name = row.get('product')
+                                unit_value = safe_decimal(row.get('unit', '0'))
+                                hsn_code = row.get('hsnCode')
+                                gst_rate = safe_decimal(row.get('gstRate', '0'))
+                                product_id = row.get('product_id')
+                                description_text = row.get('description', '')
+                                rate_value = safe_decimal(row.get('rate', '0'))
+                                amount = safe_decimal(row.get('product_amount', '0'))
+                                cgst = safe_decimal(row.get('cgst', '0'))
+                                sgst = safe_decimal(row.get('sgst', '0'))
+                                igst = safe_decimal(row.get('igst', '0'))
 
-                        if product_id:
-                            product_obj = Product.objects.filter(id=product_id).first()
-                            if not product_obj:
-                                return Response({"message": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
-                        else:
-                            product_obj, _ = Product.objects.get_or_create(
-                                product_name=product_name, hsn=hsn_code_obj, defaults={'unit_of_measure': unit_value}
-                            )
-                            product_description_obj = ProductDescription.objects.create(
-                                product=product_obj,
-                                description=description_text,
-                                unit=unit_value,
-                                rate=rate_value,
-                                product_amount=amount,
-                                cgst=cgst,
-                                sgst=sgst,
-                                igst=igst,
-                            )
-                            l = product_description_obj.unit
-                            product_summary = ProductSummaryIncomeDebitNote.objects.create(
-                                hsn=hsn_code_obj,
-                                product=product_obj,
-                                prod_description=product_description_obj
-                            )
-                            product_summaries.append(product_summary)
-                            debit_note.product_summaries.add(product_summary)
-                            
-                        debit_note.save()
-                    return Response({"message": "Income Debit Note created successfully."}, status=status.HTTP_200_OK)
+                                hsn_code_obj, _ = HSNCode.objects.get_or_create(
+                                    hsn_code=hsn_code, defaults={'gst_rate': gst_rate}
+                                )
+
+                                if product_id:
+                                    product_obj = Product.objects.filter(id=product_id).first()
+                                    if not product_obj:
+                                        return Response({"message": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                                else:
+                                    product_obj, _ = Product.objects.get_or_create(
+                                        product_name=product_name, hsn=hsn_code_obj, defaults={'unit_of_measure': unit_value}
+                                    )
+                                    product_description_obj = ProductDescription.objects.create(
+                                        product=product_obj,
+                                        description=description_text,
+                                        unit=unit_value,
+                                        rate=rate_value,
+                                        product_amount=amount,
+                                        cgst=cgst,
+                                        sgst=sgst,
+                                        igst=igst,
+                                    )
+                                    l = product_description_obj.unit
+                                    product_summary = ProductSummaryIncomeDebitNote.objects.create(
+                                        hsn=hsn_code_obj,
+                                        product=product_obj,
+                                        prod_description=product_description_obj
+                                    )
+                                    product_summaries.append(product_summary)
+                                    debit_note.product_summaries.add(product_summary)
+                                    
+                                debit_note.save()
+                            return Response({"message": "Income Debit Note created successfully."}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({"error": str(e)}, status=400)
 
     # except Exception as e:
     #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -7246,7 +8864,6 @@ def update_income_debit_note(request, client_pk, income_pk):
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 @api_view(['GET', 'PATCH'])
 def income_debit_note_detail_view(request, client_pk, income_pk, debit_pk):
@@ -7351,8 +8968,7 @@ def income_debit_note_detail_view(request, client_pk, income_pk, debit_pk):
         # Return the updated object
         updated_serializer = IncomeDebitNoteSerializer(debit_note)
         return Response(updated_serializer.data, status=status.HTTP_200_OK)
-    
-    
+        
 @api_view(['DELETE'])
 def delete_income_debit_note(request, client_pk, income_pk, pk):
     """
@@ -7389,7 +9005,6 @@ def delete_income_debit_note(request, client_pk, income_pk, pk):
     except Exception as e:
         return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-
 @api_view(['POST'])
 def create_income_debit_note2(request, client_pk, income_pk):
     try:
@@ -7569,7 +9184,6 @@ def create_income_debit_note2(request, client_pk, income_pk):
         # print({"Error in update_sales_invoice" : str(e)})
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
- 
 # ******************************************************Credit Note****************************************************   
 
 @api_view(['GET', 'POST'])
@@ -7823,7 +9437,6 @@ def create_expenses_credit_note2(request, client_pk, expenses_pk):
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
     
 @api_view(['POST'])
 def create_expenses_credit_note(request, client_pk, expenses_pk):
@@ -7831,12 +9444,12 @@ def create_expenses_credit_note(request, client_pk, expenses_pk):
     expenses = Expenses.objects.get(id=expenses_pk, client=client)
 
     # Check if 'attach_e_way_bill' is in the request files
-    if 'attach_e_way_bill' in request.FILES:
+    if 'attach_invoice' in request.FILES:
         # Iterate through each file in the 'attach_e_way_bill' field
-        for e_way_bill in request.FILES.getlist('attach_e_way_bill'):
+        for e_way_bill in request.FILES.getlist('attach_invoice'):
             # Prepare data for each file
             creditnote_data = {
-                'attach_e_way_bill': e_way_bill,  # The file being uploaded
+                'attach_invoice': e_way_bill,  # The file being uploaded
                 'client': client.id,  # Associate the file with the client
                 'expenses' : expenses.id,
             }
@@ -7945,6 +9558,8 @@ def update_expenses_credit_note(request, client_pk, expenses_pk):
                     "name": credit_note.vendor.name if credit_note.vendor else None,
                     "gst_no": credit_note.vendor.gst_no if credit_note.vendor else None,
                     "pan": credit_note.vendor.pan if credit_note.vendor else None,
+                    "email": credit_note.vendor.email if credit_note.vendor else None,
+                    "contact": credit_note.vendor.contact if credit_note.vendor else None,
                     "customer_address": credit_note.vendor.address if credit_note.vendor else None,
                     "customer": credit_note.vendor.customer if credit_note.vendor else None,
                     "vendor": credit_note.vendor.vendor if credit_note.vendor else None,
@@ -7955,254 +9570,283 @@ def update_expenses_credit_note(request, client_pk, expenses_pk):
 
         # Handle PUT request
         elif request.method == 'POST':
-            payload = request.data
-            data = request.data
-            # print('payload', payload)
+            try:
+                with transaction.atomic():
+                    payload = request.data
+                    data = request.data
+                    # print('payload', payload)
 
-            # Fetch the Client
-            client = Client.objects.filter(pk=client_pk).first()
-            if not client:
-                return Response({"message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
+                    # Fetch the Client
+                    client = Client.objects.filter(pk=client_pk).first()
+                    if not client:
+                        return Response({"message": "Client not found."}, status=status.HTTP_404_NOT_FOUND)
 
-            # Fetch the Purchase Invoice
-            expenses = Expenses.objects.filter(client_id=client_pk, id=expenses_pk )\
-                .select_related('client_Location', 'vendor') \
-                .prefetch_related('product_summaries__hsn', 'product_summaries__prod_description') \
-                .first()
-            if not expenses:
-                return Response({"message": "Credit Note not found."}, status=status.HTTP_404_NOT_FOUND)
+                    # Fetch the Purchase Invoice
+                    expenses = Expenses.objects.filter(client_id=client_pk, id=expenses_pk )\
+                        .select_related('client_Location', 'vendor') \
+                        .prefetch_related('product_summaries__hsn', 'product_summaries__prod_description') \
+                        .first()
+                    if not expenses:
+                        return Response({"message": "Credit Note not found."}, status=status.HTTP_404_NOT_FOUND)
 
-            debit_notes = ExpensesCreditNote.objects.filter(expenses=expenses)
-            product_unit_sums = defaultdict(int)
+                    debit_notes = ExpensesCreditNote.objects.filter(expenses=expenses)
+                    product_unit_sums = defaultdict(int)
 
-            for dn in debit_notes:
-                for product_summary in dn.product_summaries.all():
-                    product_name = product_summary.product_name()
-                    product_unit = product_summary.unit() or 0  # Agar unit None ho toh 0 lelo
-                    product_unit_sums[product_name] += product_unit
+                    for dn in debit_notes:
+                        for product_summary in dn.product_summaries.all():
+                            product_name = product_summary.product_name()
+                            product_unit = product_summary.unit() or 0  # Agar unit None ho toh 0 lelo
+                            product_unit_sums[product_name] += product_unit
 
-            remaining_units = {}
-            for product in expenses.product_summaries.all():
-                product_name = product.product_name()
-                si_unit = product.unit() or 0  # Sales Invoice ke unit
-                dn_unit_sum = product_unit_sums[product_name]  # Debit Notes ka unit sum
-                remaining_units[product_name] = si_unit - dn_unit_sum  # Remaining units
+                    remaining_units = {}
+                    for product in expenses.product_summaries.all():
+                        product_name = product.product_name()
+                        si_unit = product.unit() or 0  # Sales Invoice ke unit
+                        dn_unit_sum = product_unit_sums[product_name]  # Debit Notes ka unit sum
+                        remaining_units[product_name] = si_unit - dn_unit_sum  # Remaining units
 
-            print('gggggggg',remaining_units)
+                    print('gggggggg',remaining_units)
 
-            
-            # Validations..........
-            if all(unit == 0 for unit in remaining_units.values()):
-                return Response(
-                    {"message": "Cannot create a new Expenses Credit Note. All product remaining units are 0."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            for product_name, unit in remaining_units.items():
-                if unit is None:
-                    return Response({"message" : f"Remaining units for product '{product_name}' is missing or undefined."}, status=status.HTTP_400_BAD_REQUEST)
-                if unit < 0:
-                    return Response({"message" : f"Remaining units for prooooooooooooduct '{product_name}' cannot be negative. Current value: {unit}"}, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    # Validations..........
+                    if all(unit == 0 for unit in remaining_units.values()):
+                        return Response(
+                            {"message": "Cannot create a new Expenses Credit Note. All product remaining units are 0."},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    
+                    for product_name, unit in remaining_units.items():
+                        if unit is None:
+                            return Response({"message" : f"Remaining units for product '{product_name}' is missing or undefined."}, status=status.HTTP_400_BAD_REQUEST)
+                        if unit < 0:
+                            return Response({"message" : f"Remaining units for prooooooooooooduct '{product_name}' cannot be negative. Current value: {unit}"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-            # Extract rows dynamically
-            rows_data = defaultdict(dict)
-            for key, value in payload.items():
-                if key.startswith("rows["):  # Check if the key corresponds to rows
-                    row_index = key.split('[')[1].split(']')[0]
-                    field_name = key.split('[')[2].split(']')[0]
-                    rows_data[int(row_index)][field_name] = value
-            rows = [rows_data[index] for index in sorted(rows_data.keys())]
-            print('rows', rows)
+                    # Extract rows dynamically
+                    rows_data = defaultdict(dict)
+                    for key, value in payload.items():
+                        if key.startswith("rows["):  # Check if the key corresponds to rows
+                            row_index = key.split('[')[1].split(']')[0]
+                            field_name = key.split('[')[2].split(']')[0]
+                            rows_data[int(row_index)][field_name] = value
+                    rows = [rows_data[index] for index in sorted(rows_data.keys())]
+                    print('rows', rows)
 
-            # Extract form data, vendor data, and invoice data
-            form_data = {
-                "offLocID": payload.get("formData[offLocID]"),
-                "location": payload.get("formData[location]"),
-                "contact": payload.get("formData[contact]"),
-                "address": payload.get("formData[address]"),
-                "city": payload.get("formData[city]"),
-                "state": payload.get("formData[state]"),
-                "country": payload.get("formData[country]"),
-                "branchID": payload.get("formData[branchID]"),
-            }
-            vendor_data = {
-                "name": payload.get("vendorData[name]"),
-                "gst_no": payload.get("vendorData[gst_no]"),
-                "pan": payload.get("vendorData[pan]"),
-                "customer_address": payload.get("vendorData[customer_address]"),
-                "customer": payload.get("vendorData[customer]", "").lower() == "true",
-                "vendor": payload.get("vendorData[vendor]", "").lower() == "true",
-            }
-            invoice_data = {
-                "invoice_no": payload.get("invoiceData[0][invoice_no]"),
-                "invoice_date": payload.get("invoiceData[0][invoice_date]"),
-                "month": payload.get("invoiceData[0][month]"),
-                "invoice_type": payload.get("invoiceData[0][invoice_type]"),
-                "entry_type": payload.get("invoiceData[0][entry_type]"),
-                "taxable_amount": payload.get("invoiceData[0][taxable_amount]"),
-                "totalall_gst": payload.get("invoiceData[0][totalall_gst]"),
-                "total_invoice_value": payload.get("invoiceData[0][total_invoice_value]"),
-                "tds_tcs_rate": payload.get("invoiceData[0][tds_tcs_rate]"),
-                "tcs": payload.get("invoiceData[0][tcs]"),
-                "tds": payload.get("invoiceData[0][tds]"),
-                "amount_receivable": payload.get("invoiceData[0][amount_receivable]"),
-                "utilise_edit": payload.get("invoiceData[0][utilise_edit]", "").lower() == "true", #nnnn
-                "utilise_month": payload.get("invoiceData[0][utilise_month]"), #nnnnnn
-                
-            }
-            attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
-            attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
+                    # Extract form data, vendor data, and invoice data
+                    form_data = {
+                        "offLocID": payload.get("formData[offLocID]"),
+                        "location": payload.get("formData[location]"),
+                        "contact": payload.get("formData[contact]"),
+                        "address": payload.get("formData[address]"),
+                        "city": payload.get("formData[city]"),
+                        "state": payload.get("formData[state]"),
+                        "country": payload.get("formData[country]"),
+                        "branchID": payload.get("formData[branchID]"),
+                    }
+                    vendor_data = {
+                        "name": payload.get("vendorData[name]"),
+                        "gst_no": payload.get("vendorData[gst_no]"),
+                        "pan": payload.get("vendorData[pan]"),
+                        "email": payload.get("vendorData[email]"),
+                        "contact": payload.get("vendorData[contact]"),
+                        "customer_address": payload.get("vendorData[customer_address]"),
+                        "customer": payload.get("vendorData[customer]", "").lower() == "true",
+                        "vendor": payload.get("vendorData[vendor]", "").lower() == "true",
+                    }
+                    invoice_data = {
+                        "invoice_no": payload.get("invoiceData[0][invoice_no]"),
+                        "invoice_date": payload.get("invoiceData[0][invoice_date]"),
+                        "month": payload.get("invoiceData[0][month]"),
+                        "invoice_type": payload.get("invoiceData[0][invoice_type]"),
+                        "entry_type": payload.get("invoiceData[0][entry_type]"),
+                        "taxable_amount": payload.get("invoiceData[0][taxable_amount]"),
+                        "totalall_gst": payload.get("invoiceData[0][totalall_gst]"),
+                        "total_invoice_value": payload.get("invoiceData[0][total_invoice_value]"),
+                        "tds_tcs_rate": payload.get("invoiceData[0][tds_tcs_rate]"),
+                        "tcs": payload.get("invoiceData[0][tcs]"),
+                        "tds": payload.get("invoiceData[0][tds]"),
+                        "amount_receivable": payload.get("invoiceData[0][amount_receivable]"),
+                        "utilise_edit": payload.get("invoiceData[0][utilise_edit]", "").lower() == "true", #nnnn
+                        "utilise_month": payload.get("invoiceData[0][utilise_month]"), #nnnnnn
+                        
+                    }
 
-            # Handle Office Location creation or selection
-            # location_obj = None
-            # if form_data["offLocID"]:
-            #     location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
-            #     if not location_obj:
-            #         return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
-            # else:
-            #     branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
-            #     if not branch_instance:
-            #         return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
-            #                         status=status.HTTP_404_NOT_FOUND)
-            #     location_obj = OfficeLocation.objects.create(
-            #         location=form_data.get("location"),
-            #         contact=form_data.get("contact"),
-            #         address=form_data.get("address"),
-            #         city=form_data.get("city"),
-            #         state=form_data.get("state"),
-            #         country=form_data.get("country"),
-            #         branch=branch_instance
-            #     )
+                    if invoice_data["invoice_date"]:
+                        try:
+                            invoice_data["invoice_date"] = datetime.strptime(invoice_data["invoice_date"], "%d-%m-%Y").date()
+                        except ValueError:
+                            return Response({"error_message": "Invalid Invoice date format, expected DD-MM-YYYY."}, status=status.HTTP_400_BAD_REQUEST)
+                    print("Final invoice date:", invoice_data["invoice_date"])
 
-            # Handle Vendor creation or update
-            vendor_obj = None
-            if vendor_data.get("gst_no"):
-                existing_vendor = Customer.objects.filter(client=client, gst_no=vendor_data["gst_no"]).first()
-                if existing_vendor:
-                    vendor_serializer = CustomerVendorSerializer(existing_vendor, data=vendor_data, partial=True)
-                    if vendor_serializer.is_valid():
-                        vendor_obj = vendor_serializer.save()
-                    else:
-                        return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    vendor_serializer = CustomerVendorSerializer(data=vendor_data)
-                    if vendor_serializer.is_valid():
-                        vendor_obj = vendor_serializer.save(client=client)
-                    else:
-                        return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                    if invoice_data["month"]:
+                        try:
+                            invoice_data["month"] = datetime.strptime(invoice_data["month"], "%d-%m-%Y").date()
+                        except ValueError:
+                            return Response({"error_message": "Invalid Month date format, expected DD-MM-YYYY."},status=status.HTTP_400_BAD_REQUEST)
 
-            if any(unit is None for unit in remaining_units.values()):
-                return Response({"message" : f"Remaining units for product {product} is missing."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            else:
-                credit_note_serializer = CreditNoteSerializer(data=data)
+                    if invoice_data["utilise_month"]:
+                        try:
+                            invoice_data["utilise_month"] = datetime.strptime(invoice_data["utilise_month"], "%d-%m-%Y").date()
+                        except ValueError:
+                            return Response({"error_message": "Invalid Utilise Month date format, expected DD-MM-YYYY."},status=status.HTTP_400_BAD_REQUEST)
 
-                if credit_note_serializer.is_valid():
+                    print("Final month:", invoice_data["month"])
+
+
+                    attach_invoice = request.FILES.get("invoiceData[0][attach_invoice]")
+                    attach_e_way_bill = request.FILES.get("invoiceData[0][attach_e_way_bill]")
+
                     # Handle Office Location creation or selection
-                    location_obj = None
-                    if form_data["offLocID"]:
-                        location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
-                        if not location_obj:
-                            return Response({"message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+                    # location_obj = None
+                    # if form_data["offLocID"]:
+                    #     location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
+                    #     if not location_obj:
+                    #         return Response({"error_message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+                    # else:
+                    #     branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
+                    #     if not branch_instance:
+                    #         return Response({"error_message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+                    #                         status=status.HTTP_404_NOT_FOUND)
+                    #     location_obj = OfficeLocation.objects.create(
+                    #         location=form_data.get("location"),
+                    #         contact=form_data.get("contact"),
+                    #         address=form_data.get("address"),
+                    #         city=form_data.get("city"),
+                    #         state=form_data.get("state"),
+                    #         country=form_data.get("country"),
+                    #         branch=branch_instance
+                    #     )
+
+                    # Handle Vendor creation or update
+                    vendor_obj = None
+                    if vendor_data.get("gst_no"):
+                        existing_vendor = Customer.objects.filter(client=client, gst_no=vendor_data["gst_no"]).first()
+                        if existing_vendor:
+                            vendor_serializer = CustomerVendorSerializer(existing_vendor, data=vendor_data, partial=True)
+                            if vendor_serializer.is_valid():
+                                vendor_obj = vendor_serializer.save()
+                            else:
+                                return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                        else:
+                            vendor_serializer = CustomerVendorSerializer(data=vendor_data)
+                            if vendor_serializer.is_valid():
+                                vendor_obj = vendor_serializer.save(client=client)
+                            else:
+                                return Response({"vendor_errors": vendor_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+                    if any(unit is None for unit in remaining_units.values()):
+                        return Response({"message" : f"Remaining units for product {product} is missing."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                     else:
-                        branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
-                        if not branch_instance:
-                            return Response({"message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
-                                            status=status.HTTP_404_NOT_FOUND)
-                        location_obj, _ = OfficeLocation.objects.get_or_create(
-                            location=form_data.get("location"),
-                            contact=form_data.get("contact"),
-                            address=form_data.get("address"),
-                            city=form_data.get("city"),
-                            state=form_data.get("state"),
-                            country=form_data.get("country"),
-                            branch=branch_instance
-                        )
-                    for row in rows:
-                        product_name = row.get('product')
-                        unit_value = safe_decimal(row.get('unit', '0'))
-                        
-                        # Skip rows with unit value as 0 or negative
-                        if unit_value <= 0:
-                            continue  # Skip processing this row
-                        
-                        # Validate remaining units for the product
-                        if product_name in remaining_units:
-                            if remaining_units[product_name] < unit_value:
-                                return Response(
-                                    {
-                                        "message": f"Not enough units remaining for the product '{product_name}'. "
-                                                f"Available: {remaining_units[product_name]}, Requested: {unit_value}."
-                                    },
-                                    status=status.HTTP_400_BAD_REQUEST
+                        credit_note_serializer = CreditNoteSerializer(data=data)
+
+                        if credit_note_serializer.is_valid():
+                            # Handle Office Location creation or selection
+                            location_obj = None
+                            if form_data["offLocID"]:
+                                location_obj = OfficeLocation.objects.filter(id=form_data["offLocID"]).first()
+                                if not location_obj:
+                                    return Response({"message": "Office Location not found."}, status=status.HTTP_404_NOT_FOUND)
+                            else:
+                                branch_instance = Branch.objects.filter(id=form_data["branchID"], client=client).first()
+                                if not branch_instance:
+                                    return Response({"message": f"Branch with ID {form_data['branchID']} not found or doesn't belong to the client."},
+                                                    status=status.HTTP_404_NOT_FOUND)
+                                location_obj, _ = OfficeLocation.objects.get_or_create(
+                                    location=form_data.get("location"),
+                                    contact=form_data.get("contact"),
+                                    address=form_data.get("address"),
+                                    city=form_data.get("city"),
+                                    state=form_data.get("state"),
+                                    country=form_data.get("country"),
+                                    branch=branch_instance
                                 )
-                            
-                            # Deduct the used units from the remaining_units
-                            remaining_units[product_name] -= unit_value
-                        else:
-                            return Response(
-                                {"message": f"Product '{product_name}' not found in remaining units."},
-                                status=status.HTTP_400_BAD_REQUEST
-                            )
+                            for row in rows:
+                                product_name = row.get('product')
+                                unit_value = safe_decimal(row.get('unit', '0'))
+                                
+                                # Skip rows with unit value as 0 or negative
+                                if unit_value <= 0:
+                                    continue  # Skip processing this row
+                                
+                                # Validate remaining units for the product
+                                if product_name in remaining_units:
+                                    if remaining_units[product_name] < unit_value:
+                                        return Response(
+                                            {
+                                                "message": f"Not enough units remaining for the product '{product_name}'. "
+                                                        f"Available: {remaining_units[product_name]}, Requested: {unit_value}."
+                                            },
+                                            status=status.HTTP_400_BAD_REQUEST
+                                        )
+                                    
+                                    # Deduct the used units from the remaining_units
+                                    remaining_units[product_name] -= unit_value
+                                else:
+                                    return Response(
+                                        {"message": f"Product '{product_name}' not found in remaining units."},
+                                        status=status.HTTP_400_BAD_REQUEST
+                                    )
 
-                    # Create the Debit Note
-                    credit_note = ExpensesCreditNote.objects.create(
-                        client=client,
-                        # purchase_invoice=purchase_invoice,
-                        expenses = expenses,
-                        client_Location=location_obj,
-                        vendor=vendor_obj,
-                        attach_invoice=attach_invoice,
-                        attach_e_way_bill=attach_e_way_bill,
-                        **invoice_data
-                    )
-                    product_summaries = []
-                    for row in rows:
-                        product_name = row.get('product')
-                        unit_value = safe_decimal(row.get('unit', '0'))
-                        hsn_code = row.get('hsnCode')
-                        gst_rate = safe_decimal(row.get('gstRate', '0'))
-                        product_id = row.get('product_id')
-                        description_text = row.get('description', '')
-                        rate_value = safe_decimal(row.get('rate', '0'))
-                        amount = safe_decimal(row.get('product_amount', '0'))
-                        cgst = safe_decimal(row.get('cgst', '0'))
-                        sgst = safe_decimal(row.get('sgst', '0'))
-                        igst = safe_decimal(row.get('igst', '0'))
+                            # Create the Debit Note
+                            credit_note = ExpensesCreditNote.objects.create(
+                                client=client,
+                                # purchase_invoice=purchase_invoice,
+                                expenses = expenses,
+                                client_Location=location_obj,
+                                vendor=vendor_obj,
+                                attach_invoice=attach_invoice,
+                                attach_e_way_bill=attach_e_way_bill,
+                                **invoice_data
+                            )
+                            product_summaries = []
+                            for row in rows:
+                                product_name = row.get('product')
+                                unit_value = safe_decimal(row.get('unit', '0'))
+                                hsn_code = row.get('hsnCode')
+                                gst_rate = safe_decimal(row.get('gstRate', '0'))
+                                product_id = row.get('product_id')
+                                description_text = row.get('description', '')
+                                rate_value = safe_decimal(row.get('rate', '0'))
+                                amount = safe_decimal(row.get('product_amount', '0'))
+                                cgst = safe_decimal(row.get('cgst', '0'))
+                                sgst = safe_decimal(row.get('sgst', '0'))
+                                igst = safe_decimal(row.get('igst', '0'))
 
-                        hsn_code_obj, _ = HSNCode.objects.get_or_create(
-                            hsn_code=hsn_code, defaults={'gst_rate': gst_rate}
-                        )
+                                hsn_code_obj, _ = HSNCode.objects.get_or_create(
+                                    hsn_code=hsn_code, defaults={'gst_rate': gst_rate}
+                                )
 
-                        if product_id:
-                            product_obj = Product.objects.filter(id=product_id).first()
-                            if not product_obj:
-                                return Response({"message": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
-                        else:
-                            product_obj, _ = Product.objects.get_or_create(
-                                product_name=product_name, hsn=hsn_code_obj, defaults={'unit_of_measure': unit_value}
-                            )
-                            product_description_obj = ProductDescription.objects.create(
-                                product=product_obj,
-                                description=description_text,
-                                unit=unit_value,
-                                rate=rate_value,
-                                product_amount=amount,
-                                cgst=cgst,
-                                sgst=sgst,
-                                igst=igst,
-                            )
-                            l = product_description_obj.unit
-                            product_summary = ProductSummaryExpensesCreditNote.objects.create(
-                                hsn=hsn_code_obj,
-                                product=product_obj,
-                                prod_description=product_description_obj
-                            )
-                            product_summaries.append(product_summary)
-                            credit_note.product_summaries.add(product_summary)
-                            
-                        credit_note.save()
-                    return Response({"message": "Expenses Credit Note created successfully."}, status=status.HTTP_200_OK)
+                                if product_id:
+                                    product_obj = Product.objects.filter(id=product_id).first()
+                                    if not product_obj:
+                                        return Response({"message": f"Product with ID {product_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                                else:
+                                    product_obj, _ = Product.objects.get_or_create(
+                                        product_name=product_name, hsn=hsn_code_obj, defaults={'unit_of_measure': unit_value}
+                                    )
+                                    product_description_obj = ProductDescription.objects.create(
+                                        product=product_obj,
+                                        description=description_text,
+                                        unit=unit_value,
+                                        rate=rate_value,
+                                        product_amount=amount,
+                                        cgst=cgst,
+                                        sgst=sgst,
+                                        igst=igst,
+                                    )
+                                    l = product_description_obj.unit
+                                    product_summary = ProductSummaryExpensesCreditNote.objects.create(
+                                        hsn=hsn_code_obj,
+                                        product=product_obj,
+                                        prod_description=product_description_obj
+                                    )
+                                    product_summaries.append(product_summary)
+                                    credit_note.product_summaries.add(product_summary)
+                                    
+                                credit_note.save()
+                            return Response({"message": "Expenses Credit Note created successfully."}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({"error": str(e)}, status=400)
 
     # except Exception as e:
     #     print("Error in update_credit_note:", str(e))
@@ -8211,7 +9855,6 @@ def update_expenses_credit_note(request, client_pk, expenses_pk):
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
     
 @api_view(['DELETE'])
 def delete_expenses_credit_note(request, client_pk, expenses_pk, credit_pk):
@@ -8252,9 +9895,6 @@ def delete_expenses_credit_note(request, client_pk, expenses_pk, credit_pk):
         error_details = traceback.format_exc()
         # print({"Error in update_sales_invoice" : str(e)})
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    
-
 
 @api_view(['GET', 'PATCH'])
 def expenses_credit_note_detail_view(request, client_pk, expenses_pk, credit_pk):
@@ -8399,8 +10039,240 @@ def delete_excel(request, excel_pk):
     else :
         return Response({'error_message':'Fail to Delete Excel'},status=status.HTTP_400_BAD_REQUEST)
 
+# ************************************************Acknowledgement**************************************************
+
+@api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
+def create_acknowledgement(request,pk):
+    client = Client.objects.get(id=pk)
+    instance_data = request.data
+    data = {key: value for key, value in instance_data.items()}
+
+    serializer = AcknowledgementSerializer(data=data)
+    if serializer.is_valid(raise_exception=True):
+        print('create data qqq',request.data)
+        ack_instance = serializer.save(client=client)
+        print('create data',request.data)
+
+        if request.FILES:
+            # files = dict((request.FILES).lists()).get('return_file','computation_file',None)
+            # filess = dict((request.FILES).lists()).get('files',None)
+            # files = request.FILES.getlist('files')
+            files_return = dict(request.FILES.lists()).get('return_file', [])
+            files_computation = dict(request.FILES.lists()).get('computation_file', [])
+
+            files = files_return 
+            filess = files_computation
+            if files :
+                for file in files:
+                    file_data = {
+                        'ack': ack_instance.pk,
+                        'return_file': file if file in files_return else None,
+                        # 'computation_file': file if file in files_computation else None,
+                    }
+                    file_serializer= FilesSerializer(data=file_data)
+                    if file_serializer.is_valid(raise_exception=True):
+                        file_serializer.save()
+
+            if filess:
+                for file in filess:
+                    file_data = {
+                        'ack': ack_instance.pk,
+                        'computation_file': file if file in files_computation else None,
+                    }
+                    file_serializer= FilesSerializer(data=file_data)
+                    if file_serializer.is_valid(raise_exception=True):
+                        file_serializer.save()
+
+            
+
+            return Response({'message':'Bank created successfully', 'data' : serializer.data},status=status.HTTP_201_CREATED)
+    return Response({
+        'message':'Fail to create bank', 
+        'error_message' : serializer.errors
+        },status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST', 'GET'])
+@parser_classes([MultiPartParser, FormParser])
+def update_acknowledgement(request, pk, ack_pk):
+    try:
+        client = Client.objects.get(id=pk)
+        ack = Acknowledgement.objects.get(id=ack_pk)
+    except Client.DoesNotExist:
+        return Response({"message": "Client not found"}, status=status.HTTP_404_NOT_FOUND)
+    except Acknowledgement.DoesNotExist:
+        return Response({"message": "Acknowledgement not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'POST':
+        # Update Acknowledgement fields
+        ser = AcknowledgementSerializer(instance=ack, data=request.data, partial=True)
+        if ser.is_valid():
+            print('Updated data before save:', request.data)
+            ser.save(client=client)
+            print('Updated data after save:', request.data)
+
+            computation_files = request.FILES.getlist("computation_file")
+            return_files = request.FILES.getlist("return_file")
+
+            print("Received Computation Files:", computation_files)  # Debugging
+            print("Received Return Files:", return_files)
+
+            if return_files:
+                Files.objects.filter(ack=ack).exclude(return_file="").delete()
+                for file in return_files:
+                    file_serializer = FilesSerializer(data={'ack': ack.pk, 'return_file': file})
+                    if file_serializer.is_valid():
+                        file_serializer.save()
+                    else:
+                        return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            if computation_files:
+                Files.objects.filter(ack=ack).exclude(computation_file="").delete()
+                for file in computation_files:
+                    file_serializer = FilesSerializer(data={'ack': ack.pk, 'computation_file': file})
+                    if file_serializer.is_valid():
+                        file_serializer.save()
+                    else:
+                        return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({'message': 'Acknowledgement updated successfully', 'data': ser.data}, status=status.HTTP_200_OK)
+        else:
+            return Response({'message': 'Failed to update acknowledgement', 'error_message': ser.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'GET':
+        ser = AcknowledgementSerializer(ack)
+        return Response(ser.data)
+
+@api_view(['DELETE'])
+def delete_acknowledgement(request, pk, ack_pk):
+    client = Client.objects.get(id=pk)
+    ack = Acknowledgement.objects.get(id=ack_pk)
+    if request.method == 'DELETE':
+        ack.delete()
+        return Response({'message': 'Acknowledgement Deleted'},status=status.HTTP_200_OK)
+    else :
+        return Response({'error_message':'Fail to Delete Acknowledgement'},status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def single_acknowledgement(request, pk, ack_pk):
+    client = Client.objects.get(id=pk)
+    ack = Acknowledgement.objects.get(id=ack_pk)
+    if request.method == 'GET':
+        ser = AcknowledgementSerializer(ack)
+        print(ser)
+        return Response(ser.data)
+
+@api_view(['GET'])
+def get_acknowledgement(request, pk):
+    client = Client.objects.get(id=pk)
+    ack = Acknowledgement.objects.filter(client=client)
+    if request.method == 'GET':
+        ser = AcknowledgementSerializer(ack, many=True)
+        return Response(ser.data)
+    else:
+        return Response(ser.errors)
+
+@api_view(['GET'])
+def download_computation_file(request, pk, ack_pk):
+    client = Client.objects.get(id=pk)
+    ack = Acknowledgement.objects.get(id=ack_pk, client = client)
+    if request.method == 'GET':
+        ser = AcknowledgementSerializer(ack)
+        try:
+            ack = Acknowledgement.objects.get(id=ack_pk, client=client)
+        except Acknowledgement.DoesNotExist:
+            return Response({"error": "Acknowledgement not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        files = Files.objects.filter(ack=ack).exclude(computation_file='')
+
+        if not files.exists():
+            return Response([], status=status.HTTP_200_OK)
+
+        # Return only the 'file' key with the computation_file path
+        file_data = [{"file": file.computation_file.url} for file in files]
+
+        return Response(file_data, status=status.HTTP_200_OK)
+
+# @api_view(['GET'])
+# def download_computation_file(request, pk, ack_pk):
+#     try:
+#         client = Client.objects.get(id=pk)
+#         ack = Acknowledgement.objects.get(id=ack_pk, client=client)
+#     except (Client.DoesNotExist, Acknowledgement.DoesNotExist):
+#         return Response({"error": "Client or Acknowledgement not found."}, status=status.HTTP_404_NOT_FOUND)
+
+#     files = Files.objects.filter(ack=ack).exclude(computation_file='')
+
+#     if not files.exists():
+#         return Response([], status=status.HTTP_200_OK)
+
+#     file_paths = [file.computation_file.path for file in files]
+
+#     # If you're returning one file at a time
+#     file_path = file_paths[0]
+#     file_name = os.path.basename(file_path)
+
+#     try:
+#         return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=file_name)
+#     except FileNotFoundError:
+#         raise Http404("File not found.")
 
 
+@api_view(['GET'])
+def download_return_file(request, pk, ack_pk):
+    client = Client.objects.get(id=pk)
+    ack = Acknowledgement.objects.get(id=ack_pk, client = client)
+    if request.method == 'GET':
+        ser = AcknowledgementSerializer(ack)
+        try:
+            ack = Acknowledgement.objects.get(id=ack_pk, client=client)
+        except Acknowledgement.DoesNotExist:
+            return Response({"error": "Acknowledgement not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        files = Files.objects.filter(ack=ack).exclude(return_file='')
+
+        if not files.exists():
+            return Response([], status=status.HTTP_200_OK)
+
+        # Return only the 'file' key with the return_file path
+        file_data = [{"file": file.return_file.url} for file in files]
+
+        return Response(file_data, status=status.HTTP_200_OK)
+
+
+# @api_view(['GET'])
+# def serve_computation_file(request, file_id):
+#     try:
+#         file_obj = Files.objects.get(id=file_id)
+#         file_path = file_obj.computation_file.path  # absolute path
+
+#         if not os.path.exists(file_path):
+#             raise Http404
+
+#         response = FileResponse(open(file_path, 'rb'))
+#         filename = os.path.basename(file_path)
+#         response['Content-Disposition'] = f'attachment; filename="{filename}"'
+#         return response
+
+#     except Files.DoesNotExist:
+#         raise Http404("File not found")
+
+@api_view(['GET'])
+def serve_computation_file(request, file_id):
+    try:
+        file_obj = Files.objects.get(id=file_id)
+        file_path = file_obj.computation_file.path
+
+        if not os.path.exists(file_path):
+            raise Http404("File not found.")
+
+        with open(file_path, 'rb') as f:
+            response = HttpResponse(f.read(), content_type='application/octet-stream')  # Force download
+            response['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
+            return response
+
+    except Files.DoesNotExist:
+        raise Http404("File not found.")
 
 
 # ***********************************************Detail page API's*********************************************
@@ -8425,11 +10297,8 @@ def delete_excel(request, excel_pk):
 #     view_income = Income.objects.filter(client=client)
 #     view_expenses = Expenses.objects.filter(client=client)
 #     view_zipupload  = ZipUpload.objects.filter(client=client)
-    
-
 #     # view_attachment = Attachment.objects.filter(client=client)
 #     # view_branchdoc = BranchDocument.objects.filter()
-
 #     client_serializer = ClientSerializer(client)
 #     bank_serializer = BankSerializer(view_bank, many=True)
 #     owner_serializer = OwnerSerializer(view_owner, many=True)
@@ -8497,10 +10366,7 @@ def delete_excel(request, excel_pk):
 #         # 'Attachment' : attachment_serializer.data
 #     }
 #     return Response(data)
-
-
 import logging
-
 logger = logging.getLogger(__name__)
 
 @api_view(['GET'])
@@ -8517,13 +10383,17 @@ def detail_client(request, pk):
     view_taxaudit = TaxAudit.objects.filter(client=client)
     view_air = AIR.objects.filter(client=client)
     view_sft = SFT.objects.filter(client=client)
+    view_others = Others.objects.filter(client=client)
     view_tdspayment = TDSPayment.objects.filter(client=client)
     view_tds = TDSReturn.objects.filter(client=client)
+    view_tdssection = TDSSection.objects.filter()
     view_sales = SalesInvoice.objects.filter(client=client)
     view_purchase = PurchaseInvoice.objects.filter(client=client)
     view_income = Income.objects.filter(client=client)
     view_expenses = Expenses.objects.filter(client=client)
     view_zipupload  = ZipUpload.objects.filter(client=client)
+    view_acknowledgement = Acknowledgement.objects.filter(client=client)
+    view_ack = Acknowledgement.objects.filter(client=client)
     
     # Try-except blocks for each serializer
     try:
@@ -8599,9 +10469,21 @@ def detail_client(request, pk):
         raise
 
     try:
+        others_serializer = OthersSerializer(view_others, many=True)
+    except Exception as e:
+        logger.error(f"Error serializing Others: {e}")
+        raise
+
+    try:
         tdspayment_serializer = TDSPaymentSerializer(view_tdspayment, many=True)
     except Exception as e:
         logger.error(f"Error serializing TDS_Payment: {e}")
+        raise
+
+    try:
+        tdssection_serializer = TDSSectionSerializer(view_tdssection, many=True)
+    except Exception as e:
+        logger.error(f"Error serializing TDS_Section: {e}")
         raise
 
     try:
@@ -8641,6 +10523,18 @@ def detail_client(request, pk):
     except Exception as e:
         logger.error(f"Error serializing ZipUpload: {e}")
         raise
+    
+    try:
+        acknowledgement_serializer = AcknowledgementSerializer(view_acknowledgement, many=True)
+    except Exception as e:
+        logger.error(f"Error serializing Acknowledgement: {e}")
+        raise
+
+    try:
+        ack_serializer = AcknowledgementSerializer(view_ack, many=True)
+    except Exception as e:
+        logger.error(f"Error serializing Acknowledgement: {e}")
+        raise
 
     # Building the final response data
     data = {
@@ -8656,23 +10550,20 @@ def detail_client(request, pk):
         'Tax_Audit': taxaudit_serializer.data,
         'AIR': air_serializer.data,
         'SFT': sft_serializer.data,
+        'Others': others_serializer.data,
         'TDS_Payment': tdspayment_serializer.data,
         'TDS_Return': tds_serializer.data,
+        'TDS_Section': tdssection_serializer.data,
         'sales_invoice': sales_serializer.data,
         'purchase_invoice': purchase_serializer.data,
         'income': income_serializer.data,
         'expenses': expenses_serializer.data,
         'zipupload': zipupload_serializer.data,
+        'acknowledgement': acknowledgement_serializer.data,
+        'ack': ack_serializer.data,
     }
 
     return Response(data)
-
-
-
-
-
-
-
 
 @api_view(['GET'])
 def detail_branch(request, pk, branch_pk):
@@ -8691,6 +10582,21 @@ def detail_branch(request, pk, branch_pk):
         'Branch_Document' : branchdoc_serializer.data,
         'Office_Location' : officeloaction_serializer.data,
     }
+    return Response(data)
+
+@api_view(['GET'])
+def detail_acknowledgement(request, pk):
+    client = Client.objects.get(id=pk)
+    ack = Acknowledgement.objects.filter(client=client)
+
+    client_serializer = ClientSerializer(client)
+    ack_serializer = AcknowledgementSerializer(ack, many=True)
+
+    data = {
+        'Client_Name' :client.client_name,
+        'Client': client_serializer.data,  # to only retrieve client name
+        'Acknowledgement': ack_serializer.data,
+    }   
     return Response(data)
 
 @api_view(['POST'])
@@ -8748,7 +10654,6 @@ def import_hsn_excel(request):
             error_details = traceback.format_exc()
             # print({"Error in update_sales_invoice" : str(e)})
             return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 @api_view(['POST','GET'])
 def create_hsn(request):
@@ -8908,8 +10813,6 @@ def purchase_invoice_list(request):
     # Return the serialized data
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-
 @api_view(['GET'])
 def debit_list(request,client_pk, invoice_pk):
     client = Client.objects.get(id=client_pk)
@@ -8945,4 +10848,4 @@ def expenses_credit_list(request,client_pk, expenses_pk):
     credit_list = ExpensesCreditNoteSerializerList(credit_note,many=True)
     print('hghhg',credit_list.data)
     return Response(credit_list.data)
-
+   

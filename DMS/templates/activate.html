@@ -1,7 +1,9 @@
 {% autoescape off %}
 
-Hi 
+Hi
 Please Click This below Link to verify your account
+password for ur account is first 4 letters of ur name in lowercase + @123
+example: if ur name is "John Doe" then ur password will be "john@123"
 
 http://{{domain}}{%url 'activate' uidb64=uid token=token %}
 
