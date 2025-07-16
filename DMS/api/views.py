@@ -10411,6 +10411,8 @@ def detail_client(request, pk):
     try:
         owner_serializer = OwnerSerializer(view_owner, many=True)
     except Exception as e:
+        print(Owner.objects.all().query)
+
         logger.error(f"Error serializing Owner: {e}")
         raise
 
