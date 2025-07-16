@@ -1096,6 +1096,19 @@ class SFT(models.Model):
     # attachment = models.FileField(null=True, blank=True)
 
 # Others
+# class Others(models.Model):
+#     textchoices = [
+#         ('monthly', 'Monthly'),
+#         ('minute', 'Minute'),
+#         ('other', 'Other')
+#     ]
+
+#     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
+#     financial_year = models.CharField(max_length=50, null=True, blank=True)
+#     month = models.CharField(max_length=100,null=True, blank=True)
+#     text = models.CharField(max_length=100, choices=textchoices, null=True)
+    # attachment = models.FileField(null=True, blank=True)
+    
 class Others(models.Model):
     textchoices = [
         ('monthly', 'Monthly'),
@@ -1106,10 +1119,8 @@ class Others(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
     financial_year = models.CharField(max_length=50, null=True, blank=True)
     month = models.CharField(max_length=100,null=True, blank=True)
-    text = models.CharField(max_length=100, choices=textchoices, null=True)
+    text = models.CharField(max_length=100, choices=textchoices, null=True, blank=True)
     # attachment = models.FileField(null=True, blank=True)
-    
-
 
 #TDS Payment
 class TDSPayment(models.Model):
