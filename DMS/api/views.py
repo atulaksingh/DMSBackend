@@ -222,28 +222,28 @@ def edit_client(request, pk):
 
                 # Get files associated with this fileinfo
                 files = request.FILES.getlist(f'fileinfos[{index}].files')
-                fileinfo_id = request.POST.get(f'fileinfos[{index}].id')  # Assuming you have a field to identify the FileInfo
-                if fileinfo_id:  # Update existing FileInfo if ID is provided
-                    try:
-                        fileinfo = FileInfo.objects.get(id=fileinfo_id, client=client)
+                # fileinfo_id = request.POST.get(f'fileinfos[{index}].id')  # Assuming you have a field to identify the FileInfo
+                # if fileinfo_id:  # Update existing FileInfo if ID is provided
+                #     try:
+                #         fileinfo = FileInfo.objects.get(id=fileinfo_id, client=client)
 
-                        # Update existing FileInfo fields
-                        for attr, value in fileinfo_data.items():
-                            setattr(fileinfo, attr, value)
-                        fileinfo.save()
+                #         # Update existing FileInfo fields
+                #         for attr, value in fileinfo_data.items():
+                #             setattr(fileinfo, attr, value)
+                #         fileinfo.save()
 
 
-                    except FileInfo.DoesNotExist:
-                        # If FileInfo doesn't exist, create a new one
-                        fileinfo = FileInfo.objects.create(client=client, **fileinfo_data)
+                #     except FileInfo.DoesNotExist:
+                #         # If FileInfo doesn't exist, create a new one
+                #         fileinfo = FileInfo.objects.create(client=client, **fileinfo_data)
 
-                else:
-                    # Create a new FileInfo if no ID was provided
-                    fileinfo = FileInfo.objects.create(client=client, **fileinfo_data)
+                # else:
+                #     # Create a new FileInfo if no ID was provided
+                #     fileinfo = FileInfo.objects.create(client=client, **fileinfo_data)
 
                 # Create new files associated with this FileInfo
                 for file in files:
-                    File.objects.create(fileinfo=fileinfo, files=file)
+                    File.objects.create(files=file)
 
                 index += 1
 
