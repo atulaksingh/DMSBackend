@@ -147,6 +147,7 @@ class CustomUser(AbstractUser):
 class Owner(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
     owner_name = models.CharField(max_length=100, null=True, blank=True)
+    username = models.CharField(max_length=100, null=True, blank=True)
     share = models.IntegerField()
     pan = models.CharField(max_length=10, null=True, blank=True)
     aadhar = models.CharField(max_length=12, null=True, blank=True)
@@ -154,7 +155,7 @@ class Owner(models.Model):
     email = models.EmailField(null=True, blank=True)
     it_password = models.CharField(max_length=50, null=True, blank=True)
     isadmin = models.BooleanField(default=False, null=True, blank=True)
-    username = models.CharField(max_length=50, null=True, blank=True)
+    # username = models.CharField(max_length=50, null=True, blank=True)
     is_active = models.BooleanField(default=True)  # Soft delete flag
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
 
