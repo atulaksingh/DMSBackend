@@ -102,7 +102,7 @@ def fill_income_forms(driver):
                 EC.presence_of_element_located((By.ID, "branch-select"))
             )
             autocomplete_input.click()
-            # time.sleep(2)
+            time.sleep(1)
 
             dropdown_options = WebDriverWait(driver, 5).until(
                 EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'MuiAutocomplete-option')]"))
@@ -110,17 +110,28 @@ def fill_income_forms(driver):
 
             available_branch = [opt.text.strip() for opt in dropdown_options]
             print("Dropdown options:", available_branch)
-            # time.sleep(7)
+            time.sleep(2)
 
             for option in dropdown_options:
                 if option.text.strip().endswith(branch):  # Match exact branch
                     ActionChains(driver).move_to_element(option).click().perform()
-                    time.sleep(7)
                     break
             else:
                 print(f"Branch '{branch}' not found in dropdown!")
+        
 
-        # Date Fields
+        # Fill Invoice Details
+        driver.find_element(By.NAME, "invoice_no").send_keys(row['invoice_no'])
+        time.sleep(1)
+
+        file_input = driver.find_element(By.NAME, 'attach_invoice')
+        file_input.send_keys(row["attach_invoice"])
+        time.sleep(1)
+
+        file_input = driver.find_element(By.NAME, 'attach_e_way_bill')
+        file_input.send_keys(row["eway_bill"])
+        time.sleep(1)
+
         date_input = driver.find_element(By.NAME, "month")
         date_input.click()
         time.sleep(1)  # Allow calendar to open
@@ -128,67 +139,42 @@ def fill_income_forms(driver):
         date_input.send_keys(Keys.BACKSPACE)  # Clear existing date
         date_input.send_keys(row["month"])  # Enter date in MM-DD-YYYY format
         date_input.send_keys(Keys.ENTER)  # Confirm selection 
-
-        driver.find_element(By.NAME, "invoice_no").send_keys(row['invoice_no'])
-        # time.sleep(2)
+        time.sleep(1)
 
         date_input = driver.find_element(By.NAME, "invoice_date")
         date_input.click()
-        time.sleep(1)  # Allow calendar to open
-        date_input.send_keys(Keys.CONTROL + "a")  # Select existing date (if any)
-        date_input.send_keys(Keys.BACKSPACE)  # Clear existing date
-        date_input.send_keys(row["invoice_date"])  # Enter date in MM-DD-YYYY format
-        date_input.send_keys(Keys.ENTER)  # Confirm selection 
-        # time.sleep(2)
+        time.sleep(1) 
+        date_input.send_keys(Keys.CONTROL + "a") 
+        date_input.send_keys(Keys.BACKSPACE)  
+        date_input.send_keys(row["invoice_date"])  
+        date_input.send_keys(Keys.ENTER) 
+        time.sleep(2)
 
-
-        file_input = driver.find_element(By.NAME, 'attach_invoice')
-        file_input.send_keys(row["attach_invoice"])
-
-        file_input = driver.find_element(By.NAME, 'attach_e_way_bill')
-        file_input.send_keys(row["eway_bill"])
-        # time.sleep(2)
-
+        # Fill Customer and Vendor Details
         button = driver.find_element(By.XPATH, "//button[contains(text(), 'Customer And Vendor Details')]")
         button.click()
-        # time.sleep(2)
-
-        # Customer or Vendor Details
         gst = row["gst_no"]
-        print('aa')
         autocomplete_input = WebDriverWait(driver, 5).until(
             EC.presence_of_element_located((By.ID, "gst-no-autocomplete"))
         )
-        print('bb')
         autocomplete_input.clear()
-        print('c')
         autocomplete_input.send_keys(gst[:20])
-        print('d')
         time.sleep(1)
-        print('e')
 
         try:
             dropdown_options = WebDriverWait(driver, 3).until(
                 EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'MuiAutocomplete-option')]")),
-                print('f')
             )
             available_gst = [opt.text.strip() for opt in dropdown_options]
             print("Dropdown options:", available_gst)
-            print('g')
             # time.sleep(2)
 
             for option in dropdown_options:
-                print('h')
                 if option.text.strip().endswith(gst):
-                    print('i')
                     ActionChains(driver).move_to_element(option).click().perform()
-                    print('j')
                     time.sleep(2)
-                    print('k')
                     break
-                    print('l')
                 else:
-                    print('n')
                     print(f"GST '{gst}' not found in dropdown! ")
 
         except Exception :
@@ -208,7 +194,15 @@ def fill_income_forms(driver):
             cust_add = driver.find_element(By.XPATH, "//input[@name='customer_address' and @placeholder='Customer Address']")
             cust_add.clear()
             cust_add.send_keys(row['customer_add'])
-            # time.sleep(2)
+            time.sleep(1)
+
+            driver.find_element(By.NAME, "email").send_keys(row['email'])
+            time.sleep(1)
+
+            # driver.find_element(By.XPATH, "//input[@name='contact' and @type='text']").send_keys(row['contact_no'])        
+            # time.sleep(1)
+            driver.find_elements(By.XPATH, '//input[@placeholder="Contact No"]')[1].send_keys(row['contact_no'])
+            time.sleep(1)
 
                     
             customer = row["customer"]
@@ -410,7 +404,7 @@ if __name__ == "__main__":
 
     fill_income_forms(driver)
     time.sleep(15)
-    driver.quit()
+    driver.quit() 
     print("Income form submission done.")
 
     

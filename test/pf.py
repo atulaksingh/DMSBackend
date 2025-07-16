@@ -8,12 +8,11 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import officelocation
 
-def fill_branchdoc_forms(driver):
+def fill_pf_forms(driver):
     # Load the Excel data
-    df = pd.read_excel(r"doc.xlsx")
+    df = pd.read_excel(r"pf.xlsx")
 
-
-    button = driver.find_element(By.XPATH, "//button[contains(text(), 'Statutory Details')]")
+    button = driver.find_element(By.XPATH, "//button[contains(text(), 'Documents')]")
     button.click()
     time.sleep(3)
 
@@ -35,28 +34,6 @@ def fill_branchdoc_forms(driver):
         if i >= len(branch_rows):
             print(f"Branch index {i} out of range, stopping loop.")
             break
-
-        try:
-            view_button = branch_rows[i].find_element(By.XPATH, ".//button[@id='long-button']")
-            driver.execute_script("arguments[0].scrollIntoView();", view_button)  # Scroll if not visible
-            time.sleep(1)
-            view_button.click()
-            time.sleep(2)
-
-            # Click the dropdown option (assuming it's the first option)
-            dropdown_option = WebDriverWait(driver, 5).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "li.MuiButtonBase-root.MuiMenuItem-root"))
-            )
-            dropdown_option.click()
-            time.sleep(3)
-
-            print(f"Opened Branch {i + 1}")
-
-        except Exception as e:
-            print(f"Error clicking View button for Branch {i + 1}: {e}")
-            continue
-
-        # Add 10 branch document records for this branch
         for index, row in df.iterrows():
             try:
                 button = driver.find_element(By.XPATH, "//button[contains(text(), 'Create')]")
@@ -68,19 +45,21 @@ def fill_branchdoc_forms(driver):
 
             try:
 
-                dropdown = driver.find_element(By.NAME, "document_type")
-                dropdown.click()
+                dropdown = driver.find_element(By.NAME, "employee_code").send_keys(row["Employee Code"])
+                # dropdown.click()
 
-                document_type =  row["Document Type"]
-                document_type = document_type.upper()
+                # document_type =  row["Document Type"]
+                # document_type = document_type.upper()
 
-                option_xpath = f"//li[text()='{document_type}']"
-                option = driver.find_element(By.XPATH, option_xpath)
-                option.click()
-                time.sleep(2)
-                driver.find_element(By.NAME, "login").send_keys(row["Login"])
-                driver.find_element(By.NAME, "password").send_keys(row["Password"])
-                driver.find_element(By.NAME, "remark").send_keys(row["Remark"])
+                # option_xpath = f"//li[text()='{document_type}']"
+                # option = driver.find_element(By.XPATH, option_xpath)
+                # option.click()
+                time.sleep(1)
+                driver.find_element(By.NAME, "employee_code").send_keys(row["employee_code"])
+                driver.find_element(By.NAME, "employee_name").send_keys(row["employee_name"])
+                driver.find_element(By.NAME, "uan").send_keys(row["uan"])
+                driver.find_element(By.NAME, "pf_number").send_keys(row["pf_number"])
+                
 
                 file_input = driver.find_element(By.NAME, 'files')
                 file_input.send_keys(row["File1"])
@@ -91,27 +70,24 @@ def fill_branchdoc_forms(driver):
                 )
                 button.click()
 
-                # officelocation.fill_officeloc_forms(driver)
+                officelocation.fill_officeloc_forms(driver)
 
             except Exception as e:
                 print(f"Error filling form for row {index}: {e}")
                 continue
 
-            
             time.sleep(5)
-        
-        officelocation.fill_officeloc_forms(driver)
-
 
         # Navigate back to the branch list before going to the next branch
         print(f"Exiting Branch {i + 1}...")
-        driver.find_element(By.LINK_TEXT, "ClientDetails").click()
 
-
-
-        button = driver.find_element(By.XPATH, "//button[contains(text(), 'Statutory Details')]")
-        button.click()
-        time.sleep(3)
+        # client_details_link = WebDriverWait(driver, 10).until(
+        # EC.element_to_be_clickable((By.XPATH, "//a[contains(@href, '/clientDetails/')]"))
+        # )
+        # client_details_link.click()
+        # button = driver.find_element(By.XPATH, "//button[contains(text(), 'Statutory Details')]")
+        # button.click()
+        # time.sleep(3)
 
 if __name__ == "__main__":
 
@@ -124,9 +100,12 @@ if __name__ == "__main__":
     view_button.click()
     time.sleep(2)
 
-    fill_branchdoc_forms(driver)
+    fill_pf_forms(driver)
     time.sleep(15)
     driver.quit()
     print("Purchase form submission done.")
 
 
+# time.sleep(5)
+# driver.quit()
+# print("All forms submitted successfully!")

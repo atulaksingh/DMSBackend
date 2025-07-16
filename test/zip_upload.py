@@ -29,14 +29,14 @@ def fill_zip_upload_forms(driver):
         print(list(df.columns))  # Check exact column names
 
         button = driver.find_element(By.XPATH, "//button[contains(text(), 'Upload Invoice')]").click()
-        time.sleep(15)
+        time.sleep(3)
 
         file_input = driver.find_element(By.NAME, 'file')
         file_input.send_keys(row["File1"])
         file_input.send_keys(row["File2"])
 
 
-        button = WebDriverWait(driver, 5).until(
+        button = WebDriverWait(driver, 3).until(
             EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Confirm']]"))
         )
         button.click()

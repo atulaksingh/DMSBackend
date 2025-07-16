@@ -12,6 +12,7 @@ import owner
 import bank
 import branch
 import branchdoc
+import companydoc
 import customer
 import purchase
 import sales
@@ -62,7 +63,7 @@ for index, row in df.iterrows():
     driver.find_element(By.NAME, "contact_person").send_keys(row["contact_person"])
     driver.find_element(By.NAME, "designation").send_keys(row["designation"])
     driver.find_element(By.NAME, "email").send_keys(row["email"])
-    driver.find_element(By.NAME, "contact_no_1").send_keys(row["contact_no_1"])
+    driver.find_element(By.NAME, "contact_no_1").send_keys(row["contact_no_1"]) 
     driver.find_element(By.NAME, "contact_no_2").send_keys(row["contact_no_2"])
     driver.find_element(By.NAME, "business_detail").send_keys(row["business_detail"])
 
@@ -108,25 +109,23 @@ for index, row in df.iterrows():
     time.sleep(2)
 
 driver.find_element(By.ID, "long-button").click()
+
+client
+
+
 # view_button = driver.find_element(By.CSS_SELECTOR, "li.MuiButtonBase-root.MuiMenuItem-root")
 view_button = driver.find_element(By.NAME, "clientview-btn")
 view_button.click()
 time.sleep(5)
+if not view_button:
+    print("view_buton not found")
 
 # owner.fill_owner_forms(driver)
-# bank.fill_bank_forms(driver)
-owner.fill_owner_forms(driver)
+# bank.fill_bank_forms(driver) 
+# owner.fill_owner_forms(driver)
 bank.fill_bank_forms(driver)
-branch.fill_branch_forms(driver)
-branchdoc.fill_branchdoc_forms(driver)
-customer.fill_customer_forms(driver)
-purchase.fill_purchase_forms(driver)
-sales.fill_sales_forms(driver)
-income.fill_income_forms(driver)
-expenses.fill_expenses_forms(driver)
-zip_upload.fill_zip_upload_forms(driver)
 
-
+                                 
 
 # Wait before closing
 time.sleep(10)
