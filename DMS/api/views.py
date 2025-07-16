@@ -2262,7 +2262,7 @@ class PFExcelUploaadView(APIView):
             month = row.get('month')
             if not re.match(r"^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december)\s\d{4}$",str(month), re.IGNORECASE):
                 # errors.append(f"{row['employee_code']} month field must be in August 2024 or Aug 2024 format")
-                return Response({'error_message':f'Employee Code: {row['employee_code']} month field must be in August 2024 or aug 2024 formate'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error_message':f'Employee Code: {row["employee_code"]} month field must be in August 2024 or aug 2024 formate'}, status=status.HTTP_400_BAD_REQUEST)
 
             # Get the raw value from Excel and strip leading/trailing whitespace
             statu = str(row.get('status', "")).strip().lower()
