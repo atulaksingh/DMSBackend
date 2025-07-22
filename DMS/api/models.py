@@ -1002,6 +1002,7 @@ class ExpensesCreditNote(models.Model):
 class ZipUpload(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
     files = models.FileField(null=True, blank=True)
+    type_of_data = models.CharField(max_length=100, null=True, blank=True)
     date = models.DateTimeField(auto_now=True)
         
     
@@ -1135,16 +1136,16 @@ class TDSPayment(models.Model):
 
 
 class Others(models.Model):
-    textchoices = [
-        ('monthly', 'Monthly'),
-        ('minute', 'Minute'),
-        ('other', 'Other')
-    ]
+    # textchoices = [
+    #     ('monthly', 'Monthly'),
+    #     ('minute', 'Minute'),
+    #     ('other', 'Other')
+    # ]
 
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
     financial_year = models.CharField(max_length=50, null=True, blank=True)
     month = models.CharField(max_length=100,null=True, blank=True)
-    text = models.CharField(max_length=100, choices=textchoices, null=True, blank=True)
+    text = models.CharField(max_length=100, null=True, blank=True)
 
 
 # TDS Return

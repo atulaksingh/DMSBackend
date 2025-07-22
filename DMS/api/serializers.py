@@ -1627,7 +1627,7 @@ class ZipUploadSerializer2(serializers.ModelSerializer):
     
     class Meta:
         model = ZipUpload
-        fields = ['client', 'files', 'date']   
+        fields = ['client', 'files', 'date', 'type_of_data']   
 
 #************************************************************Excel File
 

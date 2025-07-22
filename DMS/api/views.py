@@ -186,6 +186,203 @@ def list_client(request):
 
         return Response(context)
 
+# @api_view(['GET', 'POST'])
+# def edit_client(request, pk):
+#     try:
+#         client = Client.objects.get(id=pk)
+#     except Client.DoesNotExist:
+#         return Response({"error_message": "Client not found"}, status=404)
+
+#     # Handle GET request: Retrieve the client and pre-populate the frontend form
+#     if request.method == 'GET':
+#         client_serializer = ClientSerializer(client)
+#         return Response(client_serializer.data, status=200)
+
+#     # Handle POST request: Update the client and associated FileInfo and File models
+#     elif request.method == 'POST':
+#         # Update client fields
+#         client_serializer = ClientSerializer(client, data=request.data)
+
+#         if client_serializer.is_valid():
+#             print('data', request.POST)
+#             client_serializer.save()
+
+#             # Access fileinfos data for updating
+#             fileinfos_data = []
+#             index = 0
+
+#             # Loop through fileinfos in request.POST
+#             while f'fileinfos[{index}].login' in request.POST:
+#                 fileinfo_data = {
+#                     'login': request.POST.get(f'fileinfos[{index}].login'),
+#                     'password': request.POST.get(f'fileinfos[{index}].password'),
+#                     'document_type': request.POST.get(f'fileinfos[{index}].document_type'),
+#                     'remark': request.POST.get(f'fileinfos[{index}].remark'),
+#                 }
+
+#                 # Get files associated with this fileinfo
+#                 files = request.FILES.getlist(f'fileinfos[{index}].files')
+#                 # fileinfo_id = request.POST.get(f'fileinfos[{index}].id')  # Assuming you have a field to identify the FileInfo
+#                 # if fileinfo_id:  # Update existing FileInfo if ID is provided
+#                 #     try:
+#                 #         fileinfo = FileInfo.objects.get(id=fileinfo_id, client=client)
+
+#                 #         # Update existing FileInfo fields
+#                 #         for attr, value in fileinfo_data.items():
+#                 #             setattr(fileinfo, attr, value)
+#                 #         fileinfo.save()
+
+
+#                 #     except FileInfo.DoesNotExist:
+#                 #         # If FileInfo doesn't exist, create a new one
+#                 #         fileinfo = FileInfo.objects.create(client=client, **fileinfo_data)
+
+#                 # else:
+#                 #     # Create a new FileInfo if no ID was provided
+#                 #     fileinfo = FileInfo.objects.create(client=client, **fileinfo_data)
+
+#                 # Create new files associated with this FileInfo
+#                 for file in files:
+#                     File.objects.create(files=file)
+
+#                 index += 1
+
+#             # return Response(client_serializer.data, status=200)
+#             return Response({'message': 'Client updated successfully','data': client_serializer.data},status=status.HTTP_200_OK)
+
+
+#         return Response({'message': 'Fail to update client', 'error_message' : client_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+# @api_view(['GET', 'POST'])
+# def edit_client(request, pk):
+#     try:
+#         client = Client.objects.get(id=pk)
+#     except Client.DoesNotExist:
+#         return Response({"error_message": "Client not found"}, status=404)
+
+#     # Handle GET request: Retrieve the client and pre-populate the frontend form
+#     if request.method == 'GET':
+#         client_serializer = ClientSerializer(client)
+#         return Response(client_serializer.data, status=200)
+
+#     # Handle POST request: Update the client and associated FileInfo and File models
+#     elif request.method == 'POST':
+#         client_serializer = ClientSerializer(client, data=request.data)
+
+#         if client_serializer.is_valid():
+#             client_serializer.save()
+
+#             # ✅ Step 1: Delete all existing FileInfo and File records for this client
+#             FileInfo.objects.filter(client=client).delete()
+
+#             index = 0
+#             while f'fileinfos[{index}].login' in request.POST:
+#                 fileinfo_data = {
+#                     'login': request.POST.get(f'fileinfos[{index}].login'),
+#                     'password': request.POST.get(f'fileinfos[{index}].password'),
+#                     'document_type': request.POST.get(f'fileinfos[{index}].document_type'),
+#                     'remark': request.POST.get(f'fileinfos[{index}].remark'),
+#                 }
+
+#                 files = request.FILES.getlist(f'fileinfos[{index}].files')
+
+#                 # ✅ Step 2: Create new FileInfo
+#                 # fileinfo = FileInfo.objects.filter(client=client, **fileinfo_data).first()
+#                 fileinfo = FileInfo.objects.filter(client=client, **fileinfo_data).first()
+#                 if not fileinfo:
+#                     fileinfo = FileInfo.objects.create(client=client, **fileinfo_data)
+
+                
+
+#                 # ✅ Step 3: Create related File objects
+#                 for file in files:
+#                     File.objects.create(fileinfo=fileinfo, files=file)
+
+#                 index += 1
+
+#             return Response({
+#                 'message': 'Client updated successfully',
+#                 'data': client_serializer.data
+#             }, status=200)
+
+#         return Response({
+#             'message': 'Fail to update client',
+#             'error_message': client_serializer.errors
+#         }, status=400)
+
+# @api_view(['GET', 'POST'])
+# def edit_client(request, pk):
+#     try:
+#         client = Client.objects.get(id=pk)
+#     except Client.DoesNotExist:
+#         return Response({"error_message": "Client not found"}, status=404)
+
+#     # Handle GET request: Retrieve the client and pre-populate the frontend form
+#     if request.method == 'GET':
+#         client_serializer = ClientSerializer(client)
+#         return Response(client_serializer.data, status=200)
+
+#     # Handle POST request: Update the client and associated FileInfo and File models
+#     elif request.method == 'POST':
+#         try:
+#             client = Client.objects.get(id=pk)
+#         except Client.DoesNotExist:
+#             return Response({"error_message": "Client not found"}, status=404)
+
+#         client_serializer = ClientSerializer(client, data=request.data)
+#         if client_serializer.is_valid():
+#             client_serializer.save()
+
+#             # Store IDs of fileinfos that were updated or newly created
+#             received_fileinfo_ids = []
+
+#             index = 0
+#             while f'fileinfos[{index}].login' in request.POST:
+#                 fileinfo_id = request.POST.get(f'fileinfos[{index}].id')
+#                 fileinfo_data = {
+#                     'login': request.POST.get(f'fileinfos[{index}].login'),
+#                     'password': request.POST.get(f'fileinfos[{index}].password'),
+#                     'document_type': request.POST.get(f'fileinfos[{index}].document_type'),
+#                     'remark': request.POST.get(f'fileinfos[{index}].remark'),
+#                 }
+#                 files = request.FILES.getlist(f'fileinfos[{index}].files')
+
+#                 if fileinfo_id:
+#                     try:
+#                         fileinfo = FileInfo.objects.get(id=int(fileinfo_id), client=client)
+#                         print(f"✅ Updating FileInfo ID {fileinfo_id}")
+#                         for attr, value in fileinfo_data.items():
+#                             setattr(fileinfo, attr, value)
+#                         fileinfo.save()
+
+#                         # ✅ Only delete old files if new ones are uploaded
+#                         if files:
+#                             fileinfo.files.all().delete()
+
+#                     except ObjectDoesNotExist:
+#                         print(f"❌ FileInfo ID {fileinfo_id} not found — creating new one.")
+#                         fileinfo = FileInfo.objects.create(client=client, **fileinfo_data)
+
+#                 received_fileinfo_ids.append(fileinfo.id)
+
+#                 for file in files:
+#                     File.objects.create(fileinfo=fileinfo, files=file)
+
+#                 index += 1
+
+#             # Optional cleanup: delete any fileinfos not included in this update
+#             FileInfo.objects.filter(client=client).exclude(id__in=received_fileinfo_ids).delete()
+
+#             return Response({
+#                 'message': 'Client updated successfully',
+#                 'data': client_serializer.data
+#             }, status=200)
+
+#         return Response({
+#             'message': 'Fail to update client',
+#             'error_message': client_serializer.errors
+#         }, status=400)
+
 @api_view(['GET', 'POST'])
 def edit_client(request, pk):
     try:
@@ -193,26 +390,20 @@ def edit_client(request, pk):
     except Client.DoesNotExist:
         return Response({"error_message": "Client not found"}, status=404)
 
-    # Handle GET request: Retrieve the client and pre-populate the frontend form
     if request.method == 'GET':
         client_serializer = ClientSerializer(client)
         return Response(client_serializer.data, status=200)
 
-    # Handle POST request: Update the client and associated FileInfo and File models
     elif request.method == 'POST':
-        # Update client fields
         client_serializer = ClientSerializer(client, data=request.data)
-
         if client_serializer.is_valid():
-            print('data', request.POST)
             client_serializer.save()
 
-            # Access fileinfos data for updating
-            fileinfos_data = []
+            received_fileinfo_ids = []
             index = 0
 
-            # Loop through fileinfos in request.POST
             while f'fileinfos[{index}].login' in request.POST:
+                fileinfo_id = request.POST.get(f'fileinfos[{index}].id', '').strip()
                 fileinfo_data = {
                     'login': request.POST.get(f'fileinfos[{index}].login'),
                     'password': request.POST.get(f'fileinfos[{index}].password'),
@@ -220,39 +411,46 @@ def edit_client(request, pk):
                     'remark': request.POST.get(f'fileinfos[{index}].remark'),
                 }
 
-                # Get files associated with this fileinfo
                 files = request.FILES.getlist(f'fileinfos[{index}].files')
-                # fileinfo_id = request.POST.get(f'fileinfos[{index}].id')  # Assuming you have a field to identify the FileInfo
-                # if fileinfo_id:  # Update existing FileInfo if ID is provided
-                #     try:
-                #         fileinfo = FileInfo.objects.get(id=fileinfo_id, client=client)
+                fileinfo = None
 
-                #         # Update existing FileInfo fields
-                #         for attr, value in fileinfo_data.items():
-                #             setattr(fileinfo, attr, value)
-                #         fileinfo.save()
+                if fileinfo_id and fileinfo_id.isdigit():
+                    try:
+                        fileinfo = FileInfo.objects.get(id=int(fileinfo_id), client=client)
+                        print(f"✅ Updating FileInfo ID {fileinfo_id}")
+                        for attr, value in fileinfo_data.items():
+                            setattr(fileinfo, attr, value)
+                        fileinfo.save()
 
+                        if files:  # only delete old files if new files are uploaded
+                            fileinfo.files.all().delete()
 
-                #     except FileInfo.DoesNotExist:
-                #         # If FileInfo doesn't exist, create a new one
-                #         fileinfo = FileInfo.objects.create(client=client, **fileinfo_data)
+                    except FileInfo.DoesNotExist:
+                        print(f"❌ FileInfo ID {fileinfo_id} not found — creating new one.")
+                        fileinfo = FileInfo.objects.create(client=client, **fileinfo_data)
+                else:
+                    print("➕ No ID provided — creating new FileInfo.")
+                    fileinfo = FileInfo.objects.create(client=client, **fileinfo_data)
 
-                # else:
-                #     # Create a new FileInfo if no ID was provided
-                #     fileinfo = FileInfo.objects.create(client=client, **fileinfo_data)
+                received_fileinfo_ids.append(fileinfo.id)
 
-                # Create new files associated with this FileInfo
                 for file in files:
-                    File.objects.create(files=file)
+                    File.objects.create(fileinfo=fileinfo, files=file)
 
                 index += 1
 
-            # return Response(client_serializer.data, status=200)
-            return Response({'message': 'Client updated successfully','data': client_serializer.data},status=status.HTTP_200_OK)
+            # Optional cleanup: delete fileinfos that were removed from the frontend
+            FileInfo.objects.filter(client=client).exclude(id__in=received_fileinfo_ids).delete()
 
+            return Response({
+                'message': 'Client updated successfully',
+                'data': client_serializer.data
+            }, status=200)
 
-        return Response({'message': 'Fail to update client', 'error_message' : client_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
+        return Response({
+            'message': 'Failed to update client',
+            'error_message': client_serializer.errors
+        }, status=400)
 @api_view(['GET'])
 def single_fileinfo(request,pk,fileinfo_pk):
     client = Client.objects.get(id = pk)
@@ -8233,35 +8431,71 @@ def delete_expenses(request, client_pk, pk):
     
 # ************************************************Zip Upload*********************************************************
 
+# @api_view(['POST'])
+# def create_zipupload(request, pk):
+#     client = Client.objects.get(id=pk)
+
+#     # Check if 'attach_e_way_bill' is in the request files
+#     if 'files' in request.FILES:
+#         # Iterate through each file in the 'attach_e_way_bill' field
+#         for file in request.FILES.getlist('files'):
+#             # Prepare data for each file
+#             zipupload_data = {
+#                 'files': file,  # The file being uploaded
+#                 'client': client.id,  # Associate the file with the client
+#             }
+
+#             # Initialize the serializer for each file
+#             serializer = ZipUploadSerializer2(data=zipupload_data)
+
+#             # Check if the serializer is valid
+#             if serializer.is_valid():
+#                 # Save each file as a separate object
+#                 serializer.save()
+#             else:
+#                 return Response({'error_message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+#         # If all files are processed, return success response
+#         return Response({'message': 'Zip Files uploaded successfully.', 'data': serializer.data}, status=status.HTTP_201_CREATED)
+#     else:
+#         return Response({'error_message': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+
 @api_view(['POST'])
 def create_zipupload(request, pk):
-    client = Client.objects.get(id=pk)
+    try:
+        client = Client.objects.get(id=pk)
+    except Client.DoesNotExist:
+        return Response({'error': 'Client not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    # Check if 'attach_e_way_bill' is in the request files
-    if 'files' in request.FILES:
-        # Iterate through each file in the 'attach_e_way_bill' field
-        for file in request.FILES.getlist('files'):
-            # Prepare data for each file
-            zipupload_data = {
-                'files': file,  # The file being uploaded
-                'client': client.id,  # Associate the file with the client
-            }
+    data = {key: value for key, value in request.data.items()}
+    serializer = ZipUploadSerializer2(data=data)
 
-            # Initialize the serializer for each file
-            serializer = ZipUploadSerializer2(data=zipupload_data)
+    if serializer.is_valid(raise_exception=True):
+        zipupload_instance = serializer.save(client=client)
 
-            # Check if the serializer is valid
-            if serializer.is_valid():
-                # Save each file as a separate object
-                serializer.save()
-            else:
-                return Response({'error_message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        # Handle file uploads
+        files = request.FILES.getlist('files')
+        if files:
+            for file in files:
+                file_data = {
+                    'zipupload': zipupload_instance.pk,
+                    'files': file,
+                }
+                file_serializer = FilesSerializer(data=file_data)
+                file_serializer.is_valid(raise_exception=True)
+                file_serializer.save()
 
-        # If all files are processed, return success response
-        return Response({'message': 'Zip Files uploaded successfully.'}, status=status.HTTP_201_CREATED)
-    else:
-        return Response({'error_message': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
-    
+            return Response({
+                'message': 'Zip Upload created successfully.',
+                'data': serializer.data
+            }, status=status.HTTP_201_CREATED)
+        else:
+            return Response({
+                'message': 'No files provided.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+ 
+
 @api_view(['DELETE'])
 def delete_zipupload(request, client_pk, pk):
     """
