@@ -1,31 +1,59 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from api.models import *
-
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 # Register your models here.
 
 admin.site.register(CompanyDocument)
-# admin.site.register(CustomUser)
-class CustomUserAdmin(UserAdmin):
-    model = CustomUser
-    list_display = ('id', 'name', 'email', 'client', 'is_active', 'is_staff')
-    # search_fields = ('name', 'email')
-    # list_editable = ('is_active', 'is_staff')
-    # fieldsets = (
-    #     (None, {'fields': ('email', 'password')}),
-    #     ('Personal Info', {'fields': ('name', 'client', 'customer')}),
-    #     ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
-    #     ('Important dates', {'fields': ('last_login', 'date_joined')}),
-    # )
-    # add_fieldsets = (
-    #     (None, {
-    #         'classes': ('wide',),
-    #         'fields': ('email', 'name', 'password1', 'password2', 'client', 'customer'),
-    #     }),
-    # )
-    # ordering = ('id',)
 
-admin.site.register(CustomUser, CustomUserAdmin)
+# class ClientUserAdmin(admin.ModelAdmin):
+#     model = ClientUser
+#     list_display = ('id', 'name', 'email', 'client', 'is_active', 'is_staff')
+# admin.site.register(ClientUser, ClientUserAdmin)
+
+# class DashboardUserAdmin(UserAdmin):
+#     model = DashboardUser
+#     list_display = ('id', 'first_name','last_name', 'email', 'is_active', 'is_staff')
+#     search_fields = ('first_name','last_name', 'email')
+#     list_editable = ('is_active', 'is_staff')
+#     fieldsets = (
+#         (None, {'fields': ('email', 'password')}),
+#         ('Personal Info', {'fields': ('first_name','last_name')}),
+#         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+#         ('Important dates', {'fields': ('last_login', 'date_joined')}),
+#     )
+#     add_fieldsets = (
+#         (None, {
+#             'classes': ('wide',),
+#             'fields': ('email', 'first_name','last_name', 'password1', 'password2'),
+#         }),
+#     )
+#     ordering = ('id',)
+
+# admin.site.register(DashboardUser, DashboardUserAdmin)
+class CommonUserAdmin(UserAdmin):
+    model = CommonUser
+    list_display = ('id', 'name', 'email','role', 'is_active', 'is_staff')
+    # search_fields = ('email')
+    list_editable = ('is_active', 'is_staff')
+
+    fieldsets = (
+        (None, {'fields': ('email', 'password')}),
+        # ('Personal Info', {'fields': ('first_name', 'last_name')}),
+        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Important dates', {'fields': ('last_login', 'date_joined')}),
+    )
+
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('email', 'password1', 'password2'),
+        }),
+    )
+
+    ordering = ('id',)
+
+admin.site.register(CommonUser, CommonUserAdmin)
 admin.site.register(Branch)
 admin.site.register(BranchDocument)
 admin.site.register(OfficeLocation)

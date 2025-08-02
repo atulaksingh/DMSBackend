@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 import os
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
+
 
 # Create your models here.
 class File(models.Model):
@@ -113,35 +115,81 @@ class Customer(models.Model):
        return self.name if self.name else "No Name"
 
 
-# User Model
-class CustomUser(AbstractUser):
 
-    groups = models.ManyToManyField(
-        Group,
-        related_name='customuser_set',  # Unique related_name for groups
-        blank=True,
-        help_text='The groups this user belongs to.',
-        verbose_name='groups',
+# **********************************************new testing*******************************************
+class CommonUser(AbstractUser):
+    ROLE_CHOICES = (
+        ('superuser', 'Super User'),
+        ('clientuser', 'Client User'),
+        ('customeruser', 'Customer User'),
     )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    name = models.CharField(max_length=100, null=True, blank=True)
+    client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True, blank=True)
 
-    user_permissions = models.ManyToManyField(
-        Permission,
-        related_name='customuser_permissions_set',  # Unique related_name for permissions
-        blank=True,
-        help_text='Specific permissions for this user.',
-        verbose_name='user permissions',
-    )
-    # first_name = models.CharField(max_length=100, null=True, blank=True)
-    # last_name = models.CharField(max_length=100, null=True, blank=True)
-    first_name = None
-    last_name = None
-    name = models.CharField(max_length=50, null=True, blank=True)
-    ca_admin = models.BooleanField(default=False, null=True, blank=True)
-    ca_user = models.BooleanField(null=True, blank=True)
-    cus_admin = models.BooleanField(default=False, null=True, blank=True)
-    cus_user = models.BooleanField(null=True, blank=True)
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
-    # customer = models.ForeignKey('Customer', on_delete=models.CASCADE, null=True, blank=True)
+
+# ****************************************************************************************************
+
+
+# # User Model
+# class ClientUser(AbstractUser):
+
+#     class Meta:
+#         verbose_name = "Client User"
+#         verbose_name_plural = "Client Users"
+
+#     groups = models.ManyToManyField(
+#         Group,
+#         related_name='clientuser_set',  # Unique related_name for groups
+#         blank=True,
+#         help_text='The groups this user belongs to.',
+#         verbose_name='groups',
+#     )
+
+#     user_permissions = models.ManyToManyField(
+#         Permission,
+#         related_name='clientuser_permissions_set',  # Unique related_name for permissions
+#         blank=True,
+#         help_text='Specific permissions for this user.',
+#         verbose_name='user permissions',
+#     )
+#     first_name = None
+#     last_name = None
+#     name = models.CharField(max_length=50, null=True, blank=True)
+#     ca_admin = models.BooleanField(default=False, null=True, blank=True)
+#     ca_user = models.BooleanField(null=True, blank=True)
+#     cus_admin = models.BooleanField(default=False, null=True, blank=True)
+#     cus_user = models.BooleanField(null=True, blank=True)
+#     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+
+# # User Model
+# class DashboardUser(AbstractUser):
+
+#     class Meta:
+#         verbose_name = "Dashboard User"
+#         verbose_name_plural = "Dashboard Users"
+
+#     groups = models.ManyToManyField(
+#         Group,
+#         related_name='dashboarduser_set',  # Unique related_name for groups
+#         blank=True,
+#         help_text='The groups this user belongs to.',
+#         verbose_name='groups',
+#     )
+
+#     user_permissions = models.ManyToManyField(
+#         Permission,
+#         related_name='dashboarduser_permissions_set',  # Unique related_name for permissions
+#         blank=True,
+#         help_text='Specific permissions for this user.',
+#         verbose_name='user permissions',
+#     )
+#     first_name = models.CharField(max_length=100, null=True, blank=True)
+#     last_name = models.CharField(max_length=100, null=True, blank=True)
+#     superadmin_user = models.BooleanField(default=True, null=True, blank=True)
+
+
+from django.contrib.auth.models import User
 
 # Owner Model
 class Owner(models.Model):
@@ -157,7 +205,9 @@ class Owner(models.Model):
     isadmin = models.BooleanField(default=False, null=True, blank=True)
     # username = models.CharField(max_length=50, null=True, blank=True)
     is_active = models.BooleanField(default=True)  # Soft delete flag
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.OneToOneField(CommonUser, on_delete=models.CASCADE, null=True, blank=True)
+    # user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    # user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def delete(self, *args, **kwargs):
         self.is_active = False

@@ -34,19 +34,40 @@ urlpatterns = [
     path('single-owner/<int:pk>/<int:owner_pk>',view=single_owner, name='single-owner'),
     path('delete-owner/<int:pk>/<int:owner_pk>',view=delete_owner, name='delete-owner'),
 
-    path('user-login', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('users', view=getUsers, name='users'),
-    path('list/<int:pk>', view=list_users_by_client, name='list'),
-    path('single-clientuser/<int:pk>/<int:user_pk>',view=single_clientuser, name='single-clientuser'),
-    path('user-profile', view=getUserProfile, name='user-profile'),
-    path('user-dashboardform', view=dashboarduser, name='dashboard-user'),
-    path('user-clientform/<int:pk>', view=clientuser, name='client'),        #***********************
-    path('activate/<uidb64>/<token>',ActivateAccountView.as_view(),name='activate'),
-    path('edit-clientuser/<int:pk>/<int:user_pk>', view=edit_clientuser, name='edit-clientuser'), #*****************
-    path('edit-dashboarduser/<int:user_pk>', view=edit_dashboardUser, name='edit-dashboarduser'),
-    path('delete-clientuser/<int:pk>/<int:user_pk>', view=delete_clientuser, name='delete-clientuser'),
-    path('delete-dashboarduser/<int:user_pk>', view=delete_dashboarduser, name='delete-dashboarduser'),
-    path('reset-password/<int:pk>/<int:user_pk>', view=reset_clientuser_password, name='reset-password'),  
+    # path('user-login', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    # path('users', view=getUsers, name='users'),
+    # # path('list/<int:pk>', view=list_users_by_client, name='list'),
+    # # path('single-clientuser/<int:pk>/<int:user_pk>',view=single_clientuser, name='single-clientuser'),
+    # path('user-profile', view=getUserProfile, name='user-profile'),
+    # path('user-clientform/<int:pk>', view=clientuser, name='client'),        #***********************
+    # # path('activate/<uidb64>/<token>',ActivateAccountView.as_view(),name='activate'),
+    # # path('edit-clientuser/<int:pk>/<int:user_pk>', view=edit_clientuser, name='edit-clientuser'), #*****************
+    # # path('delete-clientuser/<int:pk>/<int:user_pk>', view=delete_clientuser, name='delete-clientuser'),
+    path('reset-password/<int:pk>/<int:user_pk>', view=reset_clientuser_password, name='reset-password'), 
+
+    # Dashboard User / SuperAdmin User 
+    path('create-superuser', view=create_common_superuser, name='create-superuser'),
+    path('edit-superuser/<int:user_pk>', view=edit_common_superuser, name='edit-superuser'),
+    path('delete-superuser/<int:user_pk>', view=delete_common_superuser, name='delete-superuser'),
+    path('list-superuser/', view=get__superusers, name='list-superuser'),
+    path('superuser-users/', view=list_common_superuser, name='list-super-users'),
+    path('superadmin-login',  CommonLoginAPIView.as_view(), name='token_obtain_pair'),
+    path('superuser-activate/<uidb64>/<token>',SuperuserActivateAccountView.as_view(),name='superuser-activate'),
+
+
+    # Client User
+    path('create-clientuser/<int:pk>', view=create_common_clientuser, name='create-clientuser'),
+    path('edit-clientuser/<int:pk>/<int:user_pk>', view=edit_common_clientuser, name='edit-clientuser'),
+    path('delete-clientuser/<int:pk>/<int:user_pk>', view=delete_common_clientuser, name='delete-clientuser'),
+    path('list-clientuser/<int:pk>', view=list_users_by_client, name='list-clientuser'),
+    path('single-clientuser/<int:pk>/<int:user_pk>',view=single_common_clientuser, name='single-clientuser'),
+    # path('superadmin-login',  CommonLoginAPIView.as_view(), name='token_obtain_pair'),
+    path('activate/<uidb64>/<token>',ClientuserActivateAccountView.as_view(),name='activate'),
+
+
+
+
+
 
     path('create-companydoc/<int:pk>', view=create_companydoc, name='create-companydoc'),        #***********************
     path('edit-companydoc/<int:pk>/<int:file_pk>', view=edit_companydoc, name='edit-companydoc'),         #***********************

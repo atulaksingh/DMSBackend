@@ -1,0 +1,9 @@
+{% autoescape off %}
+
+Hi
+Please Click This below Link to verify your Super Admin account
+
+
+http://{{domain}}{%url 'superuser-activate' uidb64=uid token=token %}
+
+{% endautoescape %}

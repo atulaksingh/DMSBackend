@@ -7,7 +7,7 @@ from django.utils.encoding import force_bytes
 from django.utils.text import slugify
 from django.conf import settings
 
-from .models import Owner, CustomUser
+from .models import Owner, CommonUser
 from .utils import generate_token
 
 @receiver(post_save, sender=Owner)
@@ -18,11 +18,12 @@ def create_user_when_owner_created(sender, instance, created, **kwargs):
         name_part = name[:4].lower()
         generated_password = f"{name_part}@123"
 
-        user = CustomUser.objects.create_user(
+        user = CommonUser.objects.create_user(
             username=instance.email,  # Use email as username
             email=instance.email,
             name=instance.owner_name,
             password=generated_password,
+            role='clientuser',
             client=instance.client,
             is_active=True  # Force user to be inactive at first
         )
@@ -39,19 +40,19 @@ def create_user_when_owner_created(sender, instance, created, **kwargs):
         instance.save(update_fields=["user"])
         post_save.connect(update_user_when_owner_updated, sender=Owner)
 
-        #   Send activation email
-        subject = "Activate Your Account"
-        message = render_to_string(
-            'activate.html',
-            {
-                'user': user,
-                'domain': '127.0.0.1:8000',
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                'token': generate_token.make_token(user),
-            }
-        )
-        email = EmailMessage(subject, message, settings.EMAIL_HOST_USER, [instance.email])
-        email.send()
+        ###   Send activation email
+        # subject = "Activate Your Account"
+        # message = render_to_string(
+        #     'activate.html',
+        #     {
+        #         'user': user,
+        #         'domain': '127.0.0.1:8000',
+        #         'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+        #         'token': generate_token.make_token(user),
+        #     }
+        # )
+        # email = EmailMessage(subject, message, settings.EMAIL_HOST_USER, [instance.email])
+        # email.send()
 
 
 # UPDATE signal — only handles update on existing Owner
