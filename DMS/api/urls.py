@@ -45,6 +45,9 @@ urlpatterns = [
     # # path('delete-clientuser/<int:pk>/<int:user_pk>', view=delete_clientuser, name='delete-clientuser'),
     path('reset-password/<int:pk>/<int:user_pk>', view=reset_clientuser_password, name='reset-password'), 
 
+    path('forget-password', view=forget_password, name='forget-password'),
+    path('reset-password/<uidb64>/<token>/', view=reset_password, name='reset-password'),
+
     # Dashboard User / SuperAdmin User 
     path('create-superuser', view=create_common_superuser, name='create-superuser'),
     path('edit-superuser/<int:user_pk>', view=edit_common_superuser, name='edit-superuser'),
@@ -63,6 +66,15 @@ urlpatterns = [
     path('single-clientuser/<int:pk>/<int:user_pk>',view=single_common_clientuser, name='single-clientuser'),
     # path('superadmin-login',  CommonLoginAPIView.as_view(), name='token_obtain_pair'),
     path('activate/<uidb64>/<token>',ClientuserActivateAccountView.as_view(),name='activate'),
+
+    # Customer User
+    path('create-customeruser/<int:pk>', view=create_common_customeruser, name='create-customeruser'),
+    path('edit-customeruser/<int:pk>/<int:user_pk>', view=edit_common_customeruser, name='edit-customeruser'),
+    path('delete-customeruser/<int:pk>/<int:user_pk>', view=delete_common_customeruser, name='delete-customeruser'),
+    path('list-customeruser/<int:pk>', view=list_users_by_role, name='list-customeruser'),
+    path('single-customeruser/<int:pk>/<int:user_pk>',view=single_common_customeruser, name='single-customeruser'),
+    # path('superadmin-login',  CommonLoginAPIView.as_view(), name='token_obtain_pair'),
+    path('activate/<uidb64>/<token>',CustomeruserActivateAccountView.as_view(),name='activate'),
 
 
 

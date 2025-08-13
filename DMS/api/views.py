@@ -197,8 +197,21 @@ def list_client(request):
 
     if user.role == 'superuser':
         clients = Client.objects.all()
+        hsn = HSNCode.objects.all()
+        product = Product.objects.all()
+        product_description = ProductDescription.objects.all()
+
     elif user.role == 'clientuser':
         clients = Client.objects.filter(id=user.client_id)
+        hsn = HSNCode.objects.all()
+        product = Product.objects.all()
+        product_description = ProductDescription.objects.all()
+    
+    elif user.role == 'customeruser':
+        clients = Client.objects.filter(id=user.client_id)
+        hsn = HSNCode.objects.all()
+        product = Product.objects.all()
+        product_description = ProductDescription.objects.all()
     else:
         return Response({'error': 'Unauthorized user role'}, status=403)
 
@@ -953,6 +966,83 @@ def delete_bank(request,pk, bank_pk):
 
 from django.db import transaction
 
+# @api_view(['POST', 'GET'])
+# def create_owner(request, pk):
+    # client = get_object_or_404(Client, id=pk)
+
+    # if request.method == 'POST':
+    #     data = request.data
+    #     pan = request.data.get('pan')
+    #     if pan and len(pan) != 10:
+    #         return Response({'error_message': 'PAN number should be exactly 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+    #     aadhar = request.data.get('aadhar')
+    #     if aadhar and len(aadhar) > 12:
+    #         return Response({'error_message': 'Aadhar number should be at most 12 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+    #     mobile = request.data.get('mobile')
+    #     if mobile and len(mobile) != 10:
+    #         return Response({'error_message': 'Mobile number should be exactly 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+    #     share = request.data.get('share')
+    #     if share == '':
+    #         return Response({'error_message': 'Share field is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    #     user = request.data.get('username')
+    #     if user == '':
+    #         return Response({'error_message': 'Username field is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    #     owner_serializer = OwnerSerializer(data=request.data)
+
+    #     if not owner_serializer.is_valid():
+    #         return Response({
+    #             # 'message': 'Failed to create owner',
+    #             'error_message': owner_serializer.errors,
+    #         }, status=status.HTTP_400_BAD_REQUEST)
+
+    #     # Begin atomic transaction to prevent partial saves
+    #     with transaction.atomic():
+    #         total_shares = Owner.objects.filter(client=client).aggregate(
+    #             total_share=Coalesce(Sum(F('share')), 0)
+    #         )['total_share']
+
+    #         remaining_shares = 100 - total_shares
+    #         new_share = owner_serializer.validated_data['share']
+
+    #         if remaining_shares == 0:
+    #             return Response({'error_message': 'Cannot create owner because 0% shares are left'}, status=status.HTTP_400_BAD_REQUEST)
+
+    #         if new_share > remaining_shares:
+    #             return Response({
+    #                 'error_message': f'Cannot assign {new_share}%. Only {remaining_shares}% is left for assigning.'
+    #             }, status=status.HTTP_400_BAD_REQUEST)
+
+    #         owner_serializer.save(client=client)
+
+    #         # email = request.data.get('email')
+    #         # if CustomUser.objects.filter(email=email).exists():
+    #         #     return Response({'error_message': 'A user with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+    #         remaining_shares -= new_share
+
+    #         return Response({
+    #             'message': f'Owner Created Successfully, User Registered kindly activate ur account, remaining shares are {remaining_shares}%',
+    #             'data': owner_serializer.data,
+    #             # 'generated_password': password,
+    #             'remaining_shares': remaining_shares,
+    #         }, status=status.HTTP_201_CREATED)
+    #     # return Response(owner_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # elif request.method == 'GET':
+    #     total_shares = Owner.objects.filter(client=client).aggregate(
+    #         total_share=Coalesce(Sum(F('share')), 0)
+    #     )['total_share']
+    #     remaining_shares = 100 - total_shares
+
+    #     return Response({
+    #         'total_shares': total_shares,
+    #         'remaining_shares': remaining_shares
+    #     }, status=status.HTTP_200_OK)
+
 @api_view(['POST', 'GET'])
 def create_owner(request, pk):
     client = get_object_or_404(Client, id=pk)
@@ -979,6 +1069,7 @@ def create_owner(request, pk):
         if user == '':
             return Response({'error_message': 'Username field is required'}, status=status.HTTP_400_BAD_REQUEST)
 
+        email = request.data.get('email')
         owner_serializer = OwnerSerializer(data=request.data)
 
         if not owner_serializer.is_valid():
@@ -1004,12 +1095,39 @@ def create_owner(request, pk):
                     'error_message': f'Cannot assign {new_share}%. Only {remaining_shares}% is left for assigning.'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            owner_serializer.save(client=client)
+            # owner_serializer.save(client=client)
+            user_password = owner_serializer.validated_data['user_password']
+            owner = owner_serializer.save(client=client)
+            clientuser = CommonUser.objects.create_user(
+                username=owner.email,
+                email=owner.email,
+                name=owner.owner_name,
+                password=user_password,  # from request
+                role='clientuser',
+                client=owner.client,
+                is_active=True
+            )
+            email_subject = "Your Account is Registered"
+            message = render_to_string("activate.html", {
+                'user': clientuser,
+                # 'domain': '127.0.0.1:8000',
+                'password': user_password,
+                'domain': 'admin.dms.zacoinfotech.com',
+                'uid': urlsafe_base64_encode(force_bytes(clientuser.pk)),
+                'token': generate_token.make_token(clientuser),
+            })
+
+            email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [email])
+            email_message.send()
 
             # email = request.data.get('email')
             # if CustomUser.objects.filter(email=email).exists():
             #     return Response({'error_message': 'A user with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
             remaining_shares -= new_share
+
+
+
+            
 
             return Response({
                 'message': f'Owner Created Successfully, User Registered kindly activate ur account, remaining shares are {remaining_shares}%',
@@ -1195,28 +1313,28 @@ def delete_owner(request, pk, owner_pk):
 #         print(serializer)
 #         return Response(serializer.data)
 
-@api_view(['POST'])
-def reset_clientuser_password(request, pk, user_pk):
-    client = Client.objects.get(id=pk)
-    user = ClientUser.objects.get(id=user_pk, client=client)
-    if request.method == 'POST':
-        data = request.data
-        passwords = request.data.get('password')
-        print("Previous (hashed) password:", passwords)
-        previous_password = request.data.get('previous_password')
-        new_password = request.data.get('new_password')
-        confirm_password = request.data.get('confirm_password')
-        if not user.check_password(previous_password):
-            return Response({'error_message': 'Incorrect previous password !!'}, status=status.HTTP_400_BAD_REQUEST)
-        if new_password != confirm_password:
-            return Response({'error_message': 'New password and confirm password do not match !!'}, status=status.HTTP_400_BAD_REQUEST)
-        user.set_password(new_password)  # Set the new password
-        user.save()
-        user_serializer = UserSerializerWithToken(data=data, instance=user, partial=True)
-        if user_serializer.is_valid():
-            user_serializer.save(client=client)
-            return Response({'message':'Client User Password Updated'})
-        return Response(user_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+# @api_view(['POST'])
+# def reset_clientuser_password(request, pk, user_pk):
+#     client = Client.objects.get(id=pk)
+#     user = ClientUser.objects.get(id=user_pk, client=client)
+#     if request.method == 'POST':
+#         data = request.data
+#         passwords = request.data.get('password')
+#         print("Previous (hashed) password:", passwords)
+#         previous_password = request.data.get('previous_password')
+#         new_password = request.data.get('new_password')
+#         confirm_password = request.data.get('confirm_password')
+#         if not user.check_password(previous_password):
+#             return Response({'error_message': 'Incorrect previous password !!'}, status=status.HTTP_400_BAD_REQUEST)
+#         if new_password != confirm_password:
+#             return Response({'error_message': 'New password and confirm password do not match !!'}, status=status.HTTP_400_BAD_REQUEST)
+#         user.set_password(new_password)  # Set the new password
+#         user.save()
+#         user_serializer = UserSerializerWithToken(data=data, instance=user, partial=True)
+#         if user_serializer.is_valid():
+#             user_serializer.save(client=client)
+#             return Response({'message':'Client User Password Updated'})
+#         return Response(user_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 # @api_view(['POST'])
 # def clientuser(request, pk):
@@ -1596,7 +1714,7 @@ def create_common_clientuser(request, pk):
     email = data.get('email')
     username = data.get('email')  # you're setting username as email
     # confirm_password = request.data.get('confirm_password')
-    # password = request.data.get('password')
+    password = request.data.get('password')
     name = data.get('name')
 
     # ✅ Check if email or username already exists
@@ -1606,8 +1724,8 @@ def create_common_clientuser(request, pk):
     if CommonUser.objects.filter(username=username).exists():
         return Response({'error_message': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
 
-    name_part = name[:4].lower()
-    generated_password = f"{name_part}@123"
+    # name_part = name[:4].lower()
+    # generated_password = f"{name_part}@123"
     
     # if password != data['confirm_password']:
     #     return Response({'error_message': 'Password and ConfirmPassword do not match'}, status=status.HTTP_400_BAD_REQUEST)
@@ -1620,21 +1738,23 @@ def create_common_clientuser(request, pk):
             name=data['name'],
             username=username,
             email=email,
-            password=make_password(generated_password),
+            # password=make_password(generated_password),
+            password=make_password(data['password']),
             role='clientuser',
             # confirm_password=make_password(data['confirm_password']),
             # superadmin_user=True,
-            is_active=False,
+            is_active=True,
             is_staff=False, 
             client=client    
             # is_superuser=True,
         )
 
         # ✅ Email activation token
-        email_subject = "Activate Your Account"
+        email_subject = "Your Account is Registered"
         message = render_to_string("activate.html", {
             'user': clientuser,
             # 'domain': '127.0.0.1:8000',
+            'password': password,
             'domain': 'admin.dms.zacoinfotech.com',
             'uid': urlsafe_base64_encode(force_bytes(clientuser.pk)),
             'token': generate_token.make_token(clientuser),
@@ -1700,6 +1820,228 @@ def single_common_clientuser(request, pk, user_pk):
     user = CommonUser.objects.get(id = user_pk, client=client)
     if request.method == 'GET':
         serializer = ClientuserSerializerWithToken(user)
+        print(serializer)
+        return Response(serializer.data)
+
+@api_view(['POST'])
+def reset_clientuser_password(request, pk, user_pk):
+    client = Client.objects.get(id=pk)
+    user = CommonUser.objects.get(id=user_pk, client=client)
+    if request.method == 'POST':
+        data = request.data
+        passwords = request.data.get('password')
+        print("Previous (hashed) password:", passwords)
+        previous_password = request.data.get('previous_password')
+        new_password = request.data.get('new_password')
+        confirm_password = request.data.get('confirm_password')
+        if not user.check_password(previous_password):
+            return Response({'error_message': 'Incorrect previous password !!'}, status=status.HTTP_400_BAD_REQUEST)
+        if new_password != confirm_password:
+            return Response({'error_message': 'New password and confirm password do not match !!'}, status=status.HTTP_400_BAD_REQUEST)
+        user.set_password(new_password)  # Set the new password
+        user.save()
+        user_serializer = ClientuserSerializerWithToken(data=data, instance=user, partial=True)
+        if user_serializer.is_valid():
+            user_serializer.save(client=client)
+            return Response({'message':'Client User Password Updated'})
+        return Response(user_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+# @api_view(['GET', 'POST'])
+# def forget_password(request, user_pk):
+#     data = request.data
+#     user = CommonUser.objects.get(id=user_pk)    
+#     # return Response(serializer.data)
+#     if request.method == 'POST':
+#         username = data.get('username')
+#         if CommonUser.objects.filter(username=username):
+#             email_subject = "Activate Your Account"
+#             message = 'jhjhj'
+#             email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [username])
+#             email_message.send()
+#             serializer = UserSerializer(user)
+#             return Response({'message' : 'Kindly Check ur mail'})
+#         else:
+#             return Response ({'error_message' : "Given username or email doesn't exist"}, status=status.HTTP_400_BAD_REQUEST )
+#     elif request.method == 'GET':
+#         ser = UserSerializer(user)
+#         return Response(ser.data)
+
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.template.loader import render_to_string
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+
+token_generator = PasswordResetTokenGenerator()
+
+@api_view(['POST'])
+def forget_password(request):
+    username = request.data.get('username')
+
+    try:
+        user = CommonUser.objects.get(username=username)
+    except CommonUser.DoesNotExist:
+        return Response({'error_message': "Given username doesn't exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Generate token and UID
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = token_generator.make_token(user)
+
+    # Email content
+    email_subject = "Reset Your Password"
+    message = render_to_string("passwordreset.html", {
+        'user': user,
+        # 'domain': 'admin.dms.zacoinfotech.com', https://dms-frontend-new.vercel.app/forgetpassword
+        # http://localhost:5173/reset-password/MzM/cu85ad-af76c1ed92e7af05f1df7d9f508c1b9d/
+        # http://127.0.0.1:8000/reset-password/MzM/cu85en-236a306cd2999dd9db4ec85c0d0cf2c1/
+        # 'domain': 'localhost:5173',
+        'domain': 'dms-frontend-new.vercel.app',
+        'uid': uid,
+        'token': token,
+    })
+
+    email = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [user.email])
+    email.send()
+
+    return Response({'message': 'Kindly check your email to reset your password.'}, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+def reset_password(request, uidb64, token):
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = CommonUser.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, CommonUser.DoesNotExist):
+        return Response({'error_message': 'Invalid link'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not token_generator.check_token(user, token):
+        return Response({'error_message': 'Invalid or expired token'}, status=status.HTTP_400_BAD_REQUEST)
+
+    password = request.data.get('password')
+    confirm_password = request.data.get('confirm_password')
+
+    if password != confirm_password:
+        return Response({'error_message': 'Passwords do not match'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.set_password(password)
+    user.save()
+
+    return Response({'message': 'Password has been reset successfully.'}, status=status.HTTP_200_OK)
+
+
+# ******************************************Commom Customer User*************************************
+
+@api_view(['POST'])
+def create_common_customeruser(request, pk):
+    data = request.data
+    client = get_object_or_404(Client, id=pk)
+    email = data.get('email')
+    username = data.get('email')  # you're setting username as email
+    # confirm_password = request.data.get('confirm_password')
+    password = request.data.get('password')
+    name = data.get('name')
+
+    # ✅ Check if email or username already exists
+    if CommonUser.objects.filter(email=email).exists():
+        return Response({'error_message': 'Email is already registered'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if CommonUser.objects.filter(username=username).exists():
+        return Response({'error_message': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # name_part = name[:4].lower()
+    # generated_password = f"{name_part}@123"
+    
+    # if password != data['confirm_password']:
+    #     return Response({'error_message': 'Password and ConfirmPassword do not match'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        # ✅ Create user
+        customeruser = CommonUser.objects.create(
+            # first_name=data['first_name'],
+            # last_name=data['last_name'],
+            name=data['name'],
+            username=username,
+            email=email,
+            # password=make_password(generated_password),
+            password=make_password(data['password']),
+            role='customeruser',
+            # confirm_password=make_password(data['confirm_password']),
+            # superadmin_user=True,
+            is_active=True,
+            is_staff=False, 
+            client=client    
+            # is_superuser=True,
+        )
+
+        # ✅ Email activation token
+        email_subject = "Your Account is Registered"
+        message = render_to_string("activate.html", {
+            'user': customeruser,
+            # 'domain': '127.0.0.1:8000',
+            'password': password,
+            'domain': 'admin.dms.zacoinfotech.com',
+            'uid': urlsafe_base64_encode(force_bytes(customeruser.pk)),
+            'token': generate_token.make_token(customeruser),
+        })
+
+        email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [email])
+        email_message.send()
+
+        serializer = CustomeruserSerializerWithToken(customeruser, many=False)
+        return Response({'message': 'User Registered. Kindly Check your mail for password.', 'data': serializer.data})
+    
+    except Exception as e:
+        return Response({'error_message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST', 'GET'])
+def edit_common_customeruser(request,pk, user_pk):
+    client = Client.objects.get(id=pk)
+    user = CommonUser.objects.get(id=user_pk, client=client)
+    user_serializer = CustomeruserSerializerWithToken(data=request.data, instance=user, partial=True )
+    if request.method == 'POST':
+        if user_serializer.is_valid():
+            user_serializer.save(client=client)
+            return Response({'message':'Customeruser User Updated','Data': user_serializer.data}, status=status.HTTP_200_OK)
+        return Response(user_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'GET':
+        user_ser = CustomeruserSerializerWithToken(user)
+        return Response(user_ser.data)
+
+# Email Activations
+class CustomeruserActivateAccountView(View):
+    def get(self, request, uidb64, token):
+        try:
+            uid= force_text(urlsafe_base64_decode(uidb64))
+            user = CommonUser.objects.get(pk=uid)
+        except Exception as identifier:
+            user=None
+        if user is not None and generate_token.check_token(user,token):
+            user.is_active=True
+            user.save()
+            return render(request,"activatesuccess.html")
+        else:
+            return render(request,"activatefail.html")
+
+@api_view(['DELETE'])
+def delete_common_customeruser(request,pk, user_pk):
+    client = Client.objects.get(id=pk)
+    user = CommonUser.objects.get(id = user_pk, client=client)
+    if request.method == 'DELETE':
+        user.delete()
+        return Response({'message':'Customer User deleted'}, status=status.HTTP_200_OK)
+    return Response ({'error_message':'Failed to delete customer user'},status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def list_users_by_role(request, pk):
+    client = get_object_or_404(Client, id=pk)
+    users = CommonUser.objects.filter(client=client, role='customeruser')
+    serializer = CustomeruserSerializer(users, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def single_common_customeruser(request, pk, user_pk): 
+    client = Client.objects.get(id = pk)
+    user = CommonUser.objects.get(id = user_pk, client=client)
+    if request.method == 'GET':
+        serializer = CustomeruserSerializerWithToken(user)
         print(serializer)
         return Response(serializer.data)
 
@@ -10668,7 +11010,8 @@ def detail_client(request, pk):
     client = Client.objects.get(id=pk)
     view_bank = Bank.objects.filter(client=client)
     view_owner = Owner.objects.filter(client=client)
-    view_clientuser = CommonUser.objects.filter(client=client)
+    view_clientuser = CommonUser.objects.filter(client=client, role='clientuser')
+    view_customeruser = CommonUser.objects.filter(client=client, role='customeruser')
     view_companydoc = FileInfo.objects.filter(client=client)
     view_branch = Branch.objects.filter(client=client)
     view_customer = Customer.objects.filter(client=client)
@@ -10712,6 +11055,11 @@ def detail_client(request, pk):
 
     try:
         clientuser = ClientuserSerializerWithToken(view_clientuser, many=True)
+    except Exception as e:
+        logger.error(f"Error serializing ClientUser: {e}")
+        raise
+    try:
+        customeruser = CustomeruserSerializerWithToken(view_customeruser, many=True)
     except Exception as e:
         logger.error(f"Error serializing ClientUser: {e}")
         raise
@@ -10838,6 +11186,7 @@ def detail_client(request, pk):
         'Bank': bank_serializer.data,
         'Owner': owner_serializer.data,
         'ClientUser': clientuser.data,
+        'CustomerUser' : customeruser.data,
         'Company_Document': companydoc.data,
         'Branch': branch_serializer.data,
         'Customer_or_Vendor': customer_serializer.data,

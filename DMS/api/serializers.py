@@ -187,16 +187,27 @@ class AcknowledgementSerializer(serializers.ModelSerializer):
 # Owner Serializer
 class OwnerSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
+    # user_password = serializers.CharField(read_only=True)
+    user_password = serializers.CharField(write_only=True, required=True)  # extra field
 
     class Meta:
         model = Owner
         fields = '__all__'
+        extra_kwargs = {
+            'user': {'read_only': True}
+        }
+        # fields = ['owner_name', 'username', 'share', 'pan', 'aadhar', 'mobile', 'email', 'it_password', 'isadmin', 'is_active', 'user', 'client', 'id', 'user_password']
 
     def validate(self, data):
         email = data.get('email')
         if email and CommonUser.objects.filter(email=email).exists():
             raise serializers.ValidationError({'email': 'A user with this email already exists.'})
         return data
+
+    def create(self, validated_data):
+        # user_password remove kar do before creating Owner
+        validated_data.pop('user_password', None)
+        return super().create(validated_data)
     # def validate(self, data):
     #     email = data.get('email')
 
@@ -364,6 +375,12 @@ class SuperuserSerializer(serializers.ModelSerializer):
         model = CommonUser
         fields = ['__all__']
 
+class UserSerializer(serializers.ModelSerializer):
+     
+    class Meta:
+        model = CommonUser
+        fields = ['id','username','email','name','password']
+
 # *****************************************************************Common clientuser
 class ClientuserSerializerWithToken(serializers.ModelSerializer):
     # name = serializers.SerializerMethodField(read_only= True)
@@ -399,6 +416,39 @@ class ClientuserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CommonUser
         fields = ['id','username','email','name','client','password']
+
+# *****************************************************************Common customeruser
+class CustomeruserSerializerWithToken(serializers.ModelSerializer):
+    # name = serializers.SerializerMethodField(read_only= True)
+    token = serializers.SerializerMethodField(read_only = True)
+    is_active = serializers.BooleanField(default=False)
+    previous_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+    # customer = CustomerVendorSerializer(many=False, read_only=True)
+
+    class Meta:
+        model = CommonUser
+        fields = ['id','username','client','email','name','password','role','is_active', 'token', 'previous_password','new_password','confirm_password']
+
+    def validate_name(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Name cannot be blank.")
+        return value
+
+    def get_token(self, obj):
+        refresh = RefreshToken.for_user(obj)
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
+
+class CustomeruserSerializer(serializers.ModelSerializer):
+     
+    class Meta:
+        model = CommonUser
+        fields = ['id','username','email','name','client','password']
+
 # *****************************************************************Common Login
 
 class CommonTokenObtainPairSerializer(serializers.Serializer):
@@ -424,7 +474,7 @@ class CommonTokenObtainPairSerializer(serializers.Serializer):
                 }
             except CommonUser.DoesNotExist:
                 raise serializers.ValidationError({"error": "Unauthorized user type"})
-        raise serializers.ValidationError({"error": "Invalid credentials or user not found"})
+        raise serializers.ValidationError({"error_message": ["Invalid credentials or user not found"]})
 
 #***************************************************************************
 
