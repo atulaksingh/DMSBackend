@@ -451,6 +451,31 @@ class CustomeruserSerializer(serializers.ModelSerializer):
 
 # *****************************************************************Common Login
 
+# class CommonTokenObtainPairSerializer(serializers.Serializer):
+#     username = serializers.EmailField()
+#     password = serializers.CharField()
+
+#     def validate(self, attrs):
+#         username = attrs.get('username')
+#         password = attrs.get('password')
+
+#         # Try authenticating DashboardUser
+#         user = authenticate(username=username, password=password)
+#         if user:
+#             try:
+#                 common_user = CommonUser.objects.get(id=user.id)
+#                 refresh = RefreshToken.for_user(common_user)
+#                 serializer = ClientuserSerializerWithToken(common_user).data
+#                 return {
+#                     "refresh": str(refresh),
+#                     "access": str(refresh.access_token),
+#                     "message": "User logged in",
+#                     **serializer,
+#                 }
+#             except CommonUser.DoesNotExist:
+#                 raise serializers.ValidationError({"error": "Unauthorized user type"})
+#         raise serializers.ValidationError({"error_message": ["Invalid credentials or user not found"]})
+
 class CommonTokenObtainPairSerializer(serializers.Serializer):
     username = serializers.EmailField()
     password = serializers.CharField()
@@ -459,22 +484,30 @@ class CommonTokenObtainPairSerializer(serializers.Serializer):
         username = attrs.get('username')
         password = attrs.get('password')
 
-        # Try authenticating DashboardUser
         user = authenticate(username=username, password=password)
         if user:
             try:
                 common_user = CommonUser.objects.get(id=user.id)
                 refresh = RefreshToken.for_user(common_user)
+
+                # ✅ Add role inside JWT
+                refresh["role"] = common_user.role
+
                 serializer = ClientuserSerializerWithToken(common_user).data
+
                 return {
                     "refresh": str(refresh),
                     "access": str(refresh.access_token),
+                    "role": common_user.role,   # ✅ Also return separately
                     "message": "User logged in",
                     **serializer,
                 }
             except CommonUser.DoesNotExist:
                 raise serializers.ValidationError({"error": "Unauthorized user type"})
-        raise serializers.ValidationError({"error_message": ["Invalid credentials or user not found"]})
+
+        raise serializers.ValidationError(
+            {"error_message": ["Invalid credentials or user not found"]}
+        )
 
 #***************************************************************************
 

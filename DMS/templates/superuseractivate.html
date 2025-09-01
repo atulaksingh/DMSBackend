@@ -1,9 +1,26 @@
-{% autoescape off %}
+<!-- {% autoescape off %}
 
 Hi
 Please Click This below Link to verify your Super Admin account
 
 
 http://{{domain}}{%url 'superuser-activate' uidb64=uid token=token %}
+
+{% endautoescape %} -->
+
+
+{% autoescape off %}
+
+Hi {{ user.name }},
+
+Your account has been successfully created.
+
+Here are your login credentials:
+
+- *Username:* {{ user.username }}
+- *Password:* {{ password }}
+
+Please use these credentials to log in at:
+https://dms-frontend-new.vercel.app/
 
 {% endautoescape %}

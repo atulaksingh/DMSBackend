@@ -76,11 +76,6 @@ urlpatterns = [
     # path('superadmin-login',  CommonLoginAPIView.as_view(), name='token_obtain_pair'),
     path('activate/<uidb64>/<token>',CustomeruserActivateAccountView.as_view(),name='activate'),
 
-
-
-
-
-
     path('create-companydoc/<int:pk>', view=create_companydoc, name='create-companydoc'),        #***********************
     path('edit-companydoc/<int:pk>/<int:file_pk>', view=edit_companydoc, name='edit-companydoc'),         #***********************
     path('list-companydoc/<int:pk>', view=list_companydoc, name='list-companydoc'),        #***********************

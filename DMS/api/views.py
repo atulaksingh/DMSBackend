@@ -27,7 +27,7 @@ from rest_framework import generics
 from openpyxl import load_workbook
 from openpyxl import load_workbook
 from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser
+# from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from .models import Client, PF
 from .serializers import PfSerializer
@@ -42,7 +42,7 @@ from decimal import Decimal, InvalidOperation
 from django.db import transaction
 import traceback
 from rest_framework import status
-from rest_framework.parsers import MultiPartParser
+# from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from openpyxl import load_workbook
@@ -51,7 +51,7 @@ from rest_framework.response import Response
 from .models import PF  # Make sure this matches your model import
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import PF
+from .models import PF                                                                                                                                  
 from django.db.models import Sum
 from django.db import models
 from rest_framework.decorators import api_view
@@ -59,8 +59,9 @@ from rest_framework.response import Response
 from django.db.models import Sum
 from .models import PF
 from django.http import FileResponse, Http404
-# from .permissions import IsSuperAdminOrOwnClient
 from api.permission import IsSuperAdminOrOwnClient
+from api.permission import IsSuperUser, IsClientUser, IsCustomerUser, IsSuperUserOrClientUser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 #********************************************* safe_decimal**************************************************
 
@@ -570,6 +571,7 @@ def single_fileinfo(request,pk,fileinfo_pk):
         return Response(serializer.data)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_fileinfo(request,pk,fileinfo_pk):
     if request.method == 'DELETE':
         client = Client.objects.get(id=pk)
@@ -579,6 +581,7 @@ def delete_fileinfo(request,pk,fileinfo_pk):
     return Response ({'message':'Fail to delete'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_client(request,pk):
     if request.method == 'DELETE':
         client = Client.objects.get(id=pk)
@@ -590,6 +593,7 @@ def delete_client(request,pk):
 # ***********************************************Bank View's******************************************************
 
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUser])
 @parser_classes([MultiPartParser, FormParser])
 def create_bank(request,pk):
     client = Client.objects.get(id=pk)
@@ -628,6 +632,7 @@ def create_bank(request,pk):
         },status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
+@permission_classes([IsSuperUserOrClientUser])
 @parser_classes([MultiPartParser, FormParser])
 def edit_bank(request, pk, bank_pk):
     try:
@@ -699,6 +704,7 @@ def single_bank(request, pk, bank_pk):
         return Response(serializer.data)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_bank(request,pk, bank_pk):
     client = get_object_or_404(Client, id=pk)
     bank = Bank.objects.get(id=bank_pk)
@@ -1043,11 +1049,125 @@ from django.db import transaction
     #         'remaining_shares': remaining_shares
     #     }, status=status.HTTP_200_OK)
 
+# @api_view(['POST', 'GET'])
+# @permission_classes([IsSuperUserOrClientUser])
+# def create_owner(request, pk):
+#     client = get_object_or_404(Client, id=pk)
+
+#     if request.method == 'POST':
+#         data = request.data
+#         pan = request.data.get('pan')
+#         if pan and len(pan) != 10:
+#             return Response({'error_message': 'PAN number should be exactly 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         aadhar = request.data.get('aadhar')
+#         if aadhar and len(aadhar) > 12:
+#             return Response({'error_message': 'Aadhar number should be at most 12 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         mobile = request.data.get('mobile')
+#         if mobile and len(mobile) != 10:
+#             return Response({'error_message': 'Mobile number should be exactly 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         share = request.data.get('share')
+#         if share == '':
+#             return Response({'error_message': 'Share field is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         user = request.data.get('username')
+#         if user == '':
+#             return Response({'error_message': 'Username field is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         email = request.data.get('email')
+#         owner_serializer = OwnerSerializer(data=request.data)
+
+#         if not owner_serializer.is_valid():
+#             return Response({
+#                 # 'message': 'Failed to create owner',
+#                 'error_message': owner_serializer.errors,
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Begin atomic transaction to prevent partial saves
+#         with transaction.atomic():
+#             total_shares = Owner.objects.filter(client=client).aggregate(
+#                 total_share=Coalesce(Sum(F('share')), 0)
+#             )['total_share']
+
+#             remaining_shares = 100 - total_shares
+#             new_share = owner_serializer.validated_data['share']
+
+#             if remaining_shares == 0:
+#                 return Response({'error_message': 'Cannot create owner because 0% shares are left'}, status=status.HTTP_400_BAD_REQUEST)
+
+#             if new_share > remaining_shares:
+#                 return Response({
+#                     'error_message': f'Cannot assign {new_share}%. Only {remaining_shares}% is left for assigning.'
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+
+#             # owner_serializer.save(client=client)
+#             user_password = owner_serializer.validated_data['user_password']
+#             owner = owner_serializer.save(client=client)
+#             clientuser = CommonUser.objects.create_user(
+#                 username=owner.email,
+#                 email=owner.email,
+#                 name=owner.owner_name,
+#                 password=user_password,  # from request
+#                 role='clientuser',
+#                 client=owner.client,
+#                 is_active=True
+#             )
+#             email_subject = "Your Account is Registered"
+#             message = render_to_string("activate.html", {
+#                 'user': clientuser,
+#                 # 'domain': '127.0.0.1:8000',
+#                 'password': user_password,
+#                 'domain': 'admin.dms.zacoinfotech.com',
+#                 'uid': urlsafe_base64_encode(force_bytes(clientuser.pk)),
+#                 'token': generate_token.make_token(clientuser),
+#             })
+
+#             email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [email])
+#             email_message.send()
+
+#             # email = request.data.get('email')
+#             # if CustomUser.objects.filter(email=email).exists():
+#             #     return Response({'error_message': 'A user with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+#             remaining_shares -= new_share
+
+
+
+            
+
+#             return Response({
+#                 'message': f'Owner Created Successfully, User Registered kindly activate ur account, remaining shares are {remaining_shares}%',
+#                 'data': owner_serializer.data,
+#                 # 'generated_password': password,
+#                 'remaining_shares': remaining_shares,
+#             }, status=status.HTTP_201_CREATED)
+#         # return Response(owner_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#     elif request.method == 'GET':
+#         total_shares = Owner.objects.filter(client=client).aggregate(
+#             total_share=Coalesce(Sum(F('share')), 0)
+#         )['total_share']
+#         remaining_shares = 100 - total_shares
+
+#         return Response({
+#             'total_shares': total_shares,
+#             'remaining_shares': remaining_shares
+#         }, status=status.HTTP_200_OK)
+
 @api_view(['POST', 'GET'])
+# @parser_classes([MultiPartParser, FormParser])
+@parser_classes([MultiPartParser, FormParser, JSONParser])
 def create_owner(request, pk):
     client = get_object_or_404(Client, id=pk)
 
+    # 🔹 Permission logic
     if request.method == 'POST':
+        if request.user.role not in ['superuser', 'clientuser']:
+            return Response({'detail': 'You do not have permission to perform this action.'}, 
+                            status=status.HTTP_403_FORBIDDEN)
+
+        # --- POST logic (create owner) ---
         data = request.data
         pan = request.data.get('pan')
         if pan and len(pan) != 10:
@@ -1073,12 +1193,8 @@ def create_owner(request, pk):
         owner_serializer = OwnerSerializer(data=request.data)
 
         if not owner_serializer.is_valid():
-            return Response({
-                # 'message': 'Failed to create owner',
-                'error_message': owner_serializer.errors,
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error_message': owner_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Begin atomic transaction to prevent partial saves
         with transaction.atomic():
             total_shares = Owner.objects.filter(client=client).aggregate(
                 total_share=Coalesce(Sum(F('share')), 0)
@@ -1091,53 +1207,34 @@ def create_owner(request, pk):
                 return Response({'error_message': 'Cannot create owner because 0% shares are left'}, status=status.HTTP_400_BAD_REQUEST)
 
             if new_share > remaining_shares:
-                return Response({
-                    'error_message': f'Cannot assign {new_share}%. Only {remaining_shares}% is left for assigning.'
-                }, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error_message': f'Cannot assign {new_share}%. Only {remaining_shares}% is left.'}, 
+                                status=status.HTTP_400_BAD_REQUEST)
 
-            # owner_serializer.save(client=client)
             user_password = owner_serializer.validated_data['user_password']
             owner = owner_serializer.save(client=client)
+
             clientuser = CommonUser.objects.create_user(
                 username=owner.email,
                 email=owner.email,
                 name=owner.owner_name,
-                password=user_password,  # from request
+                password=user_password,
                 role='clientuser',
                 client=owner.client,
                 is_active=True
             )
-            email_subject = "Your Account is Registered"
-            message = render_to_string("activate.html", {
-                'user': clientuser,
-                # 'domain': '127.0.0.1:8000',
-                'password': user_password,
-                'domain': 'admin.dms.zacoinfotech.com',
-                'uid': urlsafe_base64_encode(force_bytes(clientuser.pk)),
-                'token': generate_token.make_token(clientuser),
-            })
 
-            email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [email])
-            email_message.send()
+            # TODO: send email...
 
-            # email = request.data.get('email')
-            # if CustomUser.objects.filter(email=email).exists():
-            #     return Response({'error_message': 'A user with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
             remaining_shares -= new_share
 
-
-
-            
-
             return Response({
-                'message': f'Owner Created Successfully, User Registered kindly activate ur account, remaining shares are {remaining_shares}%',
+                'message': f'Owner Created Successfully, User Registered. Remaining shares: {remaining_shares}%',
                 'data': owner_serializer.data,
-                # 'generated_password': password,
                 'remaining_shares': remaining_shares,
             }, status=status.HTTP_201_CREATED)
-        # return Response(owner_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'GET':
+        # 🔹 Everyone allowed (no restriction)
         total_shares = Owner.objects.filter(client=client).aggregate(
             total_share=Coalesce(Sum(F('share')), 0)
         )['total_share']
@@ -1148,7 +1245,9 @@ def create_owner(request, pk):
             'remaining_shares': remaining_shares
         }, status=status.HTTP_200_OK)
 
+
 @api_view(['POST','GET'])
+@permission_classes([IsSuperUserOrClientUser])
 def edit_owner(request, pk, owner_pk):
     client = get_object_or_404(Client, id= pk)
     owner = Owner.objects.get(id = owner_pk)
@@ -1247,6 +1346,7 @@ def single_owner(request, pk, owner_pk):
 #         return Response({'error_message':'Owner not found'},status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_owner(request, pk, owner_pk):
     client = get_object_or_404(Client, id=pk)
     try:
@@ -1644,6 +1744,7 @@ def edit_common_superuser(request, user_pk):
         return Response(user_ser.data)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_common_superuser(request, user_pk):
     user = CommonUser.objects.get(id = user_pk)
     if request.method == 'DELETE':
@@ -1708,6 +1809,7 @@ def list_common_superuser(request):
 # ******************************************Commom Client User*************************************
 
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUser])
 def create_common_clientuser(request, pk):
     data = request.data
     client = get_object_or_404(Client, id=pk)
@@ -1770,6 +1872,7 @@ def create_common_clientuser(request, pk):
         return Response({'error_message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST', 'GET'])
+@permission_classes([IsSuperUserOrClientUser])
 def edit_common_clientuser(request,pk, user_pk):
     client = Client.objects.get(id=pk)
     user = CommonUser.objects.get(id=user_pk, client=client)
@@ -1799,6 +1902,7 @@ class ClientuserActivateAccountView(View):
             return render(request,"activatefail.html")
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_common_clientuser(request,pk, user_pk):
     client = Client.objects.get(id=pk)
     user = CommonUser.objects.get(id = user_pk, client=client)
@@ -1824,6 +1928,7 @@ def single_common_clientuser(request, pk, user_pk):
         return Response(serializer.data)
 
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUser])
 def reset_clientuser_password(request, pk, user_pk):
     client = Client.objects.get(id=pk)
     user = CommonUser.objects.get(id=user_pk, client=client)
@@ -1930,6 +2035,7 @@ def reset_password(request, uidb64, token):
 # ******************************************Commom Customer User*************************************
 
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUser])
 def create_common_customeruser(request, pk):
     data = request.data
     client = get_object_or_404(Client, id=pk)
@@ -1992,6 +2098,7 @@ def create_common_customeruser(request, pk):
         return Response({'error_message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST', 'GET'])
+@permission_classes([IsSuperUserOrClientUser])
 def edit_common_customeruser(request,pk, user_pk):
     client = Client.objects.get(id=pk)
     user = CommonUser.objects.get(id=user_pk, client=client)
@@ -2021,6 +2128,7 @@ class CustomeruserActivateAccountView(View):
             return render(request,"activatefail.html")
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_common_customeruser(request,pk, user_pk):
     client = Client.objects.get(id=pk)
     user = CommonUser.objects.get(id = user_pk, client=client)
@@ -2182,6 +2290,7 @@ def list_companydoc(request,pk):
     return Response(serializer.data)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_companydoc(request,pk, file_pk):
     client = Client.objects.get(id=pk)
     doc = FileInfo.objects.get(id=file_pk, client=client)
@@ -2246,6 +2355,7 @@ def list_branch(request,pk):
         return Response(branch_serializer.data)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_branch(request,pk,branch_pk):
     client = Client.objects.get(id=pk)
     branch = Branch.objects.get(id=branch_pk)
@@ -2314,6 +2424,7 @@ def list_officelocation(request,pk, branch_pk):
         return Response(officeLocation_serializer.data)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_officelocation(request,pk, branch_pk, office_pk):
     client = Client.objects.get(id=pk)
     branch = Branch.objects.get(id=branch_pk, client=client)
@@ -2408,6 +2519,7 @@ def single_customer(request, pk, customer_pk):
         return Response(serializer.data)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_customer(request,pk, customer_pk):
     client = Client.objects.get(id=pk)
     customer = Customer.objects.get(id=customer_pk)
@@ -2563,6 +2675,7 @@ def single_branchdoc(request, branch_pk, branchdoc_pk):
         return Response(ser.data)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_branchdoc(request,branch_pk, branchdoc_pk ):
     branch = Branch.objects.get(id = branch_pk)
     branchdoc = BranchDocument.objects.get(id = branchdoc_pk, branch=branch)
@@ -2619,6 +2732,7 @@ def list_incometaxdoc(request,pk):
         return Response(income_serializer.data)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_incometaxdoc(request,pk,income_pk):
     client = Client.objects.get(id=pk)
     income = IncomeTaxDocument.objects.get(id=income_pk)
@@ -3102,6 +3216,7 @@ def list_pf(request,pk):
         return Response(pf_serializer.data)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_pf(request,pk,pf_pk):
     client = Client.objects.get(id=pk)
     pf = PF.objects.get(id=pf_pk)
@@ -3213,6 +3328,7 @@ def single_taxaudit(request, pk, taxaudit_pk):
         return Response(ser.data)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_taxaudit(request, pk, taxaudit_pk ):
     client = Client.objects.get(id = pk)
     taxaudit = TaxAudit.objects.get(id = taxaudit_pk, client=client)
@@ -3363,6 +3479,7 @@ def single_air(request, pk, air_pk):
         return Response(ser.data)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_air(request, pk, air_pk ):
     client = Client.objects.get(id = pk)
     air = AIR.objects.get(id = air_pk, client=client)
@@ -3475,6 +3592,7 @@ def single_sft(request, pk, sft_pk):
         return Response(ser.data)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_sft(request, pk, sft_pk ):
     client = Client.objects.get(id = pk)
     sft = SFT.objects.get(id = sft_pk, client=client)
@@ -3591,6 +3709,7 @@ def single_others(request, pk, others_pk):
         return Response(ser.data)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_others(request, pk, others_pk ):
     client = Client.objects.get(id = pk)
     others = Others.objects.get(id = others_pk, client=client)
@@ -3700,6 +3819,7 @@ def single_tdspayment(request, pk, tdspayment_pk):
         return Response(ser.data)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_tdspayment(request, pk, tdspayment_pk):
     client = Client.objects.get(id=pk)
     tds = TDSPayment.objects.get(id=tdspayment_pk)
@@ -3812,6 +3932,7 @@ def single_tds(request, pk, tds_pk):
         return Response(ser.data)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_tds(request, pk, tds_pk ):
     client = Client.objects.get(id = pk)
     tds = TDSReturn.objects.get(id = tds_pk, client=client)
@@ -4041,6 +4162,7 @@ def get_create_tdssection(request):
         return Response(context)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_tdssection(request, tdssection_pk):
     # client = Client.objects.get(id=pk)
     tds = TDSSection.objects.get(id=tdssection_pk)
@@ -4772,6 +4894,7 @@ def create_sales_invoice2(request, client_pk):
         return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
    
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_sales_invoice(request, client_pk, pk):
     """
     Deletes a SalesInvoice by its primary key (ID) along with its associated product summaries.
@@ -5711,6 +5834,7 @@ def purchase_invoice_detail_view(request, client_pk, invoice_pk):
         return Response(updated_serializer.data, status=status.HTTP_200_OK)
     
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_purchase_invoice(request, client_pk, pk):
     """
     Deletes a PurchaseInvoice by its primary key (ID) along with its associated product summaries.
@@ -6383,6 +6507,7 @@ def debit_note_detail_view(request, client_pk, invoice_pk, debit_pk):
         return Response(updated_serializer.data, status=status.HTTP_200_OK)
        
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_debit_note(request, client_pk, invoice_pk, pk):
     """
     Deletes a SalesInvoice by its primary key (ID) along with its associated product summaries.
@@ -7242,6 +7367,7 @@ def update_credit_note(request, client_pk, invoice_pk):
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_credit_note(request, client_pk, invoice_pk, credit_pk):
     """
     Deletes a SalesInvoice by its primary key (ID) along with its associated product summaries.
@@ -8029,6 +8155,7 @@ def create_income2(request, client_pk):
         return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_income(request, client_pk, pk):
     """
     Deletes a SalesInvoice by its primary key (ID) along with its associated product summaries.
@@ -8881,6 +9008,7 @@ def expenses_detail_view(request, client_pk, invoice_pk):
         return Response(updated_serializer.data, status=status.HTTP_200_OK)
     
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_expenses(request, client_pk, pk):
     """
     Deletes a PurchaseInvoice by its primary key (ID) along with its associated product summaries.
@@ -8985,6 +9113,7 @@ def create_zipupload(request, pk):
  
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_zipupload(request, client_pk, pk):
     """
     Deletes a PurchaseInvoice by its primary key (ID) along with its associated product summaries.
@@ -9692,6 +9821,7 @@ def income_debit_note_detail_view(request, client_pk, income_pk, debit_pk):
         return Response(updated_serializer.data, status=status.HTTP_200_OK)
         
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_income_debit_note(request, client_pk, income_pk, pk):
     """
     Deletes a SalesInvoice by its primary key (ID) along with its associated product summaries.
@@ -10579,6 +10709,7 @@ def update_expenses_credit_note(request, client_pk, expenses_pk):
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_expenses_credit_note(request, client_pk, expenses_pk, credit_pk):
     """
     Deletes a SalesInvoice by its primary key (ID) along with its associated product summaries.
@@ -10753,6 +10884,7 @@ def get_excel(request):
         return Response(ser.errors)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_excel(request, excel_pk):
     excel = ExcelFile.objects.get(id=excel_pk)
     if request.method == 'DELETE':
@@ -10866,6 +10998,7 @@ def update_acknowledgement(request, pk, ack_pk):
         return Response(ser.data)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_acknowledgement(request, pk, ack_pk):
     client = Client.objects.get(id=pk)
     ack = Acknowledgement.objects.get(id=ack_pk)
@@ -11003,8 +11136,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-# @permission_classes([IsSuperAdminOrOwnClient])
 @permission_classes([IsAuthenticated, IsSuperAdminOrOwnClient])
 def detail_client(request, pk):
     client = Client.objects.get(id=pk)
@@ -11331,6 +11462,7 @@ def list_hsn(request):
         return Response(serializer.data)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_hsn(request, pk):
     hsn = HSNCode.objects.get(id = pk)
     if request.method == 'DELETE':
@@ -11374,6 +11506,7 @@ def list_product(request):
         return Response(serializer.data)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_product(request, pk):
     product = Product.objects.get(id = pk)
     if request.method == 'DELETE':
@@ -11417,6 +11550,7 @@ def edit_product_description(request, pk):
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['DELETE'])
+@permission_classes([IsSuperUser])
 def delete_product_description(request, pk):
     product_description = ProductDescription.objects.get(id = pk)
     if request.method == 'DELETE':

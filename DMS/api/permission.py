@@ -1,22 +1,13 @@
 # permissions.py
 
 from rest_framework import permissions
+from rest_framework.permissions import BasePermission
 
 class IsSuperAdminOrOwnClient(permissions.BasePermission):
     """
     Allows access to DashboardUser (superadmin) for all clients,
     and to ClientUser only for their own client data.
     """
-    # def has_object_permission(self, request, view, obj):
-    #     user = request.user
-
-    #     if hasattr(user, 'dashboarduser'):
-    #         # It's a superadmin user
-    #         return user.dashboarduser.superadmin_user is True
-
-    #     elif hasattr(user, 'clientuser'):
-    #         # It's a client user - only allow access to their own client
-    #         return obj == user.clientuser.client
     def has_object_permission(self, request, view, obj):
         user = request.user
 
@@ -37,3 +28,23 @@ class IsSuperAdminOrOwnClient(permissions.BasePermission):
         # All other roles — no access
         return False
 
+class IsSuperUser(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.role == 'superuser'
+
+
+class IsClientUser(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.role == 'clientuser'
+
+
+class IsCustomerUser(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.role == 'customeruser'
+
+class IsSuperUserOrClientUser(BasePermission):
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated and
+            (request.user.role == "superuser" or request.user.role == "clientuser")
+        )
