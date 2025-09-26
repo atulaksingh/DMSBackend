@@ -33,12 +33,13 @@ admin.site.register(CompanyDocument)
 # admin.site.register(DashboardUser, DashboardUserAdmin)
 class CommonUserAdmin(UserAdmin):
     model = CommonUser
-    list_display = ('id', 'name', 'email','role', 'is_active', 'is_staff')
+    list_display = ('id', 'client','username', 'email','role', 'is_active', 'is_staff')
     # search_fields = ('email')
     list_editable = ('is_active', 'is_staff')
 
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
+        ('Personal info', {'fields': ('first_name', 'last_name', 'client', 'role')}),
         # ('Personal Info', {'fields': ('first_name', 'last_name')}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
@@ -47,9 +48,12 @@ class CommonUserAdmin(UserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'password1', 'password2'),
+            # 'fields': ('email', 'password1', 'password2'),
+            'fields': ('username', 'email', 'password1', 'password2', 'first_name', 'last_name', 'role'),
         }),
     )
+
+    search_fields = ('email', 'username')
 
     ordering = ('id',)
 
@@ -92,14 +96,6 @@ class AcknowledgementAdmin(admin.ModelAdmin):
 
 admin.site.register(Acknowledgement, AcknowledgementAdmin)
 
-# class CustomUserAdmin(UserAdmin):
-#     model = CustomUser
-#     list_display = ('id', 'email','name', 'is_active', 'is_staff')
-#     search_fields = ('email', 'name')
-#     ordering = ('id',)
-
-# admin.site.register(CustomUser, CustomUserAdmin)
-
 
 
 # Inline for File model to manage file uploads
@@ -116,7 +112,7 @@ class FileInfoInline(admin.StackedInline):
 # Admin for Client model
 @admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
-    list_display = ['client_name', 'entity_type', 'date_of_incorporation', 'contact_person', 'email', 'status']
+    list_display = ['id','client_name', 'entity_type', 'date_of_incorporation', 'contact_person', 'email', 'status']
     inlines = [FileInfoInline]  # Include FileInfoInline to manage FileInfo directly
 
 # Register FileInfo model

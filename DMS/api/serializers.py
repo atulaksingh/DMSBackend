@@ -14,6 +14,7 @@ from django.core.mail import EmailMessage # used to construct and send email mes
 from django.conf import settings
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import authenticate
+from django.contrib.auth import get_user_model
 
 # File Serializer
 class FileSerializer(serializers.ModelSerializer):
@@ -129,31 +130,6 @@ class BankSerializer(serializers.ModelSerializer):
         files = Files.objects.filter(bank=obj)
         return FilesSerializer(files, many=True).data
 
-# Acknowledgement
-
-# class AcknowledgementSerializer(serializers.ModelSerializer):
-#     return_file = serializers.SerializerMethodField()
-#     computation_file = serializers.SerializerMethodField()
-
-#     class Meta:
-#         model = Acknowledgement
-#         fields = ['id','client','return_type','frequency','return_period','from_date','to_date','client_review','month','remarks','status','return_file','computation_file']
-
-    
-#     def get_return_file(self, obj):
-#         return_file = Files.objects.filter(ack=obj)
-#         return FilesSerializer(return_file, many=True).data
-
-#     def get_computation_file(self, obj):
-#         computation_file = Files.objects.filter(ack=obj)
-#         return FilesSerializer(computation_file, many=True).data
-        
-        
-#         def validate(self, data):
-#         # Ensure 'remarks' is required when 'client_review' is 'remark'
-#             if data.get('client_review') == 'remark' and not data.get('remarks'):
-#                 raise serializers.ValidationError({"remarks": "This field is required when client_review is 'Remark'."})
-#             return data
 
 class AcknowledgementSerializer(serializers.ModelSerializer):
     return_file = serializers.SerializerMethodField()
@@ -181,13 +157,10 @@ class AcknowledgementSerializer(serializers.ModelSerializer):
         return data
 
 
-
-
-
+User = get_user_model() 
 # Owner Serializer
 class OwnerSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
-    # user_password = serializers.CharField(read_only=True)
     user_password = serializers.CharField(write_only=True, required=True)  # extra field
 
     class Meta:
@@ -197,68 +170,43 @@ class OwnerSerializer(serializers.ModelSerializer):
             'user': {'read_only': True}
         }
         # fields = ['owner_name', 'username', 'share', 'pan', 'aadhar', 'mobile', 'email', 'it_password', 'isadmin', 'is_active', 'user', 'client', 'id', 'user_password']
-
-    def validate(self, data):
-        email = data.get('email')
-        if email and CommonUser.objects.filter(email=email).exists():
-            raise serializers.ValidationError({'email': 'A user with this email already exists.'})
-        return data
-
+    def validate_email(self, value):
+        client = self.context.get("client")
+        if CommonUser.objects.filter(client=client, email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
+    
     def create(self, validated_data):
         # user_password remove kar do before creating Owner
         validated_data.pop('user_password', None)
         return super().create(validated_data)
-    # def validate(self, data):
-    #     email = data.get('email')
 
-    #     # When updating, exclude the current user's email from the check
-    #     instance = self.instance
-    #     if email:
-    #         if instance and instance.user:
-    #             if CommonUser.objects.exclude(pk=instance.user.pk).filter(email=email).exists():
-    #                 raise serializers.ValidationError({'email': 'A user with this email already exists.'})
-    #         else:
-    #             if CommonUser.objects.filter(email=email).exists():
-    #                 raise serializers.ValidationError({'email': 'A user with this email already exists.'})
-    #     return data
-   
+
 class CustomerVendorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
         fields = '__all__'
 
-# ****************************************************************Client User
+# ****************************************************************Base User
 
-# class UserSerializerWithToken(serializers.ModelSerializer):
-#     # name = serializers.SerializerMethodField(read_only= True)
-#     token = serializers.SerializerMethodField(read_only = True)
-#     ca_admin = serializers.SerializerMethodField()
-#     cus_admin = serializers.SerializerMethodField()
-#     is_active = serializers.BooleanField(default=False)
-#     previous_password = serializers.CharField(write_only=True)
-#     new_password = serializers.CharField(write_only=True)
-#     confirm_password = serializers.CharField(write_only=True)
-#     # customer = CustomerVendorSerializer(many=False, read_only=True)
+class BaseUserSerializer(serializers.ModelSerializer):
+    def validate(self, data):
+        client = data.get('client') or getattr(self.instance, 'client', None)
+        email = data.get('email') or getattr(self.instance, 'email', None)
 
-#     class Meta:
-#         model = ClientUser
-#         fields = ['id','username','email','name','password','ca_admin', 'cus_admin','is_active', 'token','client', 'previous_password','new_password','confirm_password']
+        if client and email:
+            qs = CommonUser.objects.filter(client=client, email=email)
+            if self.instance:  # exclude self during update
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise serializers.ValidationError(
+                    {"email": "This email already exists in this company."}
+                )
+        return data
 
-#     def validate_name(self, value):
-#         if not value.strip():
-#             raise serializers.ValidationError("Name cannot be blank.")
-#         return value
-#         # mmfm mmmfm mmfmm mmmmf rytyh
-
-#     def get_ca_admin(self,obj):
-#         return obj.is_staff
-
-#     def get_cus_admin(self, obj):
-#         return obj.is_staff
-
-#     def get_token(self, obj):
-#         token = RefreshToken.for_user(obj)
-#         return str(token.access_token)
+    class Meta:
+        model = CommonUser
+        fields = "__all__"
 
 # ****************************************************************Dashboard User
 # class DashboardSerializerWithToken(serializers.ModelSerializer):
@@ -340,27 +288,16 @@ class CustomerVendorSerializer(serializers.ModelSerializer):
 
 
 # ****************************************************************Common superuser
-class SuperuserSerializerWithToken(serializers.ModelSerializer):
-    # name = serializers.SerializerMethodField(read_only= True)
+class SuperuserSerializerWithToken(BaseUserSerializer):
     token = serializers.SerializerMethodField(read_only = True)
     is_active = serializers.BooleanField(default=False)
     previous_password = serializers.CharField(write_only=True)
     new_password = serializers.CharField(write_only=True)
     confirm_password = serializers.CharField(write_only=True)
-    # customer = CustomerVendorSerializer(many=False, read_only=True)
 
     class Meta:
         model = CommonUser
-        fields = ['id','username','email','name','password','role','is_active', 'token', 'previous_password','new_password','confirm_password']
-
-    def validate_name(self, value):
-        if not value.strip():
-            raise serializers.ValidationError("Name cannot be blank.")
-        return value
-
-    # def get_token(self, obj):
-    #     token = RefreshToken.for_user(obj)
-    #     return str(token.access_token)
+        fields = ['id','username','email','first_name','last_name','password','role','is_active', 'token', 'previous_password','new_password','confirm_password']
 
     def get_token(self, obj):
         refresh = RefreshToken.for_user(obj)
@@ -369,20 +306,20 @@ class SuperuserSerializerWithToken(serializers.ModelSerializer):
             'access': str(refresh.access_token),
         }
 
-class SuperuserSerializer(serializers.ModelSerializer):
+class SuperuserSerializer(BaseUserSerializer):
      
     class Meta:
         model = CommonUser
         fields = ['__all__']
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(BaseUserSerializer):
      
     class Meta:
         model = CommonUser
-        fields = ['id','username','email','name','password']
+        fields = ['id','username','email','first_name','last_name','password']
 
 # *****************************************************************Common clientuser
-class ClientuserSerializerWithToken(serializers.ModelSerializer):
+class ClientuserSerializerWithToken(BaseUserSerializer):
     # name = serializers.SerializerMethodField(read_only= True)
     token = serializers.SerializerMethodField(read_only = True)
     is_active = serializers.BooleanField(default=False)
@@ -393,16 +330,7 @@ class ClientuserSerializerWithToken(serializers.ModelSerializer):
 
     class Meta:
         model = CommonUser
-        fields = ['id','username','client','email','name','password','role','is_active', 'token', 'previous_password','new_password','confirm_password']
-
-    def validate_name(self, value):
-        if not value.strip():
-            raise serializers.ValidationError("Name cannot be blank.")
-        return value
-
-    # def get_token(self, obj):
-    #     token = RefreshToken.for_user(obj)
-    #     return str(token.access_token)
+        fields = ['id','username','client','email','first_name', 'last_name','password','role','is_active', 'token', 'previous_password','new_password','confirm_password']
 
     def get_token(self, obj):
         refresh = RefreshToken.for_user(obj)
@@ -411,14 +339,14 @@ class ClientuserSerializerWithToken(serializers.ModelSerializer):
             'access': str(refresh.access_token),
         }
 
-class ClientuserSerializer(serializers.ModelSerializer):
+class ClientuserSerializer(BaseUserSerializer):
      
     class Meta:
         model = CommonUser
-        fields = ['id','username','email','name','client','password']
+        fields = ['id','username','email','first_name', 'last_name','client','password']
 
 # *****************************************************************Common customeruser
-class CustomeruserSerializerWithToken(serializers.ModelSerializer):
+class CustomeruserSerializerWithToken(BaseUserSerializer):
     # name = serializers.SerializerMethodField(read_only= True)
     token = serializers.SerializerMethodField(read_only = True)
     is_active = serializers.BooleanField(default=False)
@@ -429,12 +357,7 @@ class CustomeruserSerializerWithToken(serializers.ModelSerializer):
 
     class Meta:
         model = CommonUser
-        fields = ['id','username','client','email','name','password','role','is_active', 'token', 'previous_password','new_password','confirm_password']
-
-    def validate_name(self, value):
-        if not value.strip():
-            raise serializers.ValidationError("Name cannot be blank.")
-        return value
+        fields = ['id','username','client','email','first_name', 'last_name','password','role','is_active', 'token', 'previous_password','new_password','confirm_password']
 
     def get_token(self, obj):
         refresh = RefreshToken.for_user(obj)
@@ -443,41 +366,15 @@ class CustomeruserSerializerWithToken(serializers.ModelSerializer):
             'access': str(refresh.access_token),
         }
 
-class CustomeruserSerializer(serializers.ModelSerializer):
+class CustomeruserSerializer(BaseUserSerializer):
      
     class Meta:
         model = CommonUser
-        fields = ['id','username','email','name','client','password']
+        fields = ['id','username','email','first_name', 'last_name','client','password']
 
 # *****************************************************************Common Login
-
-# class CommonTokenObtainPairSerializer(serializers.Serializer):
-#     username = serializers.EmailField()
-#     password = serializers.CharField()
-
-#     def validate(self, attrs):
-#         username = attrs.get('username')
-#         password = attrs.get('password')
-
-#         # Try authenticating DashboardUser
-#         user = authenticate(username=username, password=password)
-#         if user:
-#             try:
-#                 common_user = CommonUser.objects.get(id=user.id)
-#                 refresh = RefreshToken.for_user(common_user)
-#                 serializer = ClientuserSerializerWithToken(common_user).data
-#                 return {
-#                     "refresh": str(refresh),
-#                     "access": str(refresh.access_token),
-#                     "message": "User logged in",
-#                     **serializer,
-#                 }
-#             except CommonUser.DoesNotExist:
-#                 raise serializers.ValidationError({"error": "Unauthorized user type"})
-#         raise serializers.ValidationError({"error_message": ["Invalid credentials or user not found"]})
-
 class CommonTokenObtainPairSerializer(serializers.Serializer):
-    username = serializers.EmailField()
+    username = serializers.CharField()
     password = serializers.CharField()
 
     def validate(self, attrs):
@@ -510,18 +407,6 @@ class CommonTokenObtainPairSerializer(serializers.Serializer):
         )
 
 #***************************************************************************
-
-
-
-
-
-
-
-
-
-
-
-
 
 # Company Document
 class CompanyDocSerailizer(serializers.ModelSerializer):
@@ -564,12 +449,6 @@ class BranchDocSerailizer(serializers.ModelSerializer):
     def get_files(self, obj):
         files = Files.objects.filter(branch_doc=obj)
         return FilesSerializer(files, many=True).data
-
-# Customer Or Vendor
-# class CustomerVendorSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Customer
-#         fields = '__all__'
 
 # Incometax Document
 class IncomeTaxDocumentSerializer(serializers.ModelSerializer):

@@ -25,6 +25,11 @@ driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install())
 driver.get("http://localhost:5173/")
 time.sleep(2)
 
+driver.find_element(By.NAME, "username").send_keys("vaishnavitalari.v@gmail.com")
+driver.find_element(By.NAME, "password").send_keys("vaishnavi")
+driver.find_element(By.NAME, "login").click()
+time.sleep(5)
+
 # Read data from Excel file
 df = pd.read_excel(r"client.xlsx")  # Modify path as needed
 
@@ -80,17 +85,38 @@ for index, row in df.iterrows():
         random.choice(dropdown_options).click()
 
     # Handle attachment section
-    driver.find_element(By.CSS_SELECTOR, 'label[for="mom-file"]').click()
-    dropdown_button_files = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.CSS_SELECTOR, "button[name='file_name']"))
-    )
-    dropdown_button_files.click()
+    # driver.find_element(By.CSS_SELECTOR, 'label[for="mom-file"]').click()
+    # dropdown_button_files = WebDriverWait(driver, 10).until(
+    #     EC.element_to_be_clickable((By.CSS_SELECTOR, "button[name='file_name']"))
+    # )
+    # dropdown_button_files.click()
+    label = driver.find_element(By.XPATH, "//label[contains(text(), 'Select PDF/image file.')]")
 
-    dropdown_options = WebDriverWait(driver, 10).until(
-        EC.presence_of_all_elements_located((By.CSS_SELECTOR, "ul[role='listbox'] li[role='option']"))
-    )
-    if dropdown_options:
-        random.choice(dropdown_options).click()
+    # Click it
+    label.click()
+
+    # dropdown_options = WebDriverWait(driver, 10).until(
+    #     EC.presence_of_all_elements_located((By.CSS_SELECTOR, "ul[role='listbox'] li[role='option']"))
+    # )
+    # if dropdown_options:
+    #     random.choice(dropdown_options).click()
+    wait = WebDriverWait(driver, 10)
+
+    for index, row in df.iterrows():
+        document_type = str(row["document_type"]).strip().upper()   # e.g. PAN, TAN
+
+        print(f"Selecting: {document_type}")
+
+        # 1. Click the dropdown
+        dropdown = wait.until(EC.element_to_be_clickable((By.NAME, "file_name")))
+        dropdown.click()
+
+        # 2. Select the <li> option by visible text
+        # after clicking dropdown
+        option_xpath = f"//ul[@role='listbox']//li[normalize-space(text())='{document_type}']"
+        option = wait.until(EC.presence_of_element_located((By.XPATH, option_xpath)))
+        driver.execute_script("arguments[0].click();", option)
+
 
     driver.find_element(By.NAME, "login").send_keys(row["login"])
     driver.find_element(By.NAME, "password").send_keys(row["password"])
@@ -110,9 +136,6 @@ for index, row in df.iterrows():
 
 driver.find_element(By.ID, "long-button").click()
 
-client
-
-
 # view_button = driver.find_element(By.CSS_SELECTOR, "li.MuiButtonBase-root.MuiMenuItem-root")
 view_button = driver.find_element(By.NAME, "clientview-btn")
 view_button.click()
@@ -120,10 +143,10 @@ time.sleep(5)
 if not view_button:
     print("view_buton not found")
 
-# owner.fill_owner_forms(driver)
+owner.fill_owner_forms(driver)
 # bank.fill_bank_forms(driver) 
 # owner.fill_owner_forms(driver)
-bank.fill_bank_forms(driver)
+# bank.fill_bank_forms(driver)
 
                                  
 

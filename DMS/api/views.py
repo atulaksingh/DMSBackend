@@ -27,7 +27,6 @@ from rest_framework import generics
 from openpyxl import load_workbook
 from openpyxl import load_workbook
 from rest_framework.views import APIView
-# from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from .models import Client, PF
 from .serializers import PfSerializer
@@ -42,7 +41,6 @@ from decimal import Decimal, InvalidOperation
 from django.db import transaction
 import traceback
 from rest_framework import status
-# from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from openpyxl import load_workbook
@@ -60,8 +58,9 @@ from django.db.models import Sum
 from .models import PF
 from django.http import FileResponse, Http404
 from api.permission import IsSuperAdminOrOwnClient
-from api.permission import IsSuperUser, IsClientUser, IsCustomerUser, IsSuperUserOrClientUser
+from api.permission import IsSuperUser, IsClientUser, IsCustomerUser, IsSuperUserOrClientUser, IsSuperUserOrClientUserOrCustomerUser
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from django.db import transaction
 
 #********************************************* safe_decimal**************************************************
 
@@ -88,6 +87,7 @@ def safe_decimal(value):
 
 # ****************************************Frontend create-client api*************************************
 @api_view(['POST'])
+@permission_classes([IsSuperUser])
 def create_client(request):
     if request.method == 'POST':
         print("Received data:", request.data)  # Debugging output
@@ -166,31 +166,6 @@ def create_client(request):
 
 #         return Response(client_serializer.errors, status=400)
 
-
-# @api_view(['GET'])
-# # @permission_classes([IsAuthenticated])
-# def list_client(request):
-    if request.method == 'GET':
-        client = Client.objects.all()
-        hsn = HSNCode.objects.all()
-        product = Product.objects.all()
-        product_description = ProductDescription.objects.all()
-
-        serializers = ClientSerializer(client, many=True)
-        serializers2 = HSNSerializer(hsn, many=True)
-        serializers3 = ProductSerializer(product, many=True)
-        serializers4 = ProductDescriptionSerializer(product_description, many=True)
-
-        context = {
-            'clients':serializers.data,
-            'hsn':serializers2.data,
-            'product':serializers3.data,
-            'product_description':serializers4.data
-        }
-
-        return Response(context)
-
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_client(request):
@@ -232,268 +207,8 @@ def list_client(request):
         'product_description': desc_serializer.data
     })
 
-
-# @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-# def list_client(request):
-#     user_email = request.user.email
-
-#     try:
-#         # Check if this email belongs to a ClientUser
-#         client_user = ClientUser.objects.get(email=user_email)
-#         # Filter client based on ClientUser's client
-#         clients = Client.objects.filter(id=client_user.client.id)
-
-#     except ClientUser.DoesNotExist:
-#         # Maybe it's a DashboardUser or superuser? Show all
-#         clients = Client.objects.all()
-
-#     serializer = ClientSerializer(clients, many=True)
-#     return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-
-
-
-
-
-# @api_view(['GET'])
-# # @permission_classes([IsAuthenticated])
-# def list_client(request):
-    user = request.user
-
-    if hasattr(user, 'dashboarduser') and user.dashboarduser.superadmin_user:
-        # Superadmin → full access
-        clients = Client.objects.all()
-        hsns = HSNCode.objects.all()
-        products = Product.objects.all()
-        descriptions = ProductDescription.objects.all()
-    elif hasattr(user, 'clientuser'):
-        # Client user → only their client data
-        client = user.clientuser.client
-        clients = Client.objects.filter(id=client.id)
-        hsns = HSNCode.objects.filter(client=client)
-        products = Product.objects.filter(client=client)
-        descriptions = ProductDescription.objects.filter(client=client)
-    else:
-        # Not allowed
-        return Response({"detail": "Permission denied."}, status=403)
-
-    # Serializing
-    serializers = ClientSerializer(clients, many=True)
-    serializers2 = HSNSerializer(hsns, many=True)
-    serializers3 = ProductSerializer(products, many=True)
-    serializers4 = ProductDescriptionSerializer(descriptions, many=True)
-
-    context = {
-        'clients': serializers.data,
-        'hsn': serializers2.data,
-        'product': serializers3.data,
-        'product_description': serializers4.data
-    }
-
-    return Response(context)
-
-
-
-# @api_view(['GET', 'POST'])
-# def edit_client(request, pk):
-#     try:
-#         client = Client.objects.get(id=pk)
-#     except Client.DoesNotExist:
-#         return Response({"error_message": "Client not found"}, status=404)
-
-#     # Handle GET request: Retrieve the client and pre-populate the frontend form
-#     if request.method == 'GET':
-#         client_serializer = ClientSerializer(client)
-#         return Response(client_serializer.data, status=200)
-
-#     # Handle POST request: Update the client and associated FileInfo and File models
-#     elif request.method == 'POST':
-#         # Update client fields
-#         client_serializer = ClientSerializer(client, data=request.data)
-
-#         if client_serializer.is_valid():
-#             print('data', request.POST)
-#             client_serializer.save()
-
-#             # Access fileinfos data for updating
-#             fileinfos_data = []
-#             index = 0
-
-#             # Loop through fileinfos in request.POST
-#             while f'fileinfos[{index}].login' in request.POST:
-#                 fileinfo_data = {
-#                     'login': request.POST.get(f'fileinfos[{index}].login'),
-#                     'password': request.POST.get(f'fileinfos[{index}].password'),
-#                     'document_type': request.POST.get(f'fileinfos[{index}].document_type'),
-#                     'remark': request.POST.get(f'fileinfos[{index}].remark'),
-#                 }
-
-#                 # Get files associated with this fileinfo
-#                 files = request.FILES.getlist(f'fileinfos[{index}].files')
-#                 # fileinfo_id = request.POST.get(f'fileinfos[{index}].id')  # Assuming you have a field to identify the FileInfo
-#                 # if fileinfo_id:  # Update existing FileInfo if ID is provided
-#                 #     try:
-#                 #         fileinfo = FileInfo.objects.get(id=fileinfo_id, client=client)
-
-#                 #         # Update existing FileInfo fields
-#                 #         for attr, value in fileinfo_data.items():
-#                 #             setattr(fileinfo, attr, value)
-#                 #         fileinfo.save()
-
-
-#                 #     except FileInfo.DoesNotExist:
-#                 #         # If FileInfo doesn't exist, create a new one
-#                 #         fileinfo = FileInfo.objects.create(client=client, **fileinfo_data)
-
-#                 # else:
-#                 #     # Create a new FileInfo if no ID was provided
-#                 #     fileinfo = FileInfo.objects.create(client=client, **fileinfo_data)
-
-#                 # Create new files associated with this FileInfo
-#                 for file in files:
-#                     File.objects.create(files=file)
-
-#                 index += 1
-
-#             # return Response(client_serializer.data, status=200)
-#             return Response({'message': 'Client updated successfully','data': client_serializer.data},status=status.HTTP_200_OK)
-
-
-#         return Response({'message': 'Fail to update client', 'error_message' : client_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-# @api_view(['GET', 'POST'])
-# def edit_client(request, pk):
-#     try:
-#         client = Client.objects.get(id=pk)
-#     except Client.DoesNotExist:
-#         return Response({"error_message": "Client not found"}, status=404)
-
-#     # Handle GET request: Retrieve the client and pre-populate the frontend form
-#     if request.method == 'GET':
-#         client_serializer = ClientSerializer(client)
-#         return Response(client_serializer.data, status=200)
-
-#     # Handle POST request: Update the client and associated FileInfo and File models
-#     elif request.method == 'POST':
-#         client_serializer = ClientSerializer(client, data=request.data)
-
-#         if client_serializer.is_valid():
-#             client_serializer.save()
-
-#             # ✅ Step 1: Delete all existing FileInfo and File records for this client
-#             FileInfo.objects.filter(client=client).delete()
-
-#             index = 0
-#             while f'fileinfos[{index}].login' in request.POST:
-#                 fileinfo_data = {
-#                     'login': request.POST.get(f'fileinfos[{index}].login'),
-#                     'password': request.POST.get(f'fileinfos[{index}].password'),
-#                     'document_type': request.POST.get(f'fileinfos[{index}].document_type'),
-#                     'remark': request.POST.get(f'fileinfos[{index}].remark'),
-#                 }
-
-#                 files = request.FILES.getlist(f'fileinfos[{index}].files')
-
-#                 # ✅ Step 2: Create new FileInfo
-#                 # fileinfo = FileInfo.objects.filter(client=client, **fileinfo_data).first()
-#                 fileinfo = FileInfo.objects.filter(client=client, **fileinfo_data).first()
-#                 if not fileinfo:
-#                     fileinfo = FileInfo.objects.create(client=client, **fileinfo_data)
-
-                
-
-#                 # ✅ Step 3: Create related File objects
-#                 for file in files:
-#                     File.objects.create(fileinfo=fileinfo, files=file)
-
-#                 index += 1
-
-#             return Response({
-#                 'message': 'Client updated successfully',
-#                 'data': client_serializer.data
-#             }, status=200)
-
-#         return Response({
-#             'message': 'Fail to update client',
-#             'error_message': client_serializer.errors
-#         }, status=400)
-
-# @api_view(['GET', 'POST'])
-# def edit_client(request, pk):
-#     try:
-#         client = Client.objects.get(id=pk)
-#     except Client.DoesNotExist:
-#         return Response({"error_message": "Client not found"}, status=404)
-
-#     # Handle GET request: Retrieve the client and pre-populate the frontend form
-#     if request.method == 'GET':
-#         client_serializer = ClientSerializer(client)
-#         return Response(client_serializer.data, status=200)
-
-#     # Handle POST request: Update the client and associated FileInfo and File models
-#     elif request.method == 'POST':
-#         try:
-#             client = Client.objects.get(id=pk)
-#         except Client.DoesNotExist:
-#             return Response({"error_message": "Client not found"}, status=404)
-
-#         client_serializer = ClientSerializer(client, data=request.data)
-#         if client_serializer.is_valid():
-#             client_serializer.save()
-
-#             # Store IDs of fileinfos that were updated or newly created
-#             received_fileinfo_ids = []
-
-#             index = 0
-#             while f'fileinfos[{index}].login' in request.POST:
-#                 fileinfo_id = request.POST.get(f'fileinfos[{index}].id')
-#                 fileinfo_data = {
-#                     'login': request.POST.get(f'fileinfos[{index}].login'),
-#                     'password': request.POST.get(f'fileinfos[{index}].password'),
-#                     'document_type': request.POST.get(f'fileinfos[{index}].document_type'),
-#                     'remark': request.POST.get(f'fileinfos[{index}].remark'),
-#                 }
-#                 files = request.FILES.getlist(f'fileinfos[{index}].files')
-
-#                 if fileinfo_id:
-#                     try:
-#                         fileinfo = FileInfo.objects.get(id=int(fileinfo_id), client=client)
-#                         print(f"✅ Updating FileInfo ID {fileinfo_id}")
-#                         for attr, value in fileinfo_data.items():
-#                             setattr(fileinfo, attr, value)
-#                         fileinfo.save()
-
-#                         # ✅ Only delete old files if new ones are uploaded
-#                         if files:
-#                             fileinfo.files.all().delete()
-
-#                     except ObjectDoesNotExist:
-#                         print(f"❌ FileInfo ID {fileinfo_id} not found — creating new one.")
-#                         fileinfo = FileInfo.objects.create(client=client, **fileinfo_data)
-
-#                 received_fileinfo_ids.append(fileinfo.id)
-
-#                 for file in files:
-#                     File.objects.create(fileinfo=fileinfo, files=file)
-
-#                 index += 1
-
-#             # Optional cleanup: delete any fileinfos not included in this update
-#             FileInfo.objects.filter(client=client).exclude(id__in=received_fileinfo_ids).delete()
-
-#             return Response({
-#                 'message': 'Client updated successfully',
-#                 'data': client_serializer.data
-#             }, status=200)
-
-#         return Response({
-#             'message': 'Fail to update client',
-#             'error_message': client_serializer.errors
-#         }, status=400)
-
 @api_view(['GET', 'POST'])
+@permission_classes([IsSuperUser])
 def edit_client(request, pk):
     try:
         client = Client.objects.get(id=pk)
@@ -561,7 +276,9 @@ def edit_client(request, pk):
             'message': 'Failed to update client',
             'error_message': client_serializer.errors
         }, status=400)
+
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def single_fileinfo(request,pk,fileinfo_pk):
     client = Client.objects.get(id = pk)
     fileinfo = FileInfo.objects.get(id=fileinfo_pk, client=client)
@@ -682,6 +399,7 @@ def edit_bank(request, pk, bank_pk):
         return Response(serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def list_bank(request, pk):
     client = Client.objects.get(id=pk)
     off=OfficeLocation.objects.filter(branch__client=client)
@@ -695,6 +413,7 @@ def list_bank(request, pk):
         return Response(serializers.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def single_bank(request, pk, bank_pk):
     client = Client.objects.get(id=pk)
     bank = Bank.objects.get(id=bank_pk, client=client)
@@ -715,448 +434,9 @@ def delete_bank(request,pk, bank_pk):
 
 # **********************************************Owners View's*******************************************
 
-# @api_view(['POST', 'GET'])
-# def create_owner(request, pk):
-#     client = get_object_or_404(Client, id=pk)
-    
-#     if request.method == 'POST':
-#         owner_serializer = OwnerSerializer(data=request.data)
-#         if owner_serializer.is_valid():
-#             # Calculate total shares assigned to the client so far
-#             total_shares = Owner.objects.filter(client=client).aggregate(
-#                 total_share=Coalesce(Sum(F('share')), 0)
-#             )['total_share']
-            
-#             # Calculate remaining shares
-#             remaining_shares = 100 - total_shares
-            
-#             # New share value from the current request
-#             new_share = owner_serializer.validated_data['share']
-
-#             if new_share > remaining_shares:
-#                 # If entered shares are greater than the remaining shares, return an error
-#                 return Response({
-#                     'error_message': f'Cannot assign {new_share}%. Only {remaining_shares}% is left for assigning.'
-#                 }, status=status.HTTP_400_BAD_REQUEST)
-
-#             # if aadhar > 12:
-#             #     return Response({'error_message': 'Aadhar number should be 12 digits'}, status=status.HTTP_400_BAD_REQUEST)
-            
-#             # Save the new owner
-#             owner_serializer.save(client=client)
-            
-#             # Recalculate remaining shares after saving
-#             total_shares += new_share
-#             remaining_shares = 100 - total_shares
-
-#             return Response({
-#                 'message': f'Owner Created Successfully remaining shares are {remaining_shares}',
-#                 'data': owner_serializer.data,
-#                 'remaining_shares': remaining_shares,
-#                 },status=status.HTTP_201_CREATED)
-
-#         # Show errors if the data is not valid
-#         return Response({
-#                 'message': f'Fail to create owner {owner_serializer.errors}',
-#                 'error_message': owner_serializer.errors,
-#                 },status=status.HTTP_400_BAD_REQUEST)
-
-#     elif request.method == 'GET':
-#         # Calculate total shares and remaining shares
-#         total_shares = Owner.objects.filter(client=client).aggregate(
-#             total_share=Coalesce(Sum(F('share')), 0)
-#         )['total_share']
-#         remaining_shares = 100 - total_shares
-
-#         return Response({
-#             'total_shares': total_shares,
-#             'remaining_shares': remaining_shares
-#         }, status=status.HTTP_200_OK)
-
-# @api_view(['POST', 'GET'])
-# def create_owner(request, pk):
-    client = get_object_or_404(Client, id=pk)
-    
-    if request.method == 'POST':
-
-        pan = request.data.get('pan')
-        if pan and len(pan) > 10 or len(pan) < 10:
-            return Response({'error_message': 'PAN number should be at most 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
-
-        aadhar = request.data.get('aadhar')
-        if aadhar and len(aadhar) > 12:
-            return Response({'error_message': 'Aadhar number should be at most 12 characters'}, status=status.HTTP_400_BAD_REQUEST)
-
-        mobile = request.data.get('mobile')
-        if mobile and len(mobile) > 10 or len(mobile) < 10:
-            return Response({'error_message': 'Mobile number should be at most 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        share = request.data.get('share')
-        if share == '':
-            return Response({'error_message': f'Share field is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        user = request.data.get('username')
-        if user == '':
-            return Response({'error_message' : f'Username field is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        owner_serializer = OwnerSerializer(data=request.data)
-        if owner_serializer.is_valid():
-            # Calculate total shares assigned to the client so far
-            total_shares = Owner.objects.filter(client=client).aggregate(
-                total_share=Coalesce(Sum(F('share')), 0)
-            )['total_share']
-            
-            # Calculate remaining shares
-            remaining_shares = 100 - total_shares
-            
-            # New share value from the current request
-            new_share = owner_serializer.validated_data['share']
-
-            if new_share > remaining_shares:
-                # If entered shares are greater than the remaining shares, return an error
-                return Response({
-                    'error_message': f'Cannot assign {new_share}%. Only {remaining_shares}% is left for assigning.'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            if remaining_shares == 0:
-                return Response({'error_message': f'Cannot Create Owner Cuz their is 0% shares are left'}, status=status.HTTP_400_BAD_REQUEST)
-
-            # Save the new owner
-            owner_serializer.save(client=client)
-            
-            # Recalculate remaining shares after saving
-            total_shares += new_share
-            remaining_shares = 100 - total_shares
-
-            return Response({
-                'message': f'Owner Created Successfully, remaining shares are {remaining_shares}%',
-                'data': owner_serializer.data,
-                'remaining_shares': remaining_shares,
-            }, status=status.HTTP_201_CREATED)
-
-        return Response({
-            'message': 'Failed to create owner',
-            'error_message': owner_serializer.errors,
-        }, status=status.HTTP_400_BAD_REQUEST)
-
-    elif request.method == 'GET':
-        # Calculate total shares and remaining shares
-        total_shares = Owner.objects.filter(client=client).aggregate(
-            total_share=Coalesce(Sum(F('share')), 0)
-        )['total_share']
-        remaining_shares = 100 - total_shares
-
-        return Response({
-            'total_shares': total_shares,
-            'remaining_shares': remaining_shares
-        }, status=status.HTTP_200_OK)
-
-# @api_view(['POST', 'GET'])
-# def create_owner(request, pk):
-#     client = get_object_or_404(Client, id=pk)
-
-#     if request.method == 'POST':
-#         data = request.data
-#         pan = request.data.get('pan')
-#         if pan and len(pan) != 10:
-#             return Response({'error_message': 'PAN number should be exactly 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         aadhar = request.data.get('aadhar')
-#         if aadhar and len(aadhar) > 12:
-#             return Response({'error_message': 'Aadhar number should be at most 12 characters'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         mobile = request.data.get('mobile')
-#         if mobile and len(mobile) != 10:
-#             return Response({'error_message': 'Mobile number should be exactly 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         share = request.data.get('share')
-#         if share == '':
-#             return Response({'error_message': 'Share field is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         user = request.data.get('username')
-#         if user == '':
-#             return Response({'error_message': 'Username field is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         owner_serializer = OwnerSerializer(data=request.data)
-
-#         if not owner_serializer.is_valid():
-#             return Response({
-#                 'message': 'Failed to create owner',
-#                 'error_message': owner_serializer.errors,
-#             }, status=status.HTTP_400_BAD_REQUEST)
-
-#         # Begin atomic transaction to prevent partial saves
-#         with transaction.atomic():
-#             total_shares = Owner.objects.filter(client=client).aggregate(
-#                 total_share=Coalesce(Sum(F('share')), 0)
-#             )['total_share']
-
-#             remaining_shares = 100 - total_shares
-#             new_share = owner_serializer.validated_data['share']
-
-#             if remaining_shares == 0:
-#                 return Response({'error_message': 'Cannot create owner because 0% shares are left'}, status=status.HTTP_400_BAD_REQUEST)
-
-#             if new_share > remaining_shares:
-#                 return Response({
-#                     'error_message': f'Cannot assign {new_share}%. Only {remaining_shares}% is left for assigning.'
-#                 }, status=status.HTTP_400_BAD_REQUEST)
-
-#             # 💡 Generate password from owner name
-#             # owner_name = owner_serializer.validated_data.get('owner_name', '')
-#             # password = f"{owner_name[:4].lower()}@123"
-#             # hashed_password = make_password(password)
-
-#             # # 🔍 Print password in console
-#             # print("Generated Password:", password)
-
-#             owner_serializer.save(client=client)
-
-#             # email = validated_data.get('email')
-#             email = request.data.get('email')
-#             # if not email:
-#             #     return Response({'error_message': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-#             if CustomUser.objects.filter(email=email).exists():
-#                 return Response({'error_message': 'A user with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
-
-#             # name = request.data.get('owner_name')  
-#             # password = f"{name[:4].lower()}@123"
-
-
-#             # user = CustomUser.objects.create(
-#             #     username=email,  # Username is same as email
-#             #     email=email,
-#             #     name=name,
-#             #     password=make_password(password) if password else None,  # Secure the password
-#             #     cus_user=True,
-#             #     is_active=False,  # You can adjust this if needed
-#             #     client=client,
-#             # )
-#             # email_subject = "Activate You Account"
-#             # message = render_to_string(
-#             #     "activate.html",
-#             #     {
-#             #         'user': user,
-#             #         'domain': '127.0.0.1:8000',
-#             #         'uid' : urlsafe_base64_encode(force_bytes(user.pk)),
-#             #         'token' : generate_token.make_token(user),
-#             #     }
-#             # )
-#             # # print(message)
-#             # email_message = EmailMessage(email_subject,message,settings.EMAIL_HOST_USER,[data['email']])
-#             # email_message.send()
-#             # serializer = UserSerializerWithToken(user, many=False)
-
-#             # Update remaining shares
-#             remaining_shares -= new_share
-
-#             return Response({
-#                 'message': f'Owner Created Successfully, User Registered kindly activate ur account, remaining shares are {remaining_shares}%',
-#                 'data': owner_serializer.data,
-#                 # 'generated_password': password,
-#                 'remaining_shares': remaining_shares,
-#             }, status=status.HTTP_201_CREATED)
-
-#     elif request.method == 'GET':
-#         total_shares = Owner.objects.filter(client=client).aggregate(
-#             total_share=Coalesce(Sum(F('share')), 0)
-#         )['total_share']
-#         remaining_shares = 100 - total_shares
-
-#         return Response({
-#             'total_shares': total_shares,
-#             'remaining_shares': remaining_shares
-#         }, status=status.HTTP_200_OK)
-
-
-from django.db import transaction
-
-# @api_view(['POST', 'GET'])
-# def create_owner(request, pk):
-    # client = get_object_or_404(Client, id=pk)
-
-    # if request.method == 'POST':
-    #     data = request.data
-    #     pan = request.data.get('pan')
-    #     if pan and len(pan) != 10:
-    #         return Response({'error_message': 'PAN number should be exactly 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
-
-    #     aadhar = request.data.get('aadhar')
-    #     if aadhar and len(aadhar) > 12:
-    #         return Response({'error_message': 'Aadhar number should be at most 12 characters'}, status=status.HTTP_400_BAD_REQUEST)
-
-    #     mobile = request.data.get('mobile')
-    #     if mobile and len(mobile) != 10:
-    #         return Response({'error_message': 'Mobile number should be exactly 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
-
-    #     share = request.data.get('share')
-    #     if share == '':
-    #         return Response({'error_message': 'Share field is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-    #     user = request.data.get('username')
-    #     if user == '':
-    #         return Response({'error_message': 'Username field is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-    #     owner_serializer = OwnerSerializer(data=request.data)
-
-    #     if not owner_serializer.is_valid():
-    #         return Response({
-    #             # 'message': 'Failed to create owner',
-    #             'error_message': owner_serializer.errors,
-    #         }, status=status.HTTP_400_BAD_REQUEST)
-
-    #     # Begin atomic transaction to prevent partial saves
-    #     with transaction.atomic():
-    #         total_shares = Owner.objects.filter(client=client).aggregate(
-    #             total_share=Coalesce(Sum(F('share')), 0)
-    #         )['total_share']
-
-    #         remaining_shares = 100 - total_shares
-    #         new_share = owner_serializer.validated_data['share']
-
-    #         if remaining_shares == 0:
-    #             return Response({'error_message': 'Cannot create owner because 0% shares are left'}, status=status.HTTP_400_BAD_REQUEST)
-
-    #         if new_share > remaining_shares:
-    #             return Response({
-    #                 'error_message': f'Cannot assign {new_share}%. Only {remaining_shares}% is left for assigning.'
-    #             }, status=status.HTTP_400_BAD_REQUEST)
-
-    #         owner_serializer.save(client=client)
-
-    #         # email = request.data.get('email')
-    #         # if CustomUser.objects.filter(email=email).exists():
-    #         #     return Response({'error_message': 'A user with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
-    #         remaining_shares -= new_share
-
-    #         return Response({
-    #             'message': f'Owner Created Successfully, User Registered kindly activate ur account, remaining shares are {remaining_shares}%',
-    #             'data': owner_serializer.data,
-    #             # 'generated_password': password,
-    #             'remaining_shares': remaining_shares,
-    #         }, status=status.HTTP_201_CREATED)
-    #     # return Response(owner_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    # elif request.method == 'GET':
-    #     total_shares = Owner.objects.filter(client=client).aggregate(
-    #         total_share=Coalesce(Sum(F('share')), 0)
-    #     )['total_share']
-    #     remaining_shares = 100 - total_shares
-
-    #     return Response({
-    #         'total_shares': total_shares,
-    #         'remaining_shares': remaining_shares
-    #     }, status=status.HTTP_200_OK)
-
-# @api_view(['POST', 'GET'])
-# @permission_classes([IsSuperUserOrClientUser])
-# def create_owner(request, pk):
-#     client = get_object_or_404(Client, id=pk)
-
-#     if request.method == 'POST':
-#         data = request.data
-#         pan = request.data.get('pan')
-#         if pan and len(pan) != 10:
-#             return Response({'error_message': 'PAN number should be exactly 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         aadhar = request.data.get('aadhar')
-#         if aadhar and len(aadhar) > 12:
-#             return Response({'error_message': 'Aadhar number should be at most 12 characters'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         mobile = request.data.get('mobile')
-#         if mobile and len(mobile) != 10:
-#             return Response({'error_message': 'Mobile number should be exactly 10 characters'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         share = request.data.get('share')
-#         if share == '':
-#             return Response({'error_message': 'Share field is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         user = request.data.get('username')
-#         if user == '':
-#             return Response({'error_message': 'Username field is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-#         email = request.data.get('email')
-#         owner_serializer = OwnerSerializer(data=request.data)
-
-#         if not owner_serializer.is_valid():
-#             return Response({
-#                 # 'message': 'Failed to create owner',
-#                 'error_message': owner_serializer.errors,
-#             }, status=status.HTTP_400_BAD_REQUEST)
-
-#         # Begin atomic transaction to prevent partial saves
-#         with transaction.atomic():
-#             total_shares = Owner.objects.filter(client=client).aggregate(
-#                 total_share=Coalesce(Sum(F('share')), 0)
-#             )['total_share']
-
-#             remaining_shares = 100 - total_shares
-#             new_share = owner_serializer.validated_data['share']
-
-#             if remaining_shares == 0:
-#                 return Response({'error_message': 'Cannot create owner because 0% shares are left'}, status=status.HTTP_400_BAD_REQUEST)
-
-#             if new_share > remaining_shares:
-#                 return Response({
-#                     'error_message': f'Cannot assign {new_share}%. Only {remaining_shares}% is left for assigning.'
-#                 }, status=status.HTTP_400_BAD_REQUEST)
-
-#             # owner_serializer.save(client=client)
-#             user_password = owner_serializer.validated_data['user_password']
-#             owner = owner_serializer.save(client=client)
-#             clientuser = CommonUser.objects.create_user(
-#                 username=owner.email,
-#                 email=owner.email,
-#                 name=owner.owner_name,
-#                 password=user_password,  # from request
-#                 role='clientuser',
-#                 client=owner.client,
-#                 is_active=True
-#             )
-#             email_subject = "Your Account is Registered"
-#             message = render_to_string("activate.html", {
-#                 'user': clientuser,
-#                 # 'domain': '127.0.0.1:8000',
-#                 'password': user_password,
-#                 'domain': 'admin.dms.zacoinfotech.com',
-#                 'uid': urlsafe_base64_encode(force_bytes(clientuser.pk)),
-#                 'token': generate_token.make_token(clientuser),
-#             })
-
-#             email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [email])
-#             email_message.send()
-
-#             # email = request.data.get('email')
-#             # if CustomUser.objects.filter(email=email).exists():
-#             #     return Response({'error_message': 'A user with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
-#             remaining_shares -= new_share
-
-
-
-            
-
-#             return Response({
-#                 'message': f'Owner Created Successfully, User Registered kindly activate ur account, remaining shares are {remaining_shares}%',
-#                 'data': owner_serializer.data,
-#                 # 'generated_password': password,
-#                 'remaining_shares': remaining_shares,
-#             }, status=status.HTTP_201_CREATED)
-#         # return Response(owner_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-#     elif request.method == 'GET':
-#         total_shares = Owner.objects.filter(client=client).aggregate(
-#             total_share=Coalesce(Sum(F('share')), 0)
-#         )['total_share']
-#         remaining_shares = 100 - total_shares
-
-#         return Response({
-#             'total_shares': total_shares,
-#             'remaining_shares': remaining_shares
-#         }, status=status.HTTP_200_OK)
-
 @api_view(['POST', 'GET'])
 # @parser_classes([MultiPartParser, FormParser])
+# @permission_classes([IsSuperUserOrClientUser]) // it should not be add cuz get n post both the methods r running in this api
 @parser_classes([MultiPartParser, FormParser, JSONParser])
 def create_owner(request, pk):
     client = get_object_or_404(Client, id=pk)
@@ -1211,19 +491,73 @@ def create_owner(request, pk):
                                 status=status.HTTP_400_BAD_REQUEST)
 
             user_password = owner_serializer.validated_data['user_password']
+            # owner = owner_serializer.save(client=client)
+
+            # usernames = owner.first_name + owner.last_name + client.client_name
+            # final_username = ""
+            # for i in range(len(usernames)):
+            #     # print(a[i])
+            #     if usernames[i] == " ":
+            #         continue
+            #     else:
+            #         final_username += usernames[i]
+
+            usernames = (
+                owner_serializer.validated_data['first_name'] +
+                owner_serializer.validated_data['last_name'] +
+                client.client_name
+            )
+            final_username = "".join(ch for ch in usernames if ch != " ")
+
+            if CommonUser.objects.filter(email=owner_serializer.validated_data['email']).exists():
+                return Response(
+                    {"error_message": "A user with this email already exists."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if CommonUser.objects.filter(username=final_username).exists():
+                return Response(
+                    {"error_message": "A user with this FirstName and LastName already exists."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+
             owner = owner_serializer.save(client=client)
 
             clientuser = CommonUser.objects.create_user(
-                username=owner.email,
+                username=final_username,
                 email=owner.email,
-                name=owner.owner_name,
+                # name=owner.first_name + " " + owner.last_name,
+                first_name=owner.first_name,
+                last_name=owner.last_name,
                 password=user_password,
                 role='clientuser',
                 client=owner.client,
                 is_active=True
             )
 
-            # TODO: send email...
+            owner.user = clientuser
+            owner.save()
+
+            email_subject = "Your Account is Registered"
+            message = render_to_string("activate.html", {
+                'user': clientuser,
+                # 'domain': '127.0.0.1:8000',
+                'password': user_password,
+                'domain': 'admin.dms.zacoinfotech.com',
+                'uid': urlsafe_base64_encode(force_bytes(clientuser.pk)),
+                'token': generate_token.make_token(clientuser),
+            })
+
+            email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [email])
+            email_message.send()
+
+            print("usernames",clientuser.username)
+            serializer = ClientuserSerializerWithToken(clientuser, many=False)
+            # return Response({'message': 'User Registered. Kindly activate your account.', 'data': serializer.data})
+    
+
+            #-: send email...
 
             remaining_shares -= new_share
 
@@ -1245,13 +579,23 @@ def create_owner(request, pk):
             'remaining_shares': remaining_shares
         }, status=status.HTTP_200_OK)
 
-
 @api_view(['POST','GET'])
 @permission_classes([IsSuperUserOrClientUser])
 def edit_owner(request, pk, owner_pk):
     client = get_object_or_404(Client, id= pk)
     owner = Owner.objects.get(id = owner_pk)
     if request.method == 'POST':
+        data = request.data.copy()
+
+        if 'email' in data:
+            new_email = data['email']
+            if new_email != owner.email:   # allow same email
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                if User.objects.filter(email=new_email).exclude(id=owner.user.id).exists():
+                    return Response({
+                        'error_message': f'Email {new_email} already exists for another user.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
         
         owner_serializer = OwnerSerializer(data=request.data, instance = owner, partial=True)
 
@@ -1298,7 +642,16 @@ def edit_owner(request, pk, owner_pk):
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # Save the new owner
-            owner_serializer.save(client=client)
+            # owner_serializer.save(client=client)
+            updated_owner = owner_serializer.save(client=client)
+
+            # ✅ Sync is_active with related user
+            if 'is_active' in owner_serializer.validated_data:
+                if hasattr(updated_owner, "user") and updated_owner.user:
+                    user = updated_owner.user
+                    user.is_active = updated_owner.is_active
+                    user.save(update_fields=["is_active"])
+
 
             remaining_shares = a - new_share
             return Response({'message':f'Owner Updated Successfully remaining shares are {remaining_shares}', 'remaining_shares': remaining_shares, 'status' : status.HTTP_200_OK})
@@ -1314,6 +667,7 @@ def edit_owner(request, pk, owner_pk):
         return Response(owner_serializer1.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def list_owner(request, pk):
     client = Client.objects.get(id = pk)
     owner_list = Owner.objects.filter(client=client)
@@ -1322,6 +676,7 @@ def list_owner(request, pk):
     return Response(serializers.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def single_owner(request, pk, owner_pk):
     client = Client.objects.get(id = pk)
     owner = Owner.objects.get(id = owner_pk)
@@ -1361,325 +716,31 @@ def delete_owner(request, pk, owner_pk):
         owner.is_active = False
         owner.save()
 
+        if hasattr(owner, "user") and owner.user:
+            owner.user.is_active = False
+            owner.user.save()
+
         # Calculate remaining shares
         total_shares = sum([owner.share for owner in Owner.objects.filter(is_active=True)])
         remaining_shares = 100 - total_shares
 
         return Response(
             {
-                'message': f'Owner is disabled. {owner_share}% share is added back. Available shares: {remaining_shares}%',
+                'message': f'Owner is disabled. {owner_share}% share is added back',
             },
             status=status.HTTP_200_OK
         )
     except Owner.DoesNotExist:
         return Response({'error_message': 'Owner not found'}, status=status.HTTP_400_BAD_REQUEST)
 
-# ******************************************User's Views*******************************************
-
-# Client Login
-# class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-#     def validate(self, attrs):
-#         data = super().validate(attrs)
-#         serializer = UserSerializerWithToken(self.user).data
-#         for k,v in serializer.items():
-#              data[k]=v
-#         return data
-
-# class MyTokenObtainPairView(TokenObtainPairView):
-#     serializer_class = MyTokenObtainPairSerializer
-
-# User Profile
-# @api_view(['GET'])
-# @permission_classes([IsAuthenticated]) # the user should be valid
-# def getUserProfile(request):
-#     user = request.user # to get the specific user
-#     serializer = UserSerializerWithToken(user, many=False)
-#     return Response(serializer.data)
-
-# Users List
-# @api_view(['GET'])
-# @permission_classes([IsAdminUser]) # the user should be an admin only
-# def getUsers(request):
-#     user = ClientUser.objects.all() # to get the list of all users
-#     serializer = UserSerializerWithToken(user, many=True)
-#     return Response(serializer.data)
-
-# @api_view(['GET'])
-# def single_clientuser(request, pk, user_pk): 
-#     client = Client.objects.get(id = pk)
-#     owner = ClientUser.objects.get(id = user_pk, client=client)
-#     if request.method == 'GET':
-#         serializer = UserSerializerWithToken(owner)
-#         print(serializer)
-#         return Response(serializer.data)
-
-# @api_view(['POST'])
-# def reset_clientuser_password(request, pk, user_pk):
-#     client = Client.objects.get(id=pk)
-#     user = ClientUser.objects.get(id=user_pk, client=client)
-#     if request.method == 'POST':
-#         data = request.data
-#         passwords = request.data.get('password')
-#         print("Previous (hashed) password:", passwords)
-#         previous_password = request.data.get('previous_password')
-#         new_password = request.data.get('new_password')
-#         confirm_password = request.data.get('confirm_password')
-#         if not user.check_password(previous_password):
-#             return Response({'error_message': 'Incorrect previous password !!'}, status=status.HTTP_400_BAD_REQUEST)
-#         if new_password != confirm_password:
-#             return Response({'error_message': 'New password and confirm password do not match !!'}, status=status.HTTP_400_BAD_REQUEST)
-#         user.set_password(new_password)  # Set the new password
-#         user.save()
-#         user_serializer = UserSerializerWithToken(data=data, instance=user, partial=True)
-#         if user_serializer.is_valid():
-#             user_serializer.save(client=client)
-#             return Response({'message':'Client User Password Updated'})
-#         return Response(user_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-
-# @api_view(['POST'])
-# def clientuser(request, pk):
-#     client = get_object_or_404(Client, id=pk)
-#     data = request.data
-#     try:
-#         if ClientUser.objects.filter(email=data['email']).exists():
-#             return Response({'error_message': 'User Already Exists'}, status=status.HTTP_400_BAD_REQUEST)
-
-
-#         name = data['name']
-#         email = data['email']
-
-#         # Generate password: first 4 letters of name (or less) + @123
-#         name_part = name[:4].lower()
-#         generated_password = f"{name_part}@123"
-
-#         # Print password for testing
-#         print("Generated password:", generated_password)
-        
-#         user = ClientUser.objects.create(
-#             # first_name=data['first_name'],
-#             # last_name=data['last_name'],
-#             name = data['name'],
-#             username=data['email'],
-#             email=data['email'],
-#             # password=make_password(data['password']),
-#             password=make_password(generated_password),
-#             is_active=True,
-#             client=client
-#         )
-
-#         # Generate token for email sending
-#         email_subject = "Activate Your Account"
-#         message = render_to_string(
-#             "activate.html",
-#             {
-#                 'user': user,
-#                 'domain': '127.0.0.1:8000',
-#                 'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-#                 'token': generate_token.make_token(user),
-#             }
-#         )
-
-#         email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [data['email']])
-#         email_message.send()
-
-#         serializer = UserSerializerWithToken(user, many=False)
-#         return Response({'Message': 'User Registered. Kindly activate your account.', 'Data': serializer.data})
-
-#     except Exception as e:
-#         return Response({'error_message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-# # Email Activations
-# class ActivateAccountView(View):
-#     def get(self, request, uidb64, token):
-#         try:
-#             uid= force_text(urlsafe_base64_decode(uidb64))
-#             user = CommonUser.objects.get(pk=uid)
-#         except Exception as identifier:
-#             user=None
-#         if user is not None and generate_token.check_token(user,token):
-#             user.is_active=True
-#             user.save()
-#             return render(request,"activatesuccess.html")
-#         else:
-#             return render(request,"activatefail.html")
-
-# # Clientuser Update
-# @api_view(['POST', 'GET'])
-# def edit_clientuser(request, pk, user_pk):
-    client = Client.objects.get(id=pk)
-    user = ClientUser.objects.get(id = user_pk, client=client)
-    # user_serializer = UserSerializerWithToken(data=request.data, instance=user, partial=True)
-    if request.method == 'POST':
-        print("Previous (hashed) password:", user.password)
-        data = request.data.copy()
-        if 'password' in data and data['password']:
-            print("New password entered by user:", data['password'])  
-            data['password'] = make_password(data['password'])      
-
-        user_serializer = UserSerializerWithToken(data=data, instance=user, partial=True)
-        if user_serializer.is_valid():
-            user_serializer.save(client=client)
-            return Response({'Message':'Client User Updated'})
-        return Response(user_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-    elif request.method == 'GET':
-        user_ser = UserSerializerWithToken(user)
-        return Response(user_ser.data)
-
-# @api_view(['GET'])
-# def list_users_by_client(request, pk):
-#     client = get_object_or_404(Client, id=pk)
-#     users = ClientUser.objects.filter(client=client)
-#     serializer = UserSerializerWithToken(users, many=True)
-#     return Response(serializer.data)
-
-# ClientUser Delete
-# @api_view(['DELETE'])
-# def delete_clientuser(request,pk,user_pk):
-#     client = Client.objects.get(id=pk)
-#     user = ClientUser.objects.get(id = user_pk)
-#     if request.method == 'DELETE':
-#         user.delete()
-#         return Response ({'message':'Client User is deleted'})
-#     return Response ({'error_message':'Failed to delete Client User'},status=status.HTTP_400_BAD_REQUEST)
-
-
-# ******************************************Dashboard User **************************************
-# @api_view(['POST'])
-# def dashboarduser(request):
-#     data = request.data
-#     email = data.get('email')
-#     username = data.get('email')  # you're setting username as email
-#     confirm_password = request.data.get('confirm_password')
-#     password = request.data.get('password')
-
-#     # ✅ Check if email or username already exists
-#     if DashboardUser.objects.filter(email=email).exists():
-#         return Response({'error_message': 'Email is already registered'}, status=status.HTTP_400_BAD_REQUEST)
-
-#     if DashboardUser.objects.filter(username=username).exists():
-#         return Response({'error_message': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
-    
-#     if password != data['confirm_password']:
-#         return Response({'error_message': 'Password and ConfirmPassword do not match'}, status=status.HTTP_400_BAD_REQUEST)
-
-#     try:
-#         # ✅ Create user
-#         dashboarduser = DashboardUser.objects.create(
-#             first_name=data['first_name'],
-#             last_name=data['last_name'],
-#             username=username,
-#             email=email,
-#             password=make_password(data['password']),
-#             # confirm_password=make_password(data['confirm_password']),
-#             # superadmin_user=True,
-#             is_active=False,
-#             is_staff=True,         # ✅ allows login to admin
-#             # is_superuser=True,
-#         )
-
-#         # ✅ Email activation token
-#         email_subject = "Activate Your Account"
-#         message = render_to_string("dashboarduseractivate.html", {
-#             'user': dashboarduser,
-#             'domain': '127.0.0.1:8000',
-#             'uid': urlsafe_base64_encode(force_bytes(dashboarduser.pk)),
-#             'token': generate_token.make_token(dashboarduser),
-#         })
-
-#         email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [email])
-#         email_message.send()
-
-#         serializer = SuperuserSerializerWithToken(dashboarduser, many=False)
-#         return Response({'message': 'User Registered. Kindly activate your account.', 'data': serializer.data})
-    
-#     except Exception as e:
-#         return Response({'error_message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-# @api_view(['POST', 'GET'])
-# def edit_dashboardUser(request, user_pk):
-#     # client = Client.objects.get(id=pk)
-#     user = DashboardUser.objects.get(id=user_pk)
-#     user_serializer = DashboardSerializerWithToken(data=request.data, instance=user)
-#     if request.method == 'POST':
-#         if user_serializer.is_valid():
-#             user_serializer.save()
-#             return Response({'message':'Dashboard User Updated','Data': user_serializer.data}, status=status.HTTP_200_OK)
-#         return Response(user_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-#     elif request.method == 'GET':
-#         user_ser = DashboardSerializerWithToken(user)
-#         return Response(user_ser.data)
-
-# @api_view(['DELETE'])
-# def delete_dashboarduser(request, user_pk):
-#     user = DashboardUser.objects.get(id = user_pk)
-#     if request.method == 'DELETE':
-#         user.delete()
-#         return Response({'message':'Dashboard User deleted'}, status=status.HTTP_200_OK)
-#     return Response ({'error_message':'Failed to delete dashboard user'},status=status.HTTP_400_BAD_REQUEST)
-
-# @api_view(['GET'])
-# def get_dashboard_users(request):
-#     users = DashboardUser.objects.all()
-#     serializer = DashboardUserSerializer(users, many=True)
-#     return Response(serializer.data)
-
-# class DashboardUserActivateAccountView(APIView):
-#     def get(self, request, uidb64, token):
-#         print("✅ DashboardUserActivateAccountView called")  # Debug point
-#         try:
-#             uid = force_str(urlsafe_base64_decode(uidb64))
-#             user = DashboardUser.objects.get(pk=uid)
-#         except (TypeError, ValueError, OverflowError, DashboardUser.DoesNotExist):
-#             user = None
-
-#         if user is not None and generate_token.check_token(user, token):
-#             user.is_active = True
-#             user.save()
-#             return render(request,"activatesuccess.html")
-#         else:
-#             return render(request,"activatefail.html")
-
-# class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-#     def validate(self, attrs):
-#         try:
-#             data = super().validate(attrs)
-#             serializer = DashboardSerializerWithToken(self.user).data
-#             for k, v in serializer.items(): 
-#                 data[k] = v
-#             return data
-#         except Exception:
-#             raise serializers.ValidationError({"error_message": "Invalid Credentials"})
-
-# class MyTokenObtainPairViews(TokenObtainPairView):
-#     # print("Received login data:", request.data)
-#     serializer_class = MyTokenObtainPairSerializer
-
-# class CommonLoginAPIView(APIView):
-#     def post(self, request):
-#         serializer = CommonTokenObtainPairSerializer(data=request.data)
-#         if serializer.is_valid():
-#             return Response(serializer.validated_data, status=status.HTTP_200_OK)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-# @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-# def list_dashboard_users(request):
-#     if not getattr(request.user, 'superadmin_user', False):
-#         return Response({'detail': 'You are not authorized to view this.'}, status=403)
-
-#     users = DashboardUser.objects.all()
-#     serializer = DashboardUserSerializer(users, many=True)
-#     return Response(serializer.data)
-
-
-
-
 # ******************************************Commom Super User **************************************
 @api_view(['POST'])
 def create_common_superuser(request):
     data = request.data
     email = data.get('email')
-    username = data.get('email')  # you're setting username as email
+    # username = data.get('email')  # you're setting username as email
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
     confirm_password = request.data.get('confirm_password')
     password = request.data.get('password')
 
@@ -1693,13 +754,15 @@ def create_common_superuser(request):
     if password != data['confirm_password']:
         return Response({'error_message': 'Password and ConfirmPassword do not match'}, status=status.HTTP_400_BAD_REQUEST)
 
+    usernames = first_name + last_name
+
     try:
         # ✅ Create user
         superuser = CommonUser.objects.create(
-            # first_name=data['first_name'],
-            # last_name=data['last_name'],
-            name=data['name'],
-            username=username,
+            first_name=data['first_name'],
+            last_name=data['last_name'],
+            # name=data['name'],
+            username=usernames,
             email=email,
             password=make_password(data['password']),
             role='superuser',
@@ -1801,7 +864,6 @@ class CommonLoginAPIView(APIView):
 def list_common_superuser(request):
     if not getattr(request.user, 'superadmin_user', False):
         return Response({'detail': 'You are not authorized to view this.'}, status=403)
-
     users = CommonUser.objects.all()
     serializer = SuperuserSerializer(users, many=True)
     return Response(serializer.data)
@@ -1814,41 +876,43 @@ def create_common_clientuser(request, pk):
     data = request.data
     client = get_object_or_404(Client, id=pk)
     email = data.get('email')
-    username = data.get('email')  # you're setting username as email
-    # confirm_password = request.data.get('confirm_password')
+    username = data.get('email')  
     password = request.data.get('password')
-    name = data.get('name')
+    # name = data.get('name')
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
 
-    # ✅ Check if email or username already exists
-    if CommonUser.objects.filter(email=email).exists():
-        return Response({'error_message': 'Email is already registered'}, status=status.HTTP_400_BAD_REQUEST)
-
-    if CommonUser.objects.filter(username=username).exists():
-        return Response({'error_message': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
-
-    # name_part = name[:4].lower()
-    # generated_password = f"{name_part}@123"
+    if CommonUser.objects.filter(client=client, email=email).exists():
+        return Response(
+            {'error_message': 'A user with this email already exists in this company.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    # if CommonUser.objects.filter(username=username).exists():
+    #     return Response({'error_message': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
     
-    # if password != data['confirm_password']:
-    #     return Response({'error_message': 'Password and ConfirmPassword do not match'}, status=status.HTTP_400_BAD_REQUEST)
+    usernames = first_name + last_name + client.client_name
+    final_username = ""
+    for i in range(len(usernames)):
+        # print(a[i])
+        if usernames[i] == " ":
+            continue
+        else:
+            final_username += usernames[i]
+    # print(final_username)
 
     try:
         # ✅ Create user
         clientuser = CommonUser.objects.create(
-            # first_name=data['first_name'],
-            # last_name=data['last_name'],
-            name=data['name'],
-            username=username,
+            first_name=data['first_name'],
+            last_name=data['last_name'],
+            # name=data['name'],
+            username=final_username,
             email=email,
-            # password=make_password(generated_password),
             password=make_password(data['password']),
             role='clientuser',
-            # confirm_password=make_password(data['confirm_password']),
-            # superadmin_user=True,
             is_active=True,
             is_staff=False, 
             client=client    
-            # is_superuser=True,
         )
 
         # ✅ Email activation token
@@ -1864,6 +928,8 @@ def create_common_clientuser(request, pk):
 
         email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [email])
         email_message.send()
+
+        print("usernames",clientuser.username)
 
         serializer = ClientuserSerializerWithToken(clientuser, many=False)
         return Response({'message': 'User Registered. Kindly activate your account.', 'data': serializer.data})
@@ -1912,6 +978,7 @@ def delete_common_clientuser(request,pk, user_pk):
     return Response ({'error_message':'Failed to delete clientser user'},status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def list_users_by_client(request, pk):
     client = get_object_or_404(Client, id=pk)
     users = CommonUser.objects.filter(client=client)
@@ -1919,6 +986,8 @@ def list_users_by_client(request, pk):
     return Response(serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
+# @permission_classes([IsAuthenticated])
 def single_common_clientuser(request, pk, user_pk): 
     client = Client.objects.get(id = pk)
     user = CommonUser.objects.get(id = user_pk, client=client)
@@ -2041,40 +1110,42 @@ def create_common_customeruser(request, pk):
     client = get_object_or_404(Client, id=pk)
     email = data.get('email')
     username = data.get('email')  # you're setting username as email
-    # confirm_password = request.data.get('confirm_password')
     password = request.data.get('password')
-    name = data.get('name')
+    # name = data.get('name')
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
 
-    # ✅ Check if email or username already exists
-    if CommonUser.objects.filter(email=email).exists():
-        return Response({'error_message': 'Email is already registered'}, status=status.HTTP_400_BAD_REQUEST)
-
-    if CommonUser.objects.filter(username=username).exists():
-        return Response({'error_message': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
-
-    # name_part = name[:4].lower()
-    # generated_password = f"{name_part}@123"
+    if CommonUser.objects.filter(client=client, email=email).exists():
+        return Response(
+            {'error_message': 'A user with this email already exists in this company.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    # if CommonUser.objects.filter(username=username).exists():
+    #     return Response({'error_message': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
     
-    # if password != data['confirm_password']:
-    #     return Response({'error_message': 'Password and ConfirmPassword do not match'}, status=status.HTTP_400_BAD_REQUEST)
+    usernames = first_name + last_name + client.client_name
+    final_username = ""
+    for i in range(len(usernames)):
+        # print(a[i])
+        if usernames[i] == " ":
+            continue
+        else:
+            final_username += usernames[i]
 
+    
     try:
         # ✅ Create user
         customeruser = CommonUser.objects.create(
-            # first_name=data['first_name'],
-            # last_name=data['last_name'],
-            name=data['name'],
-            username=username,
+            first_name=data['first_name'],
+            last_name=data['last_name'],
+            # name=data['name'],
+            username=final_username,
             email=email,
-            # password=make_password(generated_password),
             password=make_password(data['password']),
             role='customeruser',
-            # confirm_password=make_password(data['confirm_password']),
-            # superadmin_user=True,
             is_active=True,
             is_staff=False, 
             client=client    
-            # is_superuser=True,
         )
 
         # ✅ Email activation token
@@ -2091,6 +1162,7 @@ def create_common_customeruser(request, pk):
         email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [email])
         email_message.send()
 
+        print("usernames",customeruser.username)
         serializer = CustomeruserSerializerWithToken(customeruser, many=False)
         return Response({'message': 'User Registered. Kindly Check your mail for password.', 'data': serializer.data})
     
@@ -2138,6 +1210,7 @@ def delete_common_customeruser(request,pk, user_pk):
     return Response ({'error_message':'Failed to delete customer user'},status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def list_users_by_role(request, pk):
     client = get_object_or_404(Client, id=pk)
     users = CommonUser.objects.filter(client=client, role='customeruser')
@@ -2145,6 +1218,7 @@ def list_users_by_role(request, pk):
     return Response(serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def single_common_customeruser(request, pk, user_pk): 
     client = Client.objects.get(id = pk)
     user = CommonUser.objects.get(id = user_pk, client=client)
@@ -2155,45 +1229,8 @@ def single_common_customeruser(request, pk, user_pk):
 
 # ******************************************Company Document **************************************
 
-# @api_view(['POST'])
-# @parser_classes([MultiPartParser, FormParser])
-# def create_companydoc(request, pk):
-#     client = Client.objects.get(id=pk)
-#     instance_data = request.data
-#     data = {key: value for key, value in instance_data.items()}
-
-#     # Save the CompanyDocument
-#     serializer = FileInfoSerializer(data=data)
-#     if serializer.is_valid(raise_exception=True):
-#         fileinfo = serializer.save(client=client)
-
-#         # Handle file uploads correctly (expecting multiple files)
-#         files = request.FILES.getlist('files')  # This gets a list of files
-#         if files:
-#             file_list = [{'fileinfo': fileinfo.pk, 'files': file} for file in files]
-#             file_serializer = FileSerializer(data=file_list, many=True)  # Pass the list of file data
-#             if file_serializer.is_valid(raise_exception=True):
-#                 file_serializer.save()
-
-#         # Success response
-#         return Response(
-#             {
-#                 'message': 'Company Document created successfully.',
-#                 'data': serializer.data,
-#             },
-#             status=status.HTTP_201_CREATED,
-#         )
-
-#     # Error response if serializer fails
-#     return Response(
-#         {
-#             'message': 'Failed to create Company Document.',
-#             'error_message': serializer.errors,
-#         },
-#         status=status.HTTP_400_BAD_REQUEST,
-#     )
-
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_companydoc(request, pk):
     if request.method == 'POST':
         client_id = request.data.get('client_id')  # Expecting the client_id in the request
@@ -2230,6 +1267,7 @@ def create_companydoc(request, pk):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 @parser_classes([MultiPartParser, FormParser])
 def edit_companydoc(request, pk, file_pk):
     try:
@@ -2282,6 +1320,7 @@ def edit_companydoc(request, pk, file_pk):
         return Response(fileinfo_serializer.data)       
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def list_companydoc(request,pk):
     client = Client.objects.get(id=pk)
     doc_list = FileInfo.objects.filter(client=client)
@@ -2302,6 +1341,7 @@ def delete_companydoc(request,pk, file_pk):
 # ************************************** Branch View's ********************************************
 
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_branch(request, pk):
     client = Client.objects.get(id=pk)
     if request.method == 'POST':
@@ -2325,6 +1365,7 @@ def create_branch(request, pk):
             )
 
 @api_view(['POST', 'GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def edit_branch(request,pk,branch_pk):
     client = Client.objects.get(id=pk)
     branch = Branch.objects.get(id = branch_pk)
@@ -2346,6 +1387,7 @@ def edit_branch(request,pk,branch_pk):
         return Response (branch_ser.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def list_branch(request,pk):
     client = Client.objects.get(id=pk)
     if request.method == 'GET':
@@ -2367,6 +1409,7 @@ def delete_branch(request,pk,branch_pk):
 # *************************************Office Location**********************************************
 
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_officelocation(request,branch_pk):
     branch = Branch.objects.get(id=branch_pk)
     if request.method == 'POST':
@@ -2382,8 +1425,8 @@ def create_officelocation(request,branch_pk):
                 'error_message': officeLocation_serializer.errors,
                 },status=status.HTTP_400_BAD_REQUEST)
 
-
 @api_view(['POST', 'GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def edit_officelocation(request,branch_pk,office_pk):
     branch = Branch.objects.get(id=branch_pk)
     office = OfficeLocation.objects.get(id=office_pk)
@@ -2405,6 +1448,7 @@ def edit_officelocation(request,branch_pk,office_pk):
         return Response (office_ser.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def single_officelocation(request, branch_pk, office_pk):
     branch = Branch.objects.get(id = branch_pk)
     owner = OfficeLocation.objects.get(id = office_pk, branch=branch)
@@ -2414,6 +1458,7 @@ def single_officelocation(request, branch_pk, office_pk):
         return Response(serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def list_officelocation(request,pk, branch_pk):
     client = Client.objects.get(id=pk)
     branch = Branch.objects.get(id = branch_pk, client=client)
@@ -2437,6 +1482,7 @@ def delete_officelocation(request,pk, branch_pk, office_pk):
 # *************************************Customer Or Vendor **************************************
 
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_customer(request, pk):
     client = Client.objects.get(id=pk)
     if request.method == 'POST':
@@ -2466,6 +1512,7 @@ def create_customer(request, pk):
                 },status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def edit_customer(request, pk, customer_pk):
     client = Client.objects.get(id=pk)
     customer = Customer.objects.get(id=customer_pk)
@@ -2501,6 +1548,7 @@ def edit_customer(request, pk, customer_pk):
         return Response(customer_ser.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def list_customer(request, pk):
     client = Client.objects.get(id=pk)
     if request.method == 'GET':
@@ -2510,6 +1558,7 @@ def list_customer(request, pk):
         return Response(customer_serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def single_customer(request, pk, customer_pk):
     client = Client.objects.get(id = pk)
     owner = Customer.objects.get(id = customer_pk, client=client)
@@ -2529,44 +1578,8 @@ def delete_customer(request,pk, customer_pk):
     return Response({'error_message':'Fail to delete Customer or Vendor'},status=status.HTTP_400_BAD_REQUEST)
 
 # **********************************************Branch Document*********************************************
-# @api_view(['POST'])
-# @parser_classes([MultiPartParser, FormParser])
-# def create_branchdoc(request,branch_pk):
-#     branch = Branch.objects.get(id=branch_pk)
-#     instance_data = request.data
-#     data = {key: value for key, value in instance_data.items()}
-
-#     serializer = BranchDocSerailizer(data=data)
-#     if serializer.is_valid(raise_exception=True):
-#         doc_instance = serializer.save(branch=branch)
-#         print(request.data)
-
-#         if request.FILES:
-#             files = dict((request.FILES).lists()).get('files',None)
-#             # files = request.FILES.getlist('files')
-#             if files:
-#                 for file in files:
-#                     file_data = {
-#                         'branch_doc' : doc_instance.pk,
-#                         'files' : file
-#                     }
-#                     file_serializer= FilesSerializer(data=file_data)
-#                     if file_serializer.is_valid(raise_exception=True):
-#                         file_serializer.save()
-#                     else:
-#                         return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#         return Response({
-#             'message': 'Branch Document created',
-#             'data': serializer.data,
-#             },status=status.HTTP_201_CREATED)
-#     else:    
-#         return Response({
-#                 'message': 'Fail to create Branch Document',
-#                 'error_message': serializer.errors,
-#                 },status=status.HTTP_400_BAD_REQUEST)
-
-
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 @parser_classes([MultiPartParser, FormParser])
 def create_branchdoc(request, branch_pk):
     branch = Branch.objects.get(id=branch_pk)
@@ -2606,6 +1619,7 @@ def create_branchdoc(request, branch_pk):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 @parser_classes([MultiPartParser, FormParser])
 def edit_branchdoc(request, branch_pk, branchdoc_pk):
     try:
@@ -2656,6 +1670,7 @@ def edit_branchdoc(request, branch_pk, branchdoc_pk):
         return Response(branchdoc_serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def list_branchdoc(request, branch_pk):
     branch = Branch.objects.get(id = branch_pk)
     # branchdoc = BranchDocument.objects.get(id = branchdoc_pk, branch=branch)
@@ -2666,6 +1681,7 @@ def list_branchdoc(request, branch_pk):
         return Response(branchdoc_serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def single_branchdoc(request, branch_pk, branchdoc_pk):
     branch = Branch.objects.get(id=branch_pk)
     doc = BranchDocument.objects.get(id = branchdoc_pk, branch=branch)
@@ -2686,6 +1702,7 @@ def delete_branchdoc(request,branch_pk, branchdoc_pk ):
 
 # **********************************************# Income Tax Document******************************************
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_incometaxdoc(request,pk):
     client = Client.objects.get(id = pk)
     if request.method == 'POST':
@@ -2700,8 +1717,9 @@ def create_incometaxdoc(request,pk):
                 'message': 'Fail to create Income Tax Documents',
                 'error_message': income_serializer.errors,
                 },status=status.HTTP_400_BAD_REQUEST)
-@api_view(['POST','GET'])
 
+@api_view(['POST','GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def edit_incometaxdoc(request, pk, income_pk):
     client = Client.objects.get(id=pk)
     income = IncomeTaxDocument.objects.get(id = income_pk, client=client)
@@ -2723,6 +1741,7 @@ def edit_incometaxdoc(request, pk, income_pk):
         return Response(income_ser.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def list_incometaxdoc(request,pk):
     client = Client.objects.get(id=pk)
     if request.method == 'GET':
@@ -2742,23 +1761,8 @@ def delete_incometaxdoc(request,pk,income_pk):
     return Response ({'error_message':'Fail to delete Income tax document'}, status=status.HTTP_400_BAD_REQUEST)
 
 #*****************************************************PF*******************************************************
-# @api_view(['POST'])
-# def create_pf(request,pk):
-#     client = Client.objects.get(id = pk)
-#     if request.method == 'POST':
-#         pf_serializer = PfSerializer(data=request.data)
-#         if pf_serializer.is_valid():
-#             pf_serializer.save(client=client)
-#             return Response({
-#                 'message': 'PF created',
-#                 'data': pf_serializer.data,
-#                 },status=status.HTTP_201_CREATED)
-#         return Response({
-#                 'error_message': 'Fail to create PF',
-#                 'error_message': pf_serializer.errors,
-#                 },status=status.HTTP_400_BAD_REQUEST)
-
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_pf(request, pk):
     client = Client.objects.get(id=pk)
     
@@ -2795,225 +1799,7 @@ def create_pf(request, pk):
             'errors': pf_serializer.errors,
         }, status=status.HTTP_400_BAD_REQUEST)
 
-# class ExcelImportView(APIView):
-#     parser_classes = [MultiPartParser]
-
-#     def post(self, request, pk, *args, **kwargs):
-#         # Get the client using the pk from the URL
-#         try:
-#             client = Client.objects.get(pk=pk)
-#         except Client.DoesNotExist:
-#             return Response({"error_message": "Client not found"}, status=404)
-
-#         file = request.FILES['file']
-
-#         # Load the workbook and select the active worksheet
-#         wb = load_workbook(file)
-#         ws = wb.active
-
-#         pf_entries = []
-
-#         # Define the fields in a list to optimize the entry creation
-#         fields = [
-#             'employee_code', 'employee_name', 'uan', 'pf_number', 'pf_deducted',
-#             'date_of_joining', 'status', 'month', 'gross_ctc', 'basic_pay',
-#             'hra', 'statutory_bonus', 'special_allowance', 'pf', 'gratuity',
-#             'total_gross_salary', 'number_of_days_in_month', 'present_days',
-#             'lwp', 'leave_adjustment', 'gender', 'basic_pay_monthly',
-#             'hra_monthly', 'statutory_bonus_monthly', 'special_allowance_monthly',
-#             'total_gross_salary_monthly', 'provident_fund', 'professional_tax',
-#             'advance', 'esic_employee', 'tds', 'total_deduction', 'net_pay',
-#             'advance_esic_employer_cont'
-#         ]
-
-#         # Iterate through the rows in the Excel file and create or update PF objects
-#         for row in ws.iter_rows(min_row=2):  # Skip the header row
-#             # Create a dictionary for the current row
-#             data = {field: row[i].value for i, field in enumerate(fields)}
-
-#             employee_code = data['employee_code']
-#             month = data['month']
-
-#             # Skip rows without essential fields
-#             if not employee_code or not month:
-#                 continue
-
-#             # Check if an entry with the same employee_code and month exists
-#             instance = PF.objects.filter(employee_code=employee_code, month=month).first()
-
-#             if instance:
-#                 # Update existing entry
-#                 for field, value in data.items():
-#                     setattr(instance, field, value)
-#                 instance.save()
-#             else:
-#                 # Create new PF entry and associate it with the client
-#                 pf_entry = PF(client=client, **data)
-#                 pf_entry.save()
-#                 pf_entries.append(pf_entry)
-
-#         return Response({"status": "success", "data": PfSerializer(pf_entries, many=True).data},status=status.HTTP_201_CREATED)
-
-# class ExcelImportView(APIView):
-#     parser_classes = [MultiPartParser]
-
-#     def post(self, request, pk, *args, **kwargs):
-#         try:
-#             client = Client.objects.get(pk=pk)
-#         except Client.DoesNotExist:
-#             return Response({"error_message": "Client not found"}, status=status.HTTP_404_NOT_FOUND)
-
-#         file = request.FILES.get('file')
-#         if not file:
-#             return Response({"error_message": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
-
-#         wb = load_workbook(file)
-#         ws = wb.active
-
-#         fields = [
-#             'employee_code', 'employee_name', 'uan', 'pf_number', 'pf_deducted',
-#             'date_of_joining', 'status', 'month', 'gross_ctc', 'basic_pay',
-#             'hra', 'statutory_bonus', 'special_allowance', 'pf', 'gratuity',
-#             'total_gross_salary', 'number_of_days_in_month', 'present_days',
-#             'lwp', 'leave_adjustment', 'gender', 'basic_pay_monthly',
-#             'hra_monthly', 'statutory_bonus_monthly', 'special_allowance_monthly',
-#             'total_gross_salary_monthly', 'provident_fund', 'professional_tax',
-#             'advance', 'esic_employee', 'tds', 'total_deduction', 'net_pay',
-#             'advance_esic_employer_cont'
-#         ]
-
-#         for row in ws.iter_rows(min_row=2):  # Skip the header row
-#             data = {field: row[i].value for i, field in enumerate(fields)}
-
-#             employee_code = data.get('employee_code')
-#             month = data.get('month')
-
-#             if not employee_code or not month:
-#                 continue  # Skip invalid rows
-
-#             # Check if employee_code already exists for the given month
-#             if PF.objects.filter(employee_code=employee_code, month=month).exists():
-#                 return Response(
-#                     {"error_message": f"Employee {employee_code} already exists for month {month}"},
-#                     status=status.HTTP_400_BAD_REQUEST
-#                 )
-
-#             # Create new PF entry
-#             PF.objects.create(client=client, **data)
-
-#         return Response({"status": "success", "message": "All entries uploaded successfully"}, status=status.HTTP_201_CREATED)
-
-# @api_view(['POST','GET'])
-# def edit_pf(request, pk, pf_pk):
-#     client = Client.objects.get(id=pk)
-#     # income = IncomeTaxDocument.objects.get(id = pf_pk, client=client)
-#     pf = PF.objects.get(id = pf_pk, client=client)
-#     pf_serializer = PfSerializer(instance=pf, data=request.data)
-#     if request.method == 'POST':
-#         if  pf_serializer.is_valid():
-#             pf_serializer.save()
-#             return Response({
-#                 'message': 'PF updated',
-#                 'data': pf_serializer.data,
-#                 'status' : status.HTTP_200_OK
-#             })
-#         return Response({
-#                 'message': 'Fail to update PF',
-#                 'error_message': pf_serializer.errors,
-#                 },status=status.HTTP_400_BAD_REQUEST)
-#     elif request.method == 'GET':
-#         pf_ser = PfSerializer(pf)
-#         return Response(pf_ser.data)
-
 import re
-
-# class ExcelImportView(APIView):
-#     parser_classes = [MultiPartParser]
-
-#     def post(self, request, pk, *args, **kwargs):
-#         try:
-#             client = Client.objects.get(pk=pk)
-#         except Client.DoesNotExist:
-#             return Response({"error_message": "Client not found"}, status=status.HTTP_404_NOT_FOUND)
-
-#         file = request.FILES.get('file')
-#         if not file:
-#             return Response({"error_message": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
-
-#         wb = load_workbook(file)
-#         df = pd.read_excel(file)
-#         ws = wb.active
-
-#         fields = [
-#             'employee_code', 'employee_name', 'uan', 'pf_number', 'pf_deducted',
-#             'date_of_joining', 'status', 'month', 'gross_ctc', 'basic_pay',
-#             'hra', 'statutory_bonus', 'special_allowance', 'pf', 'gratuity',
-#             'total_gross_salary', 'number_of_days_in_month', 'present_days',
-#             'lwp', 'leave_adjustment', 'gender', 'basic_pay_monthly',
-#             'hra_monthly', 'statutory_bonus_monthly', 'special_allowance_monthly',
-#             'total_gross_salary_monthly', 'provident_fund', 'professional_tax',
-#             'advance', 'esic_employee', 'tds', 'total_deduction', 'net_pay',
-#             'advance_esic_employer_cont'
-#         ]
-
-        
-#         skipped_rows = []
-#         # month_pattern = re.compile(
-#         #     r'^(jan|feb|mar|apr|many|jun|jul|aug|sep|oct|nov|dec'
-#         #     r' january|february|march|april|may|june|july|august|september|october|november|december)\s+20\d{2}$',
-#         #     re.IGNORECASE
-#         # )
-
-#         # errors = []
-
-#         # for index, row in df.iterrows():
-#         #     row_errors = {}
-#         #     month_value = row.get('Month')
-
-#         #     # emp_code = row.get('Employee_code')
-#         #     emp_code = str(row.get('Employee Code', f'Row {index + 2}')).strip()
-
-
-#         #     if not isinstance(month_value, str) or not month_pattern.match(month_value.strip()):
-#         #         row_errors['Month'] = 'Invalid month format. Use "August 2024" or "Aug 2024".'
-
-            
-#         #     if row_errors:
-#         #         errors.append({'employee_code':emp_code, 'errors': row_errors})
-
-#         # if errors:
-#         #     return Response({'error_message': errors}, status=status.HTTP_400_BAD_REQUEST)
-
-
-#         for idx, row in enumerate(ws.iter_rows(min_row=2), start=2):  # row index starts at 2
-#             data = {field: row[i].value for i, field in enumerate(fields)}
-#             employee_code = data.get('employee_code')
-#             uan = data.get('uan')
-#             pf_number = data.get('pf_number')
-#             month = data.get('month')
-
-#             if not (employee_code and uan and pf_number and month):
-#                 skipped_rows.append(idx)
-#                 continue  # Skip incomplete rows
-
-#             if PF.objects.filter(
-#                 employee_code=employee_code,
-#                 uan=uan,
-#                 pf_number=pf_number,
-#                 month=month,
-#                 client=client
-#             ).exists():
-#                 skipped_rows.append(idx)
-#                 continue  # Skip duplicates
-
-#             PF.objects.create(client=client, **data)
-
-#         message = "Upload completed."
-#         if skipped_rows:
-#             message += f" Skipped rows due to duplication or missing data: {skipped_rows}"
-
-#         return Response({"status": "success", "message": message}, status=status.HTTP_201_CREATED)
-
 class PFExcelUploaadView(APIView):
     parser_classes = [MultiPartParser]
     def post (self, request, pk, *args, **kwargs):
@@ -3098,8 +1884,8 @@ class PFExcelUploaadView(APIView):
             "error_message": errors},
             status=status.HTTP_207_MULTI_STATUS)
 
-
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def pf_field_totals(request, pk):
     try:
         pf_entries = PF.objects.filter(client_id=pk)
@@ -3132,6 +1918,7 @@ def pf_field_totals(request, pk):
         return Response({'error_message': str(e)}, status=500)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def get_pf_totals(request, pk):
     pf_records = PF.objects.filter(client_id=pk)
 
@@ -3159,6 +1946,7 @@ def get_pf_totals(request, pk):
     return Response(result)
 
 @api_view(['POST', 'GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def edit_pf(request, pk, pf_pk):
     try:
         client = Client.objects.get(id=pk)
@@ -3207,6 +1995,7 @@ def edit_pf(request, pk, pf_pk):
         return Response(pf_ser.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def list_pf(request,pk):
     client = Client.objects.get(id=pk)
     if request.method == 'GET':
@@ -3227,6 +2016,7 @@ def delete_pf(request,pk,pf_pk):
 
 # ***********************************************Tax Audit***************************************************
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 @parser_classes([MultiPartParser, FormParser])
 def create_taxaudit(request,pk):
     client = Client.objects.get(id=pk)
@@ -3261,6 +2051,7 @@ def create_taxaudit(request,pk):
                 },status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 @parser_classes([MultiPartParser, FormParser])
 def edit_taxaudit(request, pk, taxaudit_pk):
     try:
@@ -3310,6 +2101,7 @@ def edit_taxaudit(request, pk, taxaudit_pk):
         return Response(taxaudit_serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def list_taxaudit(request, pk):
     client = Client.objects.get(id = pk)
     if request.method == 'GET':
@@ -3319,6 +2111,7 @@ def list_taxaudit(request, pk):
         return Response(taxaudit_serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def single_taxaudit(request, pk, taxaudit_pk):
     client = Client.objects.get(id=pk)
     taxaudit = TaxAudit.objects.get(id = taxaudit_pk, client=client)
@@ -3338,41 +2131,9 @@ def delete_taxaudit(request, pk, taxaudit_pk ):
     return Response({'error_message':'Fail to delete Tax Audit'} ,status=status.HTTP_400_BAD_REQUEST)
 
 # ******************************************************AIR****************************************************
-# @api_view(['POST'])
-# @parser_classes([MultiPartParser, FormParser])
-# def create_air(request,pk):
-#     client = Client.objects.get(id=pk)
-#     instance_data = request.data
-#     data = {key: value for key, value in instance_data.items()}
-
-#     serializer = AIRSerializer(data=data)
-#     if serializer.is_valid(raise_exception=True):
-#         air_instance = serializer.save(client=client)
-#         print(request.data)
-
-#         if request.FILES:
-#             files = dict((request.FILES).lists()).get('files',None)
-#             # files = request.FILES.getlist('files')
-#             if files:
-#                 for file in files:
-#                     file_data = {
-#                         'air' : air_instance.pk,
-#                         'files' : file
-#                     }
-#                     file_serializer= FilesSerializer(data=file_data)
-#                     if file_serializer.is_valid(raise_exception=True):
-#                         file_serializer.save()
-
-#             return Response({
-#                 'message': 'AIR created',
-#                 'data': serializer.data,
-#                 },status=status.HTTP_201_CREATED)
-#         return Response({
-#                 'message': 'Fail to create AIR',
-#                 'error_message': serializer.errors,
-#                 },status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 @parser_classes([MultiPartParser, FormParser])
 def create_air(request, pk):
     client = Client.objects.get(id=pk)
@@ -3411,6 +2172,7 @@ def create_air(request, pk):
     }, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 @parser_classes([MultiPartParser, FormParser])
 def edit_air(request, pk, air_pk):
     try:
@@ -3461,6 +2223,7 @@ def edit_air(request, pk, air_pk):
         return Response(air_serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def list_air(request, pk):
     client = Client.objects.get(id = pk)
     if request.method == 'GET':
@@ -3470,6 +2233,7 @@ def list_air(request, pk):
         return Response(air_serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def single_air(request, pk, air_pk):
     client = Client.objects.get(id=pk)
     air = AIR.objects.get(id = air_pk, client=client)
@@ -3490,6 +2254,7 @@ def delete_air(request, pk, air_pk ):
 
 # ******************************************************SFT****************************************************
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 @parser_classes([MultiPartParser, FormParser])
 def create_sft(request,pk):
     client = Client.objects.get(id=pk)
@@ -3524,6 +2289,7 @@ def create_sft(request,pk):
                 },status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 @parser_classes([MultiPartParser, FormParser])
 def edit_sft(request, pk, sft_pk):
     try:
@@ -3574,6 +2340,7 @@ def edit_sft(request, pk, sft_pk):
         return Response(sft_serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def list_sft(request, pk):
     client = Client.objects.get(id = pk)
     if request.method == 'GET':
@@ -3583,6 +2350,7 @@ def list_sft(request, pk):
         return Response(sft_serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def single_sft(request, pk, sft_pk):
     client = Client.objects.get(id=pk)
     sft = SFT.objects.get(id = sft_pk, client=client)
@@ -3603,6 +2371,7 @@ def delete_sft(request, pk, sft_pk ):
 
 # **************************************************OTHERS***************************************************
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 @parser_classes([MultiPartParser, FormParser])
 def create_others(request, pk):
     client = Client.objects.get(id=pk)
@@ -3641,6 +2410,7 @@ def create_others(request, pk):
     }, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 @parser_classes([MultiPartParser, FormParser])
 def edit_others(request, pk, others_pk):
     try:
@@ -3691,6 +2461,7 @@ def edit_others(request, pk, others_pk):
         return Response(others_serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def list_others(request, pk):
     client = Client.objects.get(id = pk)
     if request.method == 'GET':
@@ -3700,6 +2471,7 @@ def list_others(request, pk):
         return Response(others_serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def single_others(request, pk, others_pk):
     client = Client.objects.get(id=pk)
     others = Others.objects.get(id = others_pk, client=client)
@@ -3721,6 +2493,7 @@ def delete_others(request, pk, others_pk ):
 
 # *************************************************TDS Payment***********************************************
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_tdspayment(request, pk):
     client = Client.objects.get(id=pk)
     if request.method == 'POST':
@@ -3781,6 +2554,7 @@ class ExcelImportViewtds(APIView):
         return Response({"status": "success", "message": "All entries uploaded successfully"}, status=status.HTTP_201_CREATED)
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def edit_tdspayment(request, pk, tdspayment_pk):
     client = Client.objects.get(id=pk)
     payment = TDSPayment.objects.get(id=tdspayment_pk, client=client)
@@ -3803,6 +2577,7 @@ def edit_tdspayment(request, pk, tdspayment_pk):
                 },status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def list_tdspayment(request, pk):
     client = Client.objects.get(id=pk)
     if request.method == 'GET':
@@ -3811,6 +2586,7 @@ def list_tdspayment(request, pk):
         return Response(tds_ser.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def single_tdspayment(request, pk, tdspayment_pk):
     client = Client.objects.get(id=pk)
     tds = TDSPayment.objects.get(id=tdspayment_pk)
@@ -3830,6 +2606,7 @@ def delete_tdspayment(request, pk, tdspayment_pk):
 
 # *************************************************TDS Return**************************************************
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 @parser_classes([MultiPartParser, FormParser])
 def create_tds(request,pk):
     client = Client.objects.get(id=pk)
@@ -3864,6 +2641,7 @@ def create_tds(request,pk):
                 },status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 @parser_classes([MultiPartParser, FormParser])
 def edit_tds(request, pk, tds_pk):
     try:
@@ -3914,6 +2692,7 @@ def edit_tds(request, pk, tds_pk):
         return Response(tdsreturn_serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def list_tds(request, pk):
     client = Client.objects.get(id = pk)
     if request.method == 'GET':
@@ -3923,6 +2702,7 @@ def list_tds(request, pk):
         return Response(tds_serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def single_tds(request, pk, tds_pk):
     client = Client.objects.get(id=pk)
     tds = TDSReturn.objects.get(id = tds_pk, client=client)
@@ -4049,6 +2829,7 @@ def delete_tds(request, pk, tds_pk ):
 #     return Response({'error_message':'Fail to delete TDS Section'} ,status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_tdssection(request):
     # client = Client.objects.get(id=pk)
     if request.method == 'POST':    
@@ -4106,6 +2887,7 @@ class ExcelImportViewtdssection(APIView):
         return Response({"status": "success", "message": "All entries uploaded successfully"}, status=status.HTTP_201_CREATED)
 
 @api_view(['POST', 'GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def edit_tdssection(request, tdssection_pk):
     # client = Client.objects.get(id=pk)
     section = TDSSection.objects.get(id=tdssection_pk)
@@ -4128,6 +2910,7 @@ def edit_tdssection(request, tdssection_pk):
                 },status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def list_tdssection(request):
     # client = Client.objects.get(id=pk)
     if request.method == 'GET':
@@ -4136,6 +2919,7 @@ def list_tdssection(request):
         return Response(tds_ser.data)
         
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def single_tdssection(request, tdssection_pk):
     # client = Client.objects.get(id=pk)
     tds = TDSSection.objects.get(id=tdssection_pk)
@@ -4144,6 +2928,7 @@ def single_tdssection(request, tdssection_pk):
         return Response(ser.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def get_create_tdssection(request):
     # try:
     #     client = Client.objects.get(id=pk)
@@ -4174,6 +2959,7 @@ def delete_tdssection(request, tdssection_pk):
 # ***********************************************Sales*******************************************
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_sales_get(request, pk):
     try:
         client = Client.objects.get(id=pk)
@@ -4243,6 +3029,7 @@ def create_sales_get(request, pk):
         return Response(context)
 
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_sale(request, pk):
     client = Client.objects.get(id=pk)
 
@@ -4267,11 +3054,12 @@ def create_sale(request, pk):
                 return Response({'error_message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
-        return Response({'message': 'Sales E-way bill(s) uploaded successfully.'}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Sales Attach Invoice uploaded successfully.'}, status=status.HTTP_201_CREATED)
     else:
         return Response({'error_message': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def get_sales_invoice_data(request, client_pk, invoice_pk):
     """
     GET request to fetch sales invoice data along with related product summaries and client info.
@@ -4345,6 +3133,7 @@ def get_sales_invoice_data(request, client_pk, invoice_pk):
     return Response(response_data, status=status.HTTP_200_OK)
 
 @api_view(['GET', 'PUT'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def update_sales_invoice(request, client_pk, invoice_pk):
 
     try:
@@ -4706,6 +3495,7 @@ def update_sales_invoice(request, client_pk, invoice_pk):
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_sales_invoice2(request, client_pk):
     try:
         with transaction.atomic():  # Start a transaction
@@ -4928,6 +3718,7 @@ def delete_sales_invoice(request, client_pk, pk):
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET', 'PATCH'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def sales_invoice_detail_view(request, client_pk, invoice_pk):
     try:
         # Fetch the sales invoice object
@@ -5036,6 +3827,7 @@ def sales_invoice_detail_view(request, client_pk, invoice_pk):
 
 # **************************************************Purchase***************************************************
 @api_view(['GET','POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_purchase_get(request, pk):
     try:
         client = Client.objects.get(id=pk)
@@ -5097,6 +3889,7 @@ def create_purchase_get(request, pk):
         return Response(context)
     
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_purchase(request, pk):
     client = Client.objects.get(id=pk)
 
@@ -5121,11 +3914,12 @@ def create_purchase(request, pk):
                 return Response({'error_message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
-        return Response({'message': 'Purchase E-way bill(s) uploaded successfully.'}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Purchase Attach Invoice uploaded successfully.'}, status=status.HTTP_201_CREATED)
     else:
         return Response({'error_message': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
     
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def get_purchase_invoice_data(request, client_pk, invoice_pk):
     purchase_invoice = PurchaseInvoice.objects.filter(client_id=client_pk, id=invoice_pk).first()
     
@@ -5187,6 +3981,7 @@ def get_purchase_invoice_data(request, client_pk, invoice_pk):
     return Response(response_data, status=status.HTTP_200_OK)
     
 @api_view(['GET','PUT'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def update_purchase_invoice(request, client_pk, invoice_pk):
     try:
         print('my payload',request.data)
@@ -5546,6 +4341,7 @@ def update_purchase_invoice(request, client_pk, invoice_pk):
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_purchase_invoice2(request, client_pk):
     try:
         with transaction.atomic():
@@ -5741,6 +4537,7 @@ def create_purchase_invoice2(request, client_pk):
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET','PATCH'])
+# @permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def purchase_invoice_detail_view(request, client_pk, invoice_pk):
     try:
         purchase_invoice = PurchaseInvoice.objects.get(client=client_pk, pk=invoice_pk)
@@ -5871,6 +4668,7 @@ def delete_purchase_invoice(request, client_pk, pk):
 
 # ******************************************************Debit Note******************************************************
 @api_view(['GET', 'POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_debit_note_get(request, pk):
     try:
         client = Client.objects.get(id=pk)
@@ -5941,6 +4739,7 @@ def create_debit_note_get(request, pk):
         return Response(context)
 
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_debit_note(request, client_pk, invoice_pk):
     client = Client.objects.get(id=client_pk)
     sales = SalesInvoice.objects.get(id=invoice_pk, client=client)
@@ -5967,11 +4766,12 @@ def create_debit_note(request, client_pk, invoice_pk):
                 return Response({'error_message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
-        return Response({'message': 'Debit Note E-way bill(s) uploaded successfully.'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Debit Note Attach Invoice uploaded successfully.'}, status=status.HTTP_200_OK)
     else:
         return Response({'error_message': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
     
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def get_debit_note_data(request, client_pk, invoice_pk, debit_pk):
     """
     GET request to fetch sales invoice data along with related product summaries and client info.
@@ -6045,6 +4845,7 @@ def get_debit_note_data(request, client_pk, invoice_pk, debit_pk):
     return Response(response_data, status=status.HTTP_200_OK)
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def update_debit_note(request, client_pk, invoice_pk):
     try:
         # Handle GET request
@@ -6402,6 +5203,7 @@ def update_debit_note(request, client_pk, invoice_pk):
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET', 'PATCH'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def debit_note_detail_view(request, client_pk, invoice_pk, debit_pk):
     try:
         # Fetch the sales invoice object
@@ -6548,6 +5350,7 @@ def delete_debit_note(request, client_pk, invoice_pk, pk):
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_debit_note2(request, client_pk, invoice_pk):
     try:
         payload = request.data
@@ -6718,6 +5521,7 @@ def create_debit_note2(request, client_pk, invoice_pk):
 # ******************************************************Credit Note****************************************************   
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_credit_note_get(request, pk):
     try:
         client = Client.objects.get(id=pk)
@@ -6788,6 +5592,7 @@ def create_credit_note_get(request, pk):
         return Response(context)
     
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_credit_note2(request, client_pk, invoice_pk):
     try:
         payload = request.data
@@ -6972,6 +5777,7 @@ def create_credit_note2(request, client_pk, invoice_pk):
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
   
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_credit_note(request, client_pk, invoice_pk):
     client = Client.objects.get(id=client_pk)
     purchase = PurchaseInvoice.objects.get(id=invoice_pk, client=client)
@@ -6998,11 +5804,12 @@ def create_credit_note(request, client_pk, invoice_pk):
                 return Response({'error_message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
-        return Response({'message': 'Credit Note E-way bill(s) uploa ded successfully.'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Credit Note Attach Invoice uploa ded successfully.'}, status=status.HTTP_200_OK)
     else:
         return Response({'error_message': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
     
 @api_view(['GET', 'POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def update_credit_note(request, client_pk, invoice_pk):
 
     try:
@@ -7408,6 +6215,7 @@ def delete_credit_note(request, client_pk, invoice_pk, credit_pk):
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET', 'PATCH'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def credit_note_detail_view(request, client_pk, invoice_pk, credit_pk):
     try:
         # Fetch the sales invoice object
@@ -7517,6 +6325,7 @@ def credit_note_detail_view(request, client_pk, invoice_pk, credit_pk):
 # ******************************************************Income****************************************************
    
 @api_view(['GET','POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_income_get(request, pk):
     try:
         client = Client.objects.get(id=pk)
@@ -7578,6 +6387,7 @@ def create_income_get(request, pk):
         return Response(context)
 
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_income(request, pk):
     client = Client.objects.get(id=pk)
 
@@ -7602,11 +6412,12 @@ def create_income(request, pk):
                 return Response({'error_message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
-        return Response({'message': 'Income E-way bill(s) uploaded successfully.'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Income Attach Invoice uploaded successfully.'}, status=status.HTTP_200_OK)
     else:
         return Response({'error_message': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'PUT'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def update_income(request, client_pk, invoice_pk):
 
     try:
@@ -7966,6 +6777,7 @@ def update_income(request, client_pk, invoice_pk):
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_income2(request, client_pk):
     try:
         with transaction.atomic():
@@ -8191,6 +7003,7 @@ def delete_income(request, client_pk, pk):
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET', 'PATCH'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def income_detail_view(request, client_pk, invoice_pk):
     try:
         # Fetch the sales invoice object
@@ -8297,6 +7110,7 @@ def income_detail_view(request, client_pk, invoice_pk):
 # ************************************************Expenses************************************************
 
 @api_view(['GET','POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_expenses_get(request, pk):
     try:
         client = Client.objects.get(id=pk)
@@ -8358,6 +7172,7 @@ def create_expenses_get(request, pk):
         return Response(context)
     
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_expenses(request, pk):
     client = Client.objects.get(id=pk)
 
@@ -8382,11 +7197,12 @@ def create_expenses(request, pk):
                 return Response({'error_message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
-        return Response({'message': 'Expenses E-way bill(s) uploaded successfully.'}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Expenses Attach Invoice uploaded successfully.'}, status=status.HTTP_201_CREATED)
     else:
         return Response({'error_message': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
         
 @api_view(['GET','PUT'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def update_expenses(request, client_pk, invoice_pk):
     try:
         # print('my payload',request.data)
@@ -8723,6 +7539,7 @@ def update_expenses(request, client_pk, invoice_pk):
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_expenses2(request, client_pk):
     try:
         with transaction.atomic():
@@ -8915,6 +7732,7 @@ def create_expenses2(request, client_pk):
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET','PATCH'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def expenses_detail_view(request, client_pk, invoice_pk):
     try:
         expenses = Expenses.objects.get(client=client_pk, pk=invoice_pk)
@@ -9041,43 +7859,10 @@ def delete_expenses(request, client_pk, pk):
         # print({"Error in update_sales_invoice" : str(e)})
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-    # except Exception as e:
-    #     return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
 # ************************************************Zip Upload*********************************************************
 
-# @api_view(['POST'])
-# def create_zipupload(request, pk):
-#     client = Client.objects.get(id=pk)
-
-#     # Check if 'attach_e_way_bill' is in the request files
-#     if 'files' in request.FILES:
-#         # Iterate through each file in the 'attach_e_way_bill' field
-#         for file in request.FILES.getlist('files'):
-#             # Prepare data for each file
-#             zipupload_data = {
-#                 'files': file,  # The file being uploaded
-#                 'client': client.id,  # Associate the file with the client
-#             }
-
-#             # Initialize the serializer for each file
-#             serializer = ZipUploadSerializer2(data=zipupload_data)
-
-#             # Check if the serializer is valid
-#             if serializer.is_valid():
-#                 # Save each file as a separate object
-#                 serializer.save()
-#             else:
-#                 return Response({'error_message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-#         # If all files are processed, return success response
-#         return Response({'message': 'Zip Files uploaded successfully.', 'data': serializer.data}, status=status.HTTP_201_CREATED)
-#     else:
-#         return Response({'error_message': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
-    
-
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_zipupload(request, pk):
     try:
         client = Client.objects.get(id=pk)
@@ -9111,7 +7896,6 @@ def create_zipupload(request, pk):
                 'message': 'No files provided.'
             }, status=status.HTTP_400_BAD_REQUEST)
  
-
 @api_view(['DELETE'])
 @permission_classes([IsSuperUser])
 def delete_zipupload(request, client_pk, pk):
@@ -9150,6 +7934,7 @@ def delete_zipupload(request, client_pk, pk):
     
 # ******************************************************Income Debit Note******************************************************
 @api_view(['GET', 'POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_income_debit_note_get(request, pk):
     try:
         client = Client.objects.get(id=pk)
@@ -9220,6 +8005,7 @@ def create_income_debit_note_get(request, pk):
         return Response(context)
 
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_income_debit_note(request, client_pk, income_pk):
     client = Client.objects.get(id=client_pk)
     income = Income.objects.get(id=income_pk, client=client)
@@ -9246,11 +8032,12 @@ def create_income_debit_note(request, client_pk, income_pk):
                 return Response({'error_message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
-        return Response({'message': 'Debit Note E-way bill(s) uploaded successfully.'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Debit Note Attach Invoice uploaded successfully.'}, status=status.HTTP_200_OK)
     else:
         return Response({'error_message': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
     
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def get_income_debit_note_data(request, client_pk, income_pk, debit_pk):
     """
     GET request to fetch sales invoice data along with related product summaries and client info.
@@ -9322,6 +8109,7 @@ def get_income_debit_note_data(request, client_pk, income_pk, debit_pk):
     return Response(response_data, status=status.HTTP_200_OK)
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def update_income_debit_note(request, client_pk, income_pk):
     try:
         # Handle GET request
@@ -9717,6 +8505,7 @@ def update_income_debit_note(request, client_pk, income_pk):
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET', 'PATCH'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def income_debit_note_detail_view(request, client_pk, income_pk, debit_pk):
     try:
         # Fetch the sales invoice object
@@ -9858,6 +8647,7 @@ def delete_income_debit_note(request, client_pk, income_pk, pk):
         return Response({"error_message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_income_debit_note2(request, client_pk, income_pk):
     try:
         payload = request.data
@@ -10039,6 +8829,7 @@ def create_income_debit_note2(request, client_pk, income_pk):
 # ******************************************************Credit Note****************************************************   
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_expenses_credit_note_get(request, pk):
     try:
         client = Client.objects.get(id=pk)
@@ -10109,6 +8900,7 @@ def create_expenses_credit_note_get(request, pk):
         return Response(context)
     
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_expenses_credit_note2(request, client_pk, expenses_pk):
     try:
         payload = request.data
@@ -10291,6 +9083,7 @@ def create_expenses_credit_note2(request, client_pk, expenses_pk):
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_expenses_credit_note(request, client_pk, expenses_pk):
     client = Client.objects.get(id=client_pk)
     expenses = Expenses.objects.get(id=expenses_pk, client=client)
@@ -10317,11 +9110,12 @@ def create_expenses_credit_note(request, client_pk, expenses_pk):
                 return Response({'error_message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         # If all files are processed, return success response
-        return Response({'message': 'Credit Note E-way bill(s) uploa ded successfully.'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Credit Note Attach Invoice uploa ded successfully.'}, status=status.HTTP_200_OK)
     else:
         return Response({'error_message': 'No files uploaded in the request.'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def update_expenses_credit_note(request, client_pk, expenses_pk):
 
     try:
@@ -10750,6 +9544,7 @@ def delete_expenses_credit_note(request, client_pk, expenses_pk, credit_pk):
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET', 'PATCH'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def expenses_credit_note_detail_view(request, client_pk, expenses_pk, credit_pk):
     try:
         # Fetch the sales invoice object
@@ -10859,6 +9654,7 @@ def expenses_credit_note_detail_view(request, client_pk, expenses_pk, credit_pk)
 # ************************************************Excel File**************************************************
 
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_excel_file(request):
     if request.method == 'POST':
         ser = ExcelFileSerializer(data=request.data)
@@ -10875,6 +9671,7 @@ def create_excel_file(request):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def get_excel(request):
     excel = ExcelFile.objects.all()
     if request.method == 'GET':
@@ -10896,6 +9693,7 @@ def delete_excel(request, excel_pk):
 # ************************************************Acknowledgement**************************************************
 
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 @parser_classes([MultiPartParser, FormParser])
 def create_acknowledgement(request,pk):
     client = Client.objects.get(id=pk)
@@ -10947,6 +9745,7 @@ def create_acknowledgement(request,pk):
         },status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST', 'GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 @parser_classes([MultiPartParser, FormParser])
 def update_acknowledgement(request, pk, ack_pk):
     try:
@@ -11009,6 +9808,7 @@ def delete_acknowledgement(request, pk, ack_pk):
         return Response({'error_message':'Fail to Delete Acknowledgement'},status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def single_acknowledgement(request, pk, ack_pk):
     client = Client.objects.get(id=pk)
     ack = Acknowledgement.objects.get(id=ack_pk)
@@ -11018,6 +9818,7 @@ def single_acknowledgement(request, pk, ack_pk):
         return Response(ser.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def get_acknowledgement(request, pk):
     client = Client.objects.get(id=pk)
     ack = Acknowledgement.objects.filter(client=client)
@@ -11028,6 +9829,7 @@ def get_acknowledgement(request, pk):
         return Response(ser.errors)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def download_computation_file(request, pk, ack_pk):
     client = Client.objects.get(id=pk)
     ack = Acknowledgement.objects.get(id=ack_pk, client = client)
@@ -11048,32 +9850,8 @@ def download_computation_file(request, pk, ack_pk):
 
         return Response(file_data, status=status.HTTP_200_OK)
 
-# @api_view(['GET'])
-# def download_computation_file(request, pk, ack_pk):
-#     try:
-#         client = Client.objects.get(id=pk)
-#         ack = Acknowledgement.objects.get(id=ack_pk, client=client)
-#     except (Client.DoesNotExist, Acknowledgement.DoesNotExist):
-#         return Response({"error": "Client or Acknowledgement not found."}, status=status.HTTP_404_NOT_FOUND)
-
-#     files = Files.objects.filter(ack=ack).exclude(computation_file='')
-
-#     if not files.exists():
-#         return Response([], status=status.HTTP_200_OK)
-
-#     file_paths = [file.computation_file.path for file in files]
-
-#     # If you're returning one file at a time
-#     file_path = file_paths[0]
-#     file_name = os.path.basename(file_path)
-
-#     try:
-#         return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=file_name)
-#     except FileNotFoundError:
-#         raise Http404("File not found.")
-
-
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def download_return_file(request, pk, ack_pk):
     client = Client.objects.get(id=pk)
     ack = Acknowledgement.objects.get(id=ack_pk, client = client)
@@ -11094,25 +9872,8 @@ def download_return_file(request, pk, ack_pk):
 
         return Response(file_data, status=status.HTTP_200_OK)
 
-
-# @api_view(['GET'])
-# def serve_computation_file(request, file_id):
-#     try:
-#         file_obj = Files.objects.get(id=file_id)
-#         file_path = file_obj.computation_file.path  # absolute path
-
-#         if not os.path.exists(file_path):
-#             raise Http404
-
-#         response = FileResponse(open(file_path, 'rb'))
-#         filename = os.path.basename(file_path)
-#         response['Content-Disposition'] = f'attachment; filename="{filename}"'
-#         return response
-
-#     except Files.DoesNotExist:
-#         raise Http404("File not found")
-
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def serve_computation_file(request, file_id):
     try:
         file_obj = Files.objects.get(id=file_id)
@@ -11342,6 +10103,7 @@ def detail_client(request, pk):
     return Response(data)
 
 @api_view(['GET'])
+# @permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def detail_branch(request, pk, branch_pk):
     client = Client.objects.get(id = pk)
     branch = Branch.objects.get(id = branch_pk, client=client)
@@ -11361,6 +10123,7 @@ def detail_branch(request, pk, branch_pk):
     return Response(data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def detail_acknowledgement(request, pk):
     client = Client.objects.get(id=pk)
     ack = Acknowledgement.objects.filter(client=client)
@@ -11375,7 +10138,10 @@ def detail_acknowledgement(request, pk):
     }   
     return Response(data)
 
+#*************************************************************************** HSN ********************************
+
 @api_view(['POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def import_hsn_excel(request):
     if request.method == 'POST':
         # Check if an Excel file is provided
@@ -11432,6 +10198,7 @@ def import_hsn_excel(request):
             return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST','GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_hsn(request):
     if request.method == 'POST':
         serializer = HSNSerializer(data=request.data)
@@ -11441,6 +10208,7 @@ def create_hsn(request):
         return Response({'error_message':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def edit_hsn(request, pk):
     hsn = HSNCode.objects.get(id=pk)
     serializer = HSNSerializer(instance=hsn, data=request.data)
@@ -11455,6 +10223,7 @@ def edit_hsn(request, pk):
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def list_hsn(request):
     if request.method == 'GET':
         hsn_code = HSNCode.objects.all()
@@ -11470,7 +10239,10 @@ def delete_hsn(request, pk):
         return Response({'message':'HSN Return Delete'})
     return Response({'message':'Fail to delete HSN Return'} ,status=status.HTTP_400_BAD_REQUEST)
 
+#*********************************************** Product ********************************************************
+
 @api_view(['POST','GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_product(request):
     if request.method=="GET":
         hsn_list = HSNCode.objects.all()
@@ -11484,6 +10256,7 @@ def create_product(request):
         return Response({'error_message':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def edit_product(request, pk):
     product = Product.objects.get(id=pk)
     serializer = ProductSerializer(instance=product, data=request.data)
@@ -11498,6 +10271,7 @@ def edit_product(request, pk):
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def list_product(request):
     if request.method == 'GET':
         product = Product.objects.all()
@@ -11514,7 +10288,10 @@ def delete_product(request, pk):
         return Response({'message':'Product Return Delete'})
     return Response({'message':'Fail to delete HSN Return'} ,status=status.HTTP_400_BAD_REQUEST)
 
+#*****************=***************************** Product Description ***********************************************
+
 @api_view(['POST','GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def create_product_description(request):
     if request.method=="GET":
         product = Product.objects.all()
@@ -11528,6 +10305,7 @@ def create_product_description(request):
         return Response({'error_message':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def list_product_description(request):
     if request.method == 'GET':
         product_description = ProductDescription.objects.all()
@@ -11536,6 +10314,7 @@ def list_product_description(request):
         return Response(serializer.data)
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def edit_product_description(request, pk):
     product_description = ProductDescription.objects.get(id=pk)
     serializer = ProductDescriptionSerializer(instance=product_description, data=request.data)
@@ -11558,7 +10337,10 @@ def delete_product_description(request, pk):
         return Response({'message':'Product Description Return Delete'})
     return Response({'message':'Fail to delete Product Description Return'} ,status=status.HTTP_400_BAD_REQUEST)
 
+#*************************************************** Invoice List ************************************************************
+
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def sales_invoice_list(request):
     """
     View to list all sales invoices with their related product summaries.
@@ -11576,6 +10358,7 @@ def sales_invoice_list(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def purchase_invoice_list(request):
     """
     View to list all sales invoices with their related product summaries.
@@ -11593,6 +10376,7 @@ def purchase_invoice_list(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def debit_list(request,client_pk, invoice_pk):
     client = Client.objects.get(id=client_pk)
     invoice= SalesInvoice.objects.get(client=client, id=invoice_pk)
@@ -11602,6 +10386,7 @@ def debit_list(request,client_pk, invoice_pk):
     return Response(debit_list.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def credit_list(request,client_pk, invoice_pk):
     client = Client.objects.get(id=client_pk)
     invoice= PurchaseInvoice.objects.get(client=client, id=invoice_pk)
@@ -11611,6 +10396,7 @@ def credit_list(request,client_pk, invoice_pk):
     return Response(credit_list.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def income_debit_list(request,client_pk, income_pk):
     client = Client.objects.get(id=client_pk)
     income= Income.objects.get(client=client, id=income_pk)
@@ -11620,6 +10406,7 @@ def income_debit_list(request,client_pk, income_pk):
     return Response(debit_list.data)
 
 @api_view(['GET'])
+@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def expenses_credit_list(request,client_pk, expenses_pk):
     client = Client.objects.get(id=client_pk)
     expenses= Expenses.objects.get(client=client, id=expenses_pk)

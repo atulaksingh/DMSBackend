@@ -48,3 +48,10 @@ class IsSuperUserOrClientUser(BasePermission):
             request.user.is_authenticated and
             (request.user.role == "superuser" or request.user.role == "clientuser")
         )
+
+class IsSuperUserOrClientUserOrCustomerUser(BasePermission):
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated and
+            (request.user.role == "superuser" or request.user.role == "clientuser" or request.user.role == "customeruser")
+        )

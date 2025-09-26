@@ -13,9 +13,20 @@ def fill_companydoc_forms(driver):
     df = pd.read_excel(r"companydoc.xlsx")
 
 
-    button = driver.find_element(By.XPATH, "//button[contains(text(), 'Company Documents')]")
-    button.click()
-    time.sleep(3)
+    # button = driver.find_element(By.XPATH, "//button[contains(text(), 'Company Documents')]")
+    # button.click()
+    # time.sleep(3)
+
+    try:
+        tab = WebDriverWait(driver, 15).until(
+            EC.presence_of_element_located((By.XPATH, "//*[text()='Company Documents']"))
+        )
+        driver.execute_script("arguments[0].scrollIntoView(true);", tab)
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable(tab))
+        driver.execute_script("arguments[0].click();", tab)
+    except TimeoutException:
+        print("Company Documents tab not found!")
+
 
 
     # Wait for branch table to load
@@ -115,6 +126,11 @@ if __name__ == "__main__":
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
     driver.get("http://localhost:5173/")
     time.sleep(2)
+
+    driver.find_element(By.NAME, "username").send_keys("vaishnavitalari.v@gmail.com")
+    driver.find_element(By.NAME, "password").send_keys("vaishnavi")
+    driver.find_element(By.NAME, "login").click()
+    time.sleep(5)
 
     driver.find_element(By.ID, "long-button").click()
     view_button = driver.find_element(By.CSS_SELECTOR, "li.MuiButtonBase-root.MuiMenuItem-root")

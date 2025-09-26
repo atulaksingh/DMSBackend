@@ -64,7 +64,6 @@ urlpatterns = [
     path('delete-clientuser/<int:pk>/<int:user_pk>', view=delete_common_clientuser, name='delete-clientuser'),
     path('list-clientuser/<int:pk>', view=list_users_by_client, name='list-clientuser'),
     path('single-clientuser/<int:pk>/<int:user_pk>',view=single_common_clientuser, name='single-clientuser'),
-    # path('superadmin-login',  CommonLoginAPIView.as_view(), name='token_obtain_pair'),
     path('activate/<uidb64>/<token>',ClientuserActivateAccountView.as_view(),name='activate'),
 
     # Customer User
@@ -73,8 +72,8 @@ urlpatterns = [
     path('delete-customeruser/<int:pk>/<int:user_pk>', view=delete_common_customeruser, name='delete-customeruser'),
     path('list-customeruser/<int:pk>', view=list_users_by_role, name='list-customeruser'),
     path('single-customeruser/<int:pk>/<int:user_pk>',view=single_common_customeruser, name='single-customeruser'),
-    # path('superadmin-login',  CommonLoginAPIView.as_view(), name='token_obtain_pair'),
     path('activate/<uidb64>/<token>',CustomeruserActivateAccountView.as_view(),name='activate'),
+
 
     path('create-companydoc/<int:pk>', view=create_companydoc, name='create-companydoc'),        #***********************
     path('edit-companydoc/<int:pk>/<int:file_pk>', view=edit_companydoc, name='edit-companydoc'),         #***********************
@@ -181,18 +180,16 @@ urlpatterns = [
     path('delete-sales-invoice/<int:client_pk>/<int:pk>', view=delete_sales_invoice, name='delete-sales-invoice'),
     path('sales-view/<int:client_pk>/<int:invoice_pk>', view=sales_invoice_detail_view, name='sales-view'),
 
-    # hsn master
-
+# hsn master
     path('create-hsn', view=create_hsn, name='create-hsn'),
     path('create-hsn-excel', view=import_hsn_excel, name='create-hsn-excel'),
     path('edit-hsn/<int:pk>', view=edit_hsn, name='edit-hsn'),
-
     path('list-hsn', view=list_hsn, name='list-hsn'),
     path('delete-hsn/<int:pk>', view=delete_hsn, name='delete-hsn'),
-    # product
+
+# product
     path('create-product', view=create_product, name='create-product'),
     path('edit-product/<int:pk>', view=edit_product, name='edit-product'),
-
     path('list-product', view=list_product, name='list-product'),
     path('delete-product/<int:pk>', view=delete_product, name='delete-product'),
 
@@ -209,6 +206,7 @@ urlpatterns = [
     path('update-purchase-post/<int:client_pk>/<int:invoice_pk>', view=update_purchase_invoice, name='create-purchase-post'),
     path('get-purchase-invoice/<int:client_pk>/<int:invoice_pk>', view=update_purchase_invoice, name='get-purchase-invoice'),
     path('create-purchase-post2/<int:client_pk>', view=create_purchase_invoice2, name='create-purchase-post2'),
+    # path('purchase-view/<int:client_pk>/<int:invoice_pk>', view=get_purchase_invoice_data, name='purchase-view'),
     path('purchase-view/<int:client_pk>/<int:invoice_pk>', view=purchase_invoice_detail_view, name='purchase-view'),
     path('delete-purchase-invoice/<int:client_pk>/<int:pk>', view=delete_purchase_invoice, name='delete-purchase-invoice'),
 
@@ -292,3 +290,5 @@ urlpatterns = [
     path('download-return-file/<int:pk>/<int:ack_pk>', view=download_return_file, name='downlaod-return-file'),
     path('serve-computation-file/<int:file_id>/', views.serve_computation_file),
 ]
+
+7 

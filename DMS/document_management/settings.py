@@ -110,7 +110,12 @@ REST_FRAMEWORK = {
     # 'DEFAULT_PERMISSION_CLASSES': (
     #     'rest_framework.permissions.IsAuthenticated',
     # )
+    "EXCEPTION_HANDLER": "api.utils.custom_exception_handler",
 }
+
+# REST_FRAMEWORK = {
+#     "EXCEPTION_HANDLER": "api.utils.custom_exception_handler"
+# }
 
 
 # Password validation

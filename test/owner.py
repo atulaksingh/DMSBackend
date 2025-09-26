@@ -11,38 +11,25 @@ from webdriver_manager.chrome import ChromeDriverManager
 import bank
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import StaleElementReferenceException
-
-
-
-# df = pd.read_excel(r"owner_data.xlsx")  # Modify path as needed
-
-# driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
-# driver.get("http://localhost:5173/")
-# time.sleep(2)
-
-# driver.find_element(By.ID, "long-button").click()
-
-# view_button = driver.find_element(By.CSS_SELECTOR, "li.MuiButtonBase-root.MuiMenuItem-root")
-# view_button.click()
-
-# time.sleep(5)
+from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
 
 def fill_owner_forms(driver):
     df = pd.read_excel(r"owner2.xlsx")  # Modify path as needed
 
     for index, row in df.iterrows():
 
-        # try :
-        #     button = driver.find_element(By.XPATH, "//button[contains(text(), 'Create')]")
+        try:
+            tab = WebDriverWait(driver, 15).until(
+                EC.presence_of_element_located((By.XPATH, "//*[text()='Owner Details']"))
+            )
+            driver.execute_script("arguments[0].scrollIntoView(true);", tab)
+            WebDriverWait(driver, 10).until(EC.element_to_be_clickable(tab))
+            driver.execute_script("arguments[0].click();", tab)
+        except TimeoutException:
+            print("Owner Details tab not found!")
 
-        #     # Check if the button is obscured
-        #     if button.is_displayed() and button.is_enabled():
-        #         button.click()
-        #     else:
-        #         print("Button is not clickable due to being obscured or disabled")
-        # except Exception as e:
-        #     print(f"Error clicking Create button: {e}")
-        #     continue
+
+
         try:
             WebDriverWait(driver, 10).until(
                 EC.invisibility_of_element_located((By.CLASS_NAME, "MuiBackdrop-root"))
@@ -60,7 +47,8 @@ def fill_owner_forms(driver):
 
         try:
             # Fill client name
-            driver.find_element(By.NAME, "owner_name").send_keys(row["owner_name"])
+            driver.find_element(By.NAME, "first_name").send_keys(row["first_name"])
+            driver.find_element(By.NAME, "last_name").send_keys(row["last_name"])
             driver.find_element(By.NAME, "share").send_keys(row["share"])
             driver.find_element(By.NAME, "pan").send_keys(row["pan"])
             driver.find_element(By.NAME, "aadhar").send_keys(row["aadhar"])
@@ -68,6 +56,7 @@ def fill_owner_forms(driver):
             driver.find_element(By.NAME, "username").send_keys(row["username"])
             driver.find_element(By.NAME, "it_password").send_keys(row["it_password"])
             driver.find_element(By.NAME, "mobile").send_keys(row["mobile"])
+            driver.find_element(By.NAME, "user_password").send_keys(row["user_password"])
 
             isadmin = row["isadmin"]
         
@@ -163,6 +152,11 @@ if __name__ == "__main__":
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
     driver.get("http://localhost:5173/")
     time.sleep(2)
+
+    driver.find_element(By.NAME, "username").send_keys("vaishnavitalari.v@gmail.com")
+    driver.find_element(By.NAME, "password").send_keys("vaishnavi")
+    driver.find_element(By.NAME, "login").click()
+    time.sleep(5)
 
     driver.find_element(By.ID, "long-button").click()
     view_button = driver.find_element(By.CSS_SELECTOR, "li.MuiButtonBase-root.MuiMenuItem-root")

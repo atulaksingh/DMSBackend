@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractUser, Group, Permission
 import os
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
-
+from django.contrib.auth.models import User
 
 # Create your models here.
 class File(models.Model):
@@ -11,6 +11,7 @@ class File(models.Model):
     fileinfo = models.ForeignKey('FileInfo', on_delete=models.CASCADE, related_name='files', null=True, blank=True)
     # def __str__(self):
     #     return self.files.name if self.files.name else 'No name provided'
+
 class FileInfo(models.Model):
     document_type_choices = [
         ('pan', 'PAN'),
@@ -69,36 +70,6 @@ class Bank(models.Model):
     def __str__(self):
         return self.bank_name
 
-# # Owner Model
-# class Owner(models.Model):
-#     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
-#     owner_name = models.CharField(max_length=100, null=True, blank=True)
-#     share = models.IntegerField()
-#     pan = models.CharField(max_length=10, null=True, blank=True)
-#     aadhar = models.CharField(max_length=12, null=True, blank=True)
-#     mobile = models.IntegerField(null=True, blank=True)
-#     email = models.EmailField(null=True, blank=True)
-#     it_password = models.CharField(max_length=50, null=True, blank=True)
-#     isadmin = models.BooleanField(default=False, null=True, blank=True)
-#     username = models.CharField(max_length=50, null=True, blank=True)
-#     is_active = models.BooleanField(default=True)  # Soft delete flag
-#     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
-
-    # user = models.OneToOneField(
-    #     settings.AUTH_USER_MODEL,
-    #     on_delete=models.SET_NULL,  # 🔁 Don't delete user
-    #     null=True,
-    #     blank=True
-    # )
-
-    #def validate_aadhar(self, value):
-    #    if len(value) > 12:
-    #        raise serializers.ValidationError("Aadhar number cannot exceed 12 digits.")
-    #    return value
-    # def __str__(self):
-    #     return self.owner_name
-
-
 # Customer or Vendor Model
 class Customer(models.Model):
    name = models.CharField(max_length=100, null=True, blank=True)
@@ -114,9 +85,7 @@ class Customer(models.Model):
    def __str__(self):
        return self.name if self.name else "No Name"
 
-
-
-# **********************************************new testing*******************************************
+# User Model
 class CommonUser(AbstractUser):
     ROLE_CHOICES = (
         ('superuser', 'Super User'),
@@ -124,77 +93,19 @@ class CommonUser(AbstractUser):
         ('customeruser', 'Customer User'),
     )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
-    name = models.CharField(max_length=100, null=True, blank=True)
+    # name = models.CharField(max_length=100, null=True, blank=True)
     client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True, blank=True)
 
-
-# ****************************************************************************************************
-
-
-# # User Model
-# class ClientUser(AbstractUser):
-
-#     class Meta:
-#         verbose_name = "Client User"
-#         verbose_name_plural = "Client Users"
-
-#     groups = models.ManyToManyField(
-#         Group,
-#         related_name='clientuser_set',  # Unique related_name for groups
-#         blank=True,
-#         help_text='The groups this user belongs to.',
-#         verbose_name='groups',
-#     )
-
-#     user_permissions = models.ManyToManyField(
-#         Permission,
-#         related_name='clientuser_permissions_set',  # Unique related_name for permissions
-#         blank=True,
-#         help_text='Specific permissions for this user.',
-#         verbose_name='user permissions',
-#     )
-#     first_name = None
-#     last_name = None
-#     name = models.CharField(max_length=50, null=True, blank=True)
-#     ca_admin = models.BooleanField(default=False, null=True, blank=True)
-#     ca_user = models.BooleanField(null=True, blank=True)
-#     cus_admin = models.BooleanField(default=False, null=True, blank=True)
-#     cus_user = models.BooleanField(null=True, blank=True)
-#     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
-
-# # User Model
-# class DashboardUser(AbstractUser):
-
-#     class Meta:
-#         verbose_name = "Dashboard User"
-#         verbose_name_plural = "Dashboard Users"
-
-#     groups = models.ManyToManyField(
-#         Group,
-#         related_name='dashboarduser_set',  # Unique related_name for groups
-#         blank=True,
-#         help_text='The groups this user belongs to.',
-#         verbose_name='groups',
-#     )
-
-#     user_permissions = models.ManyToManyField(
-#         Permission,
-#         related_name='dashboarduser_permissions_set',  # Unique related_name for permissions
-#         blank=True,
-#         help_text='Specific permissions for this user.',
-#         verbose_name='user permissions',
-#     )
-#     first_name = models.CharField(max_length=100, null=True, blank=True)
-#     last_name = models.CharField(max_length=100, null=True, blank=True)
-#     superadmin_user = models.BooleanField(default=True, null=True, blank=True)
-
-
-from django.contrib.auth.models import User
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['client', 'email'], name='unique_email_per_client')
+        ]
 
 # Owner Model
 class Owner(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
-    owner_name = models.CharField(max_length=100, null=True, blank=True)
+    first_name = models.CharField(max_length=100, null=True, blank=True)
+    last_name = models.CharField(max_length=100, null=True, blank=True)
     username = models.CharField(max_length=100, null=True, blank=True)
     share = models.IntegerField()
     pan = models.CharField(max_length=10, null=True, blank=True)
@@ -237,7 +148,6 @@ class CompanyDocument(models.Model):
     password = models.CharField(max_length=100, null=True, blank=True)
     remark = models.TextField(null=True, blank=True)
     # file = models.FileField(null=True, blank=True)
-
 
 # Branch Model
 class Branch(models.Model):
@@ -283,19 +193,6 @@ class BranchDocument(models.Model):
     remark = models.TextField(null=True, blank=True)
     # file = models.FileField(null=True, blank=True)
 
-# # Customer or Vendor Model
-# class Customer(models.Model):
-#    name = models.CharField(max_length=100, null=True, blank=True)
-#    gst_no = models.CharField(max_length=100, null=True, blank=True)
-#    pan = models.CharField(max_length=100, null=True, blank=True)
-#    address = models.TextField(null=True, blank=True)
-#    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
-#    customer = models.BooleanField(null=True, blank=True)
-#    vendor = models.BooleanField(null=True, blank=True)
-
-#    def __str__(self):
-#        return self.name if self.name else "No Name"
-
 # HSNCode Model
 class HSNCode(models.Model):
     hsn_code = models.IntegerField(null=True, blank=True, unique=True)
@@ -330,7 +227,7 @@ class ProductDescription(models.Model):
     def __str__(self):
         return f"Description for {self.product}"
 
-
+# Product Summary Sales Model
 class ProductSummary(models.Model): #new
     hsn = models.ForeignKey(HSNCode, on_delete=models.SET_NULL, null=True, blank=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
@@ -374,7 +271,7 @@ class ProductSummary(models.Model): #new
     def __str__(self):
         return f"Summary for {self.product_name()}"
 
-
+# Sales Invoice Model
 class SalesInvoice(models.Model):
     invoice_type = [
         ('b2b', 'B2B'),
@@ -422,7 +319,7 @@ class SalesInvoice(models.Model):
         customer_name = self.customer.name if self.customer else "No Customer"
         return f"Sales Invoice {invoice_no} - {customer_name}"
 
-# Product Summary model
+# Product Summary Purchase Model
 class ProductSummaryPurchase(models.Model):
         hsn = models.ForeignKey(HSNCode,on_delete=models.SET_NULL, null=True, blank=True)
         product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -457,7 +354,6 @@ class ProductSummaryPurchase(models.Model):
 
         def __str__(self):
             return f'Summary for {self.product_name()}'
-
 
 # Purchase Invoice Model
 class PurchaseInvoice(models.Model):
@@ -512,10 +408,7 @@ class PurchaseInvoice(models.Model):
         vendor_name = self.vendor.name if self.vendor else "No Vendor"
         return f"Purchase Invoice {invoice_no} - {vendor_name}"
     
-    
-
-# Debit Note
-
+# Product Summary Debit Note Model
 class ProductSummaryDebitNote(models.Model): #new
     hsn = models.ForeignKey(HSNCode, on_delete=models.SET_NULL, null=True, blank=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
@@ -555,7 +448,7 @@ class ProductSummaryDebitNote(models.Model): #new
     def __str__(self):
         return f"Summary for {self.product_name()}"
 
-
+# Debit Note Model
 class DebitNote(models.Model):
     invoice_type = [
         ('b2b', 'B2B'),
@@ -606,7 +499,7 @@ class DebitNote(models.Model):
         customer_name = self.customer.name if self.customer else "No Customer"
         return f"Debit Note {invoice_no} - {customer_name}"
     
-# Credit Note
+# Product Summary Credit Note Model
 class ProductSummaryCreditNote(models.Model):
         hsn = models.ForeignKey(HSNCode,on_delete=models.SET_NULL, null=True, blank=True)
         product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
@@ -695,7 +588,7 @@ class CreditNote(models.Model):
         vendor_name = self.vendor.name if self.vendor else "No Vendor"
         return f"Credit Note {invoice_no} - {vendor_name}"   
 
-# Income 
+# Product Summary  Income Model
 class ProductSummaryIncome(models.Model):
         hsn = models.ForeignKey(HSNCode,on_delete=models.SET_NULL, null=True, blank=True)
         product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
@@ -730,7 +623,8 @@ class ProductSummaryIncome(models.Model):
 
         def __str__(self):
             return f'Summary for {self.product_name()}'
-        
+
+# Income Model
 class Income(models.Model):
     invoice_type = [
         ('b2b', 'B2B'),
@@ -776,8 +670,7 @@ class Income(models.Model):
         customer_name = self.customer.name if self.customer else "No Customer"
         return f"Income {invoice_no} - {customer_name}" 
     
-
-# Expenses
+# Product Summary Expenses Model
 class ProductSummaryExpenses(models.Model):
         hsn = models.ForeignKey(HSNCode,on_delete=models.SET_NULL, null=True, blank=True)
         product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
@@ -812,7 +705,6 @@ class ProductSummaryExpenses(models.Model):
 
         def __str__(self):
             return f'Summary for {self.product_name()}'
-
 
 # Expenses Model
 class Expenses(models.Model):
@@ -867,8 +759,7 @@ class Expenses(models.Model):
         vendor_name = self.vendor.name if self.vendor else "No Vendor"
         return f"Expenses {invoice_no} - {vendor_name}"
     
-# Income Debit Note
-
+# Product Summary Income Debit Note Model
 class ProductSummaryIncomeDebitNote(models.Model): #new
     hsn = models.ForeignKey(HSNCode, on_delete=models.SET_NULL, null=True, blank=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
@@ -908,7 +799,7 @@ class ProductSummaryIncomeDebitNote(models.Model): #new
     def __str__(self):
         return f"Summary for {self.product_name()}"
 
-
+# Income Debit Note Model
 class IncomeDebitNote(models.Model):
     invoice_type = [
         ('b2b', 'B2B'),
@@ -956,7 +847,7 @@ class IncomeDebitNote(models.Model):
         customer_name = self.customer.name if self.customer else "No Customer"
         return f"Income Debit Note {invoice_no} - {customer_name}"
     
-# Expenses Credit Note
+# Product Summary Expenses Credit Note Model
 class ProductSummaryExpensesCreditNote(models.Model):
         hsn = models.ForeignKey(HSNCode,on_delete=models.SET_NULL, null=True, blank=True)
         product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
@@ -992,8 +883,7 @@ class ProductSummaryExpensesCreditNote(models.Model):
         def __str__(self):
             return f'Summary for {self.product_name()}'
 
-
-# Credit Note Model
+# Expenses Credit Note Model
 class ExpensesCreditNote(models.Model):
     invoice_type = [
         ('b2b', 'B2B'),
@@ -1046,17 +936,14 @@ class ExpensesCreditNote(models.Model):
         vendor_name = self.vendor.name if self.vendor else "No Vendor"
         return f"Expenses Credit Note {invoice_no} - {vendor_name}"
     
-
-    
 # Zip Upload 
 class ZipUpload(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
     files = models.FileField(null=True, blank=True)
     type_of_data = models.CharField(max_length=100, null=True, blank=True)
     date = models.DateTimeField(auto_now=True)
-        
-    
-# Income Tax Document
+            
+# Income Tax Document Model
 class IncomeTaxDocument(models.Model):
     frequency_choices = [
         ('26as', '26AS'),
@@ -1069,7 +956,7 @@ class IncomeTaxDocument(models.Model):
     month = models.DateField(null=True, blank=True)
     attachment = models.FileField(null=True, blank=True)
 
-#PF
+# PF Model
 class PF(models.Model):
 
     gender = [
@@ -1125,48 +1012,28 @@ class PF(models.Model):
     def __str__(self):
         return str(self.employee_code) if str(self.employee_code) else "Unnamed PF"
 
-# Tax Audit
+# Tax Audit Model
 class TaxAudit(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
     financial_year = models.CharField(max_length=50,null=True, blank=True)
     month = models.CharField(max_length=100,null=True, blank=True)
     # attachment = models.FileField(null=True, blank=True)
 
-# AIR
+# AIR Model
 class AIR(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
     financial_year = models.CharField(max_length=50,null=True, blank=True)
     month = models.CharField(max_length=100,null=True, blank=True)
     # attachment = models.FileField(null=True, blank=True)
 
-# SFT
+# SFT Model
 class SFT(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
     financial_year = models.CharField(max_length=50, null=True, blank=True)
     month = models.CharField(max_length=100,null=True, blank=True)
     # attachment = models.FileField(null=True, blank=True)
 
-# Others
-# class Others(models.Model):
-#     textchoices = [
-#         ('monthly', 'Monthly'),
-#         ('minute', 'Minute'),
-#         ('other', 'Other')
-#     ]
-
-#     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
-#     financial_year = models.CharField(max_length=50, null=True, blank=True)
-#     month = models.CharField(max_length=100,null=True, blank=True)
-#     text = models.CharField(max_length=100, choices=textchoices, null=True)
-    # attachment = models.FileField(null=True, blank=True)
-    
-    # attachment = models.FileField(null=True, blank=True)
-
-
-
-
-
-#TDS Payment
+#TDS Payment Model
 class TDSPayment(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
     client_name = models.CharField(max_length=100 ,null=True, blank=True)
@@ -1184,7 +1051,7 @@ class TDSPayment(models.Model):
     tds_payment_date = models.DateField(null=True, blank=True)
     tds_challan_no = models.CharField(max_length=100, null=True, blank=True)
 
-
+# Others Model
 class Others(models.Model):
     # textchoices = [
     #     ('monthly', 'Monthly'),
@@ -1197,26 +1064,24 @@ class Others(models.Model):
     month = models.CharField(max_length=100,null=True, blank=True)
     text = models.CharField(max_length=100, null=True, blank=True)
 
-
-# TDS Return
+# TDS Return Model
 class TDSReturn(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
     challan_date = models.DateField(null=True, blank=True)
-    challan_no = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    challan_no = models.CharField(max_length=100, null=True, blank=True)
     challan_type = models.CharField(max_length=100 ,null=True, blank=True)
     tds_section = models.CharField(max_length=1000 ,null=True, blank=True)
     amount = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
-    last_filed_return_ack_no = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    last_filed_return_ack_no = models.CharField(max_length=100, null=True, blank=True)
     last_filed_return_ack_date = models.DateField(null=True, blank=True)
     # challan_attachment = models.FileField(null=True, blank=True)
 
-# TDS tds_section
+# TDS tds_section Model
 class TDSSection(models.Model):
     # client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
     name = models.CharField(max_length=100 ,null=True, blank=True)
 
-
-#Acknowledgement
+# Acknowledgement Model
 class Acknowledgement(models.Model):
 
     return_type = [
@@ -1269,7 +1134,6 @@ class Acknowledgement(models.Model):
     # return_file = models.FileField(null=True, blank=True)
     # computation_file = models.FileField(null=True, blank=True)
     status = models.BooleanField(null=True, blank=True, default=False)
- 
 
 
 class Files(models.Model):
@@ -1286,6 +1150,7 @@ class Files(models.Model):
     return_file = models.FileField(upload_to='documents',null=True, blank=True)
     computation_file = models.FileField(upload_to='documents',null=True, blank=True)
 
+# Excel File Model
 class ExcelFile(models.Model):
     file = models.FileField(null=True, blank=True)
 
