@@ -509,19 +509,29 @@ def create_owner(request, pk):
             )
             final_username = "".join(ch for ch in usernames if ch != " ")
 
-            if CommonUser.objects.filter(email=owner_serializer.validated_data['email']).exists():
+            # if CommonUser.objects.filter(email=owner_serializer.validated_data['email']).exists():
+            #     return Response(
+            #         {"error_message": "A user with this email already exists."},
+            #         status=status.HTTP_400_BAD_REQUEST
+            #     )
+
+            # if CommonUser.objects.filter(username=final_username).exists():
+            #     return Response(
+            #         {"error_message": "A user with this FirstName and LastName already exists."},
+            #         status=status.HTTP_400_BAD_REQUEST
+            #     )
+            if CommonUser.objects.filter(email=owner_serializer.validated_data['email'], client=client).exists():
                 return Response(
-                    {"error_message": "A user with this email already exists."},
+                    {"error_message": "A user with this email already exists for this client."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            if CommonUser.objects.filter(username=final_username).exists():
+            # Check username within the same client only
+            if CommonUser.objects.filter(username=final_username, client=client).exists():
                 return Response(
-                    {"error_message": "A user with this FirstName and LastName already exists."},
+                    {"error_message": "A user with this FirstName and LastName already exists for this client."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-
-
             owner = owner_serializer.save(client=client)
 
             clientuser = CommonUser.objects.create_user(
@@ -539,18 +549,18 @@ def create_owner(request, pk):
             owner.user = clientuser
             owner.save()
 
-            email_subject = "Your Account is Registered"
-            message = render_to_string("activate.html", {
-                'user': clientuser,
-                # 'domain': '127.0.0.1:8000',
-                'password': user_password,
-                'domain': 'admin.dms.zacoinfotech.com',
-                'uid': urlsafe_base64_encode(force_bytes(clientuser.pk)),
-                'token': generate_token.make_token(clientuser),
-            })
+            # email_subject = "Your Account is Registered"
+            # message = render_to_string("activate.html", {
+            #     'user': clientuser,
+            #     # 'domain': '127.0.0.1:8000',
+            #     'password': user_password,
+            #     'domain': 'admin.dms.zacoinfotech.com',
+            #     'uid': urlsafe_base64_encode(force_bytes(clientuser.pk)),
+            #     'token': generate_token.make_token(clientuser),
+            # })
 
-            email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [email])
-            email_message.send()
+            # email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [email])
+            # email_message.send()
 
             print("usernames",clientuser.username)
             serializer = ClientuserSerializerWithToken(clientuser, many=False)
@@ -9738,9 +9748,9 @@ def create_acknowledgement(request,pk):
 
             
 
-            return Response({'message':'Bank created successfully', 'data' : serializer.data},status=status.HTTP_201_CREATED)
+            return Response({'message':'Acknowledgement created successfully', 'data' : serializer.data},status=status.HTTP_201_CREATED)
     return Response({
-        'message':'Fail to create bank', 
+        'message':'Fail to create Acknowledgement', 
         'error_message' : serializer.errors
         },status=status.HTTP_400_BAD_REQUEST)
 

@@ -12,7 +12,7 @@ import customeruser
 
 def fill_clientuser_forms(driver):
     # Load the Excel data
-    df = pd.read_excel(r"users.xlsx")
+    df = pd.read_excel(r"user100.xlsx")
 
     # Map column names to lowercase without spaces for convenience
     df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
@@ -23,7 +23,7 @@ def fill_clientuser_forms(driver):
             EC.presence_of_element_located((By.XPATH, "//*[text()='Users Creation']"))
         )
         driver.execute_script("arguments[0].scrollIntoView(true);", tab)
-        WebDriverWait(driver, 10).until(EC.element_to_be_clickable(tab))
+        WebDriverWait(driver, 5).until(EC.element_to_be_clickable(tab))
         driver.execute_script("arguments[0].click();", tab)
         time.sleep(2)
     except TimeoutException:
@@ -32,12 +32,12 @@ def fill_clientuser_forms(driver):
     for index, row in df.iterrows():
         try:
             # Wait for backdrop to disappear
-            WebDriverWait(driver, 10).until(
+            WebDriverWait(driver, 5).until(
                 EC.invisibility_of_element_located((By.CLASS_NAME, "MuiBackdrop-root"))
             )
 
             # Click the 'Create' button
-            button = WebDriverWait(driver, 10).until(
+            button = WebDriverWait(driver, 5).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Create')]"))
             )
             driver.execute_script("arguments[0].scrollIntoView(true);", button)
@@ -57,7 +57,7 @@ def fill_clientuser_forms(driver):
             driver.find_element(By.NAME, "password").send_keys(row["password"])
 
             # Click Confirm button
-            confirm_button = WebDriverWait(driver, 10).until(
+            confirm_button = WebDriverWait(driver, 5).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Confirm']]"))
             )
             driver.execute_script("arguments[0].scrollIntoView(true);", confirm_button)

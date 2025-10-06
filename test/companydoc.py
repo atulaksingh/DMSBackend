@@ -10,7 +10,7 @@ import officelocation
 
 def fill_companydoc_forms(driver):
     # Load the Excel data
-    df = pd.read_excel(r"companydoc.xlsx")
+    df = pd.read_excel(r"companydoc50.xlsx")
 
 
     # button = driver.find_element(By.XPATH, "//button[contains(text(), 'Company Documents')]")
@@ -18,11 +18,11 @@ def fill_companydoc_forms(driver):
     # time.sleep(3)
 
     try:
-        tab = WebDriverWait(driver, 15).until(
+        tab = WebDriverWait(driver, 5).until(
             EC.presence_of_element_located((By.XPATH, "//*[text()='Company Documents']"))
         )
         driver.execute_script("arguments[0].scrollIntoView(true);", tab)
-        WebDriverWait(driver, 10).until(EC.element_to_be_clickable(tab))
+        WebDriverWait(driver, 5).until(EC.element_to_be_clickable(tab))
         driver.execute_script("arguments[0].click();", tab)
     except TimeoutException:
         print("Company Documents tab not found!")
@@ -30,7 +30,7 @@ def fill_companydoc_forms(driver):
 
 
     # Wait for branch table to load
-    WebDriverWait(driver, 10).until(
+    WebDriverWait(driver, 5).until(
         EC.presence_of_element_located((By.XPATH, "//table"))
     )
 
@@ -97,7 +97,7 @@ def fill_companydoc_forms(driver):
                 file_input.send_keys(row["File1"])
                 file_input.send_keys(row["File2"])
 
-                button = WebDriverWait(driver, 10).until(
+                button = WebDriverWait(driver, 5).until(
                     EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Confirm']]"))
                 )
                 button.click()
@@ -138,7 +138,7 @@ if __name__ == "__main__":
     time.sleep(2)
 
     fill_companydoc_forms(driver)
-    time.sleep(15)
+    time.sleep(5)
     driver.quit()
     print("Purchase form submission done.")
 

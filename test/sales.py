@@ -16,10 +16,20 @@ def fill_sales_forms(driver):
     options = Options()
     options.add_experimental_option("detach", True)  
 
-    df = pd.read_excel(r"sales2.xlsx")  
+    df = pd.read_excel(r"sales100.xlsx")  
     print("Columnnnnnnnnnn",df.columns)
-    button = driver.find_element(By.XPATH, "//button[contains(text(), 'Sales')]")
-    button.click()
+
+    # button = driver.find_element(By.XPATH, "//button[contains(text(), 'Sales')]")
+    # button.click()
+    try:
+        tab = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.XPATH, "//*[text()='Sales']"))
+        )
+        driver.execute_script("arguments[0].scrollIntoView(true);", tab)
+        WebDriverWait(driver, 5).until(EC.element_to_be_clickable(tab))
+        driver.execute_script("arguments[0].click();", tab)
+    except TimeoutException:
+        print("Sales tab not found!")
 
     # Convert date_of_incorporation to MM-DD-YYYY format 
     df.columns = df.columns.str.strip() 
@@ -390,6 +400,11 @@ if __name__ == "__main__":
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
     driver.get("http://localhost:5173/")
     time.sleep(2)
+
+    driver.find_element(By.NAME, "username").send_keys("vaishnavitalari.v@gmail.com")
+    driver.find_element(By.NAME, "password").send_keys("vaishnavi")
+    driver.find_element(By.NAME, "login").click()
+    time.sleep(5)
 
     driver.find_element(By.ID, "long-button").click()
     view_button = driver.find_element(By.CSS_SELECTOR, "li.MuiButtonBase-root.MuiMenuItem-root")

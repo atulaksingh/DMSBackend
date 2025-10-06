@@ -8,16 +8,18 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.common.exceptions import TimeoutException
+
 
 def fill_bank_forms(driver):
-    df = pd.read_excel(r"bank2.xlsx")  # Modify path as needed
+    df = pd.read_excel(r"bank200.xlsx")  # Modify path as needed
 
     try:
-        tab = WebDriverWait(driver, 15).until(
+        tab = WebDriverWait(driver, 5).until(
             EC.presence_of_element_located((By.XPATH, "//*[text()='Bank Details']"))
         )
         driver.execute_script("arguments[0].scrollIntoView(true);", tab)
-        WebDriverWait(driver, 10).until(EC.element_to_be_clickable(tab))
+        WebDriverWait(driver, 5).until(EC.element_to_be_clickable(tab))
         driver.execute_script("arguments[0].click();", tab)
     except TimeoutException:
         print("Owner Details tab not found!")
@@ -78,6 +80,6 @@ if __name__ == "__main__":
     time.sleep(2)
 
     fill_bank_forms(driver)
-    time.sleep(8)
+    time.sleep(5)
     driver.quit()
     print("Bank form submission done.")

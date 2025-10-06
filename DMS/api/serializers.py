@@ -170,11 +170,11 @@ class OwnerSerializer(serializers.ModelSerializer):
             'user': {'read_only': True}
         }
         # fields = ['owner_name', 'username', 'share', 'pan', 'aadhar', 'mobile', 'email', 'it_password', 'isadmin', 'is_active', 'user', 'client', 'id', 'user_password']
-    def validate_email(self, value):
-        client = self.context.get("client")
-        if CommonUser.objects.filter(client=client, email=value).exists():
-            raise serializers.ValidationError("A user with this email already exists.")
-        return value
+    # def validate_email(self, value):
+    #     client = self.context.get("client")
+    #     if CommonUser.objects.filter(client=client, email=value).exists():
+    #         raise serializers.ValidationError("A user with this email already exists.")
+    #     return value
     
     def create(self, validated_data):
         # user_password remove kar do before creating Owner

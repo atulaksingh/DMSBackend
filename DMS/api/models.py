@@ -94,7 +94,8 @@ class CommonUser(AbstractUser):
     )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
     # name = models.CharField(max_length=100, null=True, blank=True)
-    client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True, blank=True)
+    # client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True, blank=True)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
         constraints = [

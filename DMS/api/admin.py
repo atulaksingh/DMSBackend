@@ -6,31 +6,6 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 admin.site.register(CompanyDocument)
 
-# class ClientUserAdmin(admin.ModelAdmin):
-#     model = ClientUser
-#     list_display = ('id', 'name', 'email', 'client', 'is_active', 'is_staff')
-# admin.site.register(ClientUser, ClientUserAdmin)
-
-# class DashboardUserAdmin(UserAdmin):
-#     model = DashboardUser
-#     list_display = ('id', 'first_name','last_name', 'email', 'is_active', 'is_staff')
-#     search_fields = ('first_name','last_name', 'email')
-#     list_editable = ('is_active', 'is_staff')
-#     fieldsets = (
-#         (None, {'fields': ('email', 'password')}),
-#         ('Personal Info', {'fields': ('first_name','last_name')}),
-#         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
-#         ('Important dates', {'fields': ('last_login', 'date_joined')}),
-#     )
-#     add_fieldsets = (
-#         (None, {
-#             'classes': ('wide',),
-#             'fields': ('email', 'first_name','last_name', 'password1', 'password2'),
-#         }),
-#     )
-#     ordering = ('id',)
-
-# admin.site.register(DashboardUser, DashboardUserAdmin)
 class CommonUserAdmin(UserAdmin):
     model = CommonUser
     list_display = ('id', 'client','username', 'email','role', 'is_active', 'is_staff')
@@ -96,8 +71,6 @@ class AcknowledgementAdmin(admin.ModelAdmin):
 
 admin.site.register(Acknowledgement, AcknowledgementAdmin)
 
-
-
 # Inline for File model to manage file uploads
 class FileInline(admin.TabularInline):
     model = File
@@ -149,11 +122,8 @@ class SalesInvoiceAdmin(admin.ModelAdmin):
 class ProductSummaryAdmin(admin.ModelAdmin):
     list_display = ['id', 'hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
     readonly_fields = ['hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
-    
-    
-    
+       
 # ############################# Purchase
-
 class ProductPurchaseSummaryInline(admin.TabularInline): ##############
     model = PurchaseInvoice.product_summaries.through  # Access the through model
     extra = 0
@@ -177,9 +147,7 @@ class ProductSummaryAdmin(admin.ModelAdmin):
     list_display = ['id', 'hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
     readonly_fields = ['hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
     
-
 # ############################Debit Note
-
 class DebitNotePurchaseSummaryInline(admin.TabularInline): ##############
     model = DebitNote.product_summaries.through  # Access the through model
     extra = 0
@@ -205,7 +173,6 @@ class ProductSummaryDebitNoteAdmin(admin.ModelAdmin):
 
     
 # #########################################Credit Note
-
 class CreditNotePurchaseSummaryInline(admin.TabularInline): ##############
     model = CreditNote.product_summaries.through  # Access the through model
     extra = 0
@@ -230,7 +197,6 @@ class ProductSummaryCreditNoteAdmin(admin.ModelAdmin):
     readonly_fields = ['hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
 
 # #########################################Income
-
 class ProductSummaryIncomeInline(admin.TabularInline): ##############
     model = Income.product_summaries.through  # Access the through model
     extra = 0
@@ -255,7 +221,6 @@ class ProductSummaryIncomeAdmin(admin.ModelAdmin):
     readonly_fields = ['hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
     
 # ############################# Expenses
-
 class ProductSummaryExpensesInline(admin.TabularInline): ##############
     model = Expenses.product_summaries.through  # Access the through model
     extra = 0
@@ -281,7 +246,6 @@ class ProductSummaryExpensesAdmin(admin.ModelAdmin):
     
 
 # ############################Income Debit Note
-
 class IncomeDebitNotePurchaseSummaryInline(admin.TabularInline): ##############
     model = IncomeDebitNote.product_summaries.through  # Access the through model
     extra = 0
@@ -306,7 +270,6 @@ class ProductSummaryIncomeDebitNoteAdmin(admin.ModelAdmin):
     readonly_fields = ['hsn_code', 'gst_rate', 'product_name', 'description_text', 'unit', 'rate']
     
 # #########################################Expenses Credit Note
-
 class ExpensesCreditNotePurchaseSummaryInline(admin.TabularInline): ##############
     model = ExpensesCreditNote.product_summaries.through  # Access the through model
     extra = 0

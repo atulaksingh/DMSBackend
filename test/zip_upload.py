@@ -14,22 +14,27 @@ from selenium.webdriver.chrome.options import Options
 
 
 def fill_zip_upload_forms(driver):
-    # options = Options()
-    # options.add_experimental_option("detach", True)  
+    df = pd.read_excel(r"zipupload200.xlsx")  
 
-    df = pd.read_excel(r"zipupload.xlsx")  
 
-    # button = driver.find_element(By.XPATH, "//button[contains(text(), 'ZipFile  Upload')]")
-    button = driver.find_element(By.XPATH, "//button[contains(text(), 'ZipFile  Upload')]")
-    time.sleep(10)
-    button.click()
+    try:
+        tab = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.XPATH, "//*[text()='Zipfile Upload']"))
+        )
+        driver.execute_script("arguments[0].scrollIntoView(true);", tab)
+        WebDriverWait(driver, 5).until(EC.element_to_be_clickable(tab))
+        driver.execute_script("arguments[0].click();", tab)
+    except TimeoutException:
+        print("Zipfile Upload tab not found!")
 
     # Loop through the rows in the dataframe
     for index, row in df.iterrows():
         print(list(df.columns))  # Check exact column names
 
-        button = driver.find_element(By.XPATH, "//button[contains(text(), 'Upload Invoice')]").click()
+        button = driver.find_element(By.XPATH, "//button[contains(text(), 'Upload Data')]").click()
         time.sleep(3)
+
+        driver.find_element(By.NAME, "type_of_data").send_keys(row["TypeofData"])
 
         file_input = driver.find_element(By.NAME, 'file')
         file_input.send_keys(row["File1"])
@@ -49,6 +54,11 @@ if __name__ == "__main__":
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
     driver.get("http://localhost:5173/")
     time.sleep(2)
+
+    driver.find_element(By.NAME, "username").send_keys("vaishnavitalari.v@gmail.com")
+    driver.find_element(By.NAME, "password").send_keys("vaishnavi")
+    driver.find_element(By.NAME, "login").click()
+    time.sleep(5)
 
     driver.find_element(By.ID, "long-button").click()
     view_button = driver.find_element(By.CSS_SELECTOR, "li.MuiButtonBase-root.MuiMenuItem-root")

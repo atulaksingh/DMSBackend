@@ -11,20 +11,32 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import StaleElementReferenceException, TimeoutException, NoSuchWindowException
 from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
 
 
 def fill_customeruser_forms(driver):
+
+    try:
+        tab = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.XPATH, "//*[text()='Users Creation']"))
+        )
+        driver.execute_script("arguments[0].scrollIntoView(true);", tab)
+        WebDriverWait(driver, 5).until(EC.element_to_be_clickable(tab))
+        driver.execute_script("arguments[0].click();", tab)
+    except TimeoutException:
+        print("Users Creation tab not found!")
+
     options = Options()
     options.add_experimental_option("detach", True)  
 
-    df = pd.read_excel(r"customeruser.xlsx")  
+    df = pd.read_excel(r"customeruser100.xlsx")  
 
     try:
-        tab = WebDriverWait(driver, 15).until(
+        tab = WebDriverWait(driver, 5).until(
             EC.presence_of_element_located((By.XPATH, "//*[text()='User']"))
         )
         driver.execute_script("arguments[0].scrollIntoView(true);", tab)
-        WebDriverWait(driver, 10).until(EC.element_to_be_clickable(tab))
+        WebDriverWait(driver, 5).until(EC.element_to_be_clickable(tab))
         driver.execute_script("arguments[0].click();", tab)
     except TimeoutException:
         print("Branch Details tab not found!")
@@ -32,12 +44,12 @@ def fill_customeruser_forms(driver):
     for index, row in df.iterrows():
         try:
             # Wait for backdrop to disappear
-            WebDriverWait(driver, 10).until(
+            WebDriverWait(driver, 5).until(
                 EC.invisibility_of_element_located((By.CLASS_NAME, "MuiBackdrop-root"))
             )
 
             # Click the 'Create' button
-            button = WebDriverWait(driver, 10).until(
+            button = WebDriverWait(driver, 5).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Create')]"))
             )
             driver.execute_script("arguments[0].scrollIntoView(true);", button)
@@ -57,7 +69,7 @@ def fill_customeruser_forms(driver):
             driver.find_element(By.NAME, "password").send_keys(row["password"])
 
             # Click Confirm button
-            confirm_button = WebDriverWait(driver, 10).until(
+            confirm_button = WebDriverWait(driver, 5).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Confirm']]"))
             )
             driver.execute_script("arguments[0].scrollIntoView(true);", confirm_button)
@@ -71,107 +83,23 @@ def fill_customeruser_forms(driver):
             print(f"Error filling form for row {index}: {e}")
             continue
 
+if __name__ == "__main__":
 
-    # Loop through the rows in the dataframe
-    # for index, row in df.iterrows():
-    #     print(list(df.columns))  # Check exact column names
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+    driver.get("http://localhost:5173/")
+    time.sleep(2)
 
-    #     button = driver.find_element(By.XPATH, "//button[contains(text(), 'Create')]").click()
-    #     time.sleep(1)
+    driver.find_element(By.NAME, "username").send_keys("vaishnavitalari.v@gmail.com")
+    driver.find_element(By.NAME, "password").send_keys("vaishnavi")
+    driver.find_element(By.NAME, "login").click()
+    time.sleep(5)
 
-    #     # Fill in the form fields
-    #     driver.find_element(By.NAME, "location").send_keys(row["location"])
-    #     driver.find_element(By.NAME, "contact").send_keys(row["contact"])
-    #     # driver.find_element(By.NAME, "gst_no").send_keys(row["gst_no"])
+    driver.find_element(By.ID, "long-button").click()
+    view_button = driver.find_element(By.CSS_SELECTOR, "li.MuiButtonBase-root.MuiMenuItem-root")
+    view_button.click()
+    time.sleep(2)
 
-    #     try:
-    #         # Country field
-    #         country_name = row["country"]  
-    #         autocomplete_input = WebDriverWait(driver, 5).until(
-    #             EC.presence_of_element_located((By.ID, "country-select"))
-    #         )
-    #         autocomplete_input.clear()
-    #         autocomplete_input.send_keys(country_name[:10]) 
-    #         time.sleep(1)
-
-    #         dropdown_options = WebDriverWait(driver, 5).until(
-    #             EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'MuiAutocomplete-option')]"))
-    #         )
-
-    #         available_countries = [opt.text.strip() for opt in dropdown_options]
-    #         print("Dropdown options:", available_countries)
-
-    #         for option in dropdown_options:
-    #             if option.text.strip().endswith(country_name):  # Match exact country
-    #                 ActionChains(driver).move_to_element(option).click().perform()
-    #                 time.sleep(1)
-    #                 break
-    #             else:
-    #                 print(f"Country '{country_name}' not found in dropdown!")
-
-    #         # State field
-    #         state_name = row["state"]  # Take state from Excel
-    #         autocomplete_input = WebDriverWait(driver, 10).until(
-    #             EC.element_to_be_clickable((By.ID, "state-select"))
-    #         )
-    #         autocomplete_input.clear()
-    #         autocomplete_input.send_keys(state_name[:10])
-    #         time.sleep(1) 
-
-    #         dropdown_options = WebDriverWait(driver, 5).until(
-    #             EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'MuiAutocomplete-option')]"))
-    #         )
-
-    #         available_states = [opt.text.strip() for opt in dropdown_options]
-    #         print("Dropdown options:", available_states)
-
-    #         for option in dropdown_options:
-    #             if option.text.strip().endswith(state_name):  
-    #                 ActionChains(driver).move_to_element(option).click().perform()
-    #                 time.sleep(1)
-    #                 break
-    #         else:
-    #             print(f"State '{state_name}' not found in dropdown!")
-
-    #         # City field
-    #         city_name = row["city"]  # Take state from Excel
-    #         autocomplete_input = WebDriverWait(driver, 10).until(
-    #             EC.element_to_be_clickable((By.ID, "city-select"))
-    #         )
-    #         autocomplete_input.clear()
-    #         autocomplete_input.send_keys(city_name[:10])
-    #         time.sleep(1) 
-
-    #         dropdown_options = WebDriverWait(driver, 5).until(
-    #             EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'MuiAutocomplete-option')]"))
-    #         )
-
-    #         available_states = [opt.text.strip() for opt in dropdown_options]
-    #         print("Dropdown options:", available_states)
-
-    #         for option in dropdown_options:
-    #             if option.text.strip().endswith(city_name):  
-    #                 ActionChains(driver).move_to_element(option).click().perform()
-    #                 time.sleep(1)
-    #                 break
-    #         else:
-    #             print(f"State '{city_name}' not found in dropdown!")
-
-
-    #     except Exception as e:
-    #         print(f"Error: {e}")
-
-    #     # Fill in remaining form fields
-    #     # driver.find_element(By.NAME, "pincode").send_keys(row["pincode"])
-    #     driver.find_element(By.NAME, "address").send_keys(row["address"])
-
-    #     button = WebDriverWait(driver, 3).until(
-    #         EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Confirm']]"))
-    #     )
-    #     button.click()
-    #     time.sleep(2)
-
-# # Wait for a few seconds before quitting
-# time.sleep(15)
-# driver.quit()
-# print("Done")
+    fill_customeruser_forms(driver)
+    time.sleep(5)
+    driver.quit()
+    print("Purchase form submission done.")

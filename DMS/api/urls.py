@@ -14,6 +14,8 @@ from rest_framework_simplejwt.views import (
 
 
 urlpatterns = [
+
+# Client
     path('create-client', create_client, name='clients-create'),
     path('edit-client/<int:pk>',view=edit_client, name='edit-client'),
     path('delete-client/<int:pk>',view=delete_client, name='delete-client'),
@@ -22,12 +24,14 @@ urlpatterns = [
     path('single-fileinfo/<int:pk>/<int:fileinfo_pk>', view=single_fileinfo, name='single-fileinfo'),
     path('delete-fileinfo/<int:pk>/<int:fileinfo_pk>', view=delete_fileinfo, name='delete-fileinfo'),
 
+# Bank
     path('create-bank/<int:pk>',view=create_bank, name='create-bank'),
     path('edit-bank/<int:pk>/<int:bank_pk>',view=edit_bank, name='edit-bank'),
     path('list-bank/<int:pk>',view=list_bank, name='list-bank'),
     path('single-bank/<int:pk>/<int:bank_pk>',view=single_bank, name='single-bank'),
     path('delete-bank/<int:pk>/<int:bank_pk>', view=delete_bank, name='delete-bank'),
 
+# Owner
     path('create-owner/<int:pk>',view=create_owner, name='create-owner'),
     path('edit-owner/<int:pk>/<int:owner_pk>',view=edit_owner, name='edit-owner'),
     path('list-owner/<int:pk>',view=list_owner, name='list-owner'),
@@ -44,11 +48,10 @@ urlpatterns = [
     # # path('edit-clientuser/<int:pk>/<int:user_pk>', view=edit_clientuser, name='edit-clientuser'), #*****************
     # # path('delete-clientuser/<int:pk>/<int:user_pk>', view=delete_clientuser, name='delete-clientuser'),
     path('reset-password/<int:pk>/<int:user_pk>', view=reset_clientuser_password, name='reset-password'), 
-
     path('forget-password', view=forget_password, name='forget-password'),
     path('reset-password/<uidb64>/<token>/', view=reset_password, name='reset-password'),
 
-    # Dashboard User / SuperAdmin User 
+# Dashboard User / SuperAdmin User 
     path('create-superuser', view=create_common_superuser, name='create-superuser'),
     path('edit-superuser/<int:user_pk>', view=edit_common_superuser, name='edit-superuser'),
     path('delete-superuser/<int:user_pk>', view=delete_common_superuser, name='delete-superuser'),
@@ -57,8 +60,7 @@ urlpatterns = [
     path('superadmin-login',  CommonLoginAPIView.as_view(), name='token_obtain_pair'),
     path('superuser-activate/<uidb64>/<token>',SuperuserActivateAccountView.as_view(),name='superuser-activate'),
 
-
-    # Client User
+# Client User
     path('create-clientuser/<int:pk>', view=create_common_clientuser, name='create-clientuser'),
     path('edit-clientuser/<int:pk>/<int:user_pk>', view=edit_common_clientuser, name='edit-clientuser'),
     path('delete-clientuser/<int:pk>/<int:user_pk>', view=delete_common_clientuser, name='delete-clientuser'),
@@ -66,7 +68,7 @@ urlpatterns = [
     path('single-clientuser/<int:pk>/<int:user_pk>',view=single_common_clientuser, name='single-clientuser'),
     path('activate/<uidb64>/<token>',ClientuserActivateAccountView.as_view(),name='activate'),
 
-    # Customer User
+# Customer User
     path('create-customeruser/<int:pk>', view=create_common_customeruser, name='create-customeruser'),
     path('edit-customeruser/<int:pk>/<int:user_pk>', view=edit_common_customeruser, name='edit-customeruser'),
     path('delete-customeruser/<int:pk>/<int:user_pk>', view=delete_common_customeruser, name='delete-customeruser'),
@@ -74,41 +76,47 @@ urlpatterns = [
     path('single-customeruser/<int:pk>/<int:user_pk>',view=single_common_customeruser, name='single-customeruser'),
     path('activate/<uidb64>/<token>',CustomeruserActivateAccountView.as_view(),name='activate'),
 
-
+# Company Document
     path('create-companydoc/<int:pk>', view=create_companydoc, name='create-companydoc'),        #***********************
     path('edit-companydoc/<int:pk>/<int:file_pk>', view=edit_companydoc, name='edit-companydoc'),         #***********************
     path('list-companydoc/<int:pk>', view=list_companydoc, name='list-companydoc'),        #***********************
     path('delete-companydoc/<int:pk>/<int:file_pk>', view=delete_companydoc, name='delete-companydoc'),        #***********************
 
+# Branch
     path('create-branch/<int:pk>', view=create_branch, name='create-branch'),
     path('edit-branch/<int:pk>/<int:branch_pk>',view=edit_branch, name='edit-branch'),
     path('list-branch/<int:pk>',view=list_branch, name='list-branch'),
     path('delete-branch/<int:pk>/<int:branch_pk>', view=delete_branch, name='delete-branch'),
     path('detail-branch/<int:pk>/<int:branch_pk>', view=detail_branch, name='detail-branch'),
 
+# Office Location
     path('create-officelocation/<int:branch_pk>', view=create_officelocation, name='create-officelocation'),
     path('edit-officelocation/<int:branch_pk>/<int:office_pk>',view=edit_officelocation, name='edit-officelocation'),
     path('single-officelocation/<int:branch_pk>/<int:office_pk>',view=single_officelocation, name='single-officelocation'),
     path('list-officelocation/<int:pk>/<int:branch_pk>',view=list_officelocation, name='list-officelocation'),
     path('delete-officelocation/<int:pk>/<int:branch_pk>/<int:office_pk>', view=delete_officelocation, name='delete-officelocation'),
 
+# Customer
     path('create-customer/<int:pk>', view=create_customer, name='create-customer'),
     path('edit-customer/<int:pk>/<int:customer_pk>',view=edit_customer, name='edit-customer'),
     path('list-customer/<int:pk>',view=list_customer, name='list-customer'),
     path('delete-customer/<int:pk>/<int:customer_pk>', view=delete_customer, name='delete-cutomer'),
     path('single-customer/<int:pk>/<int:customer_pk>', view=single_customer, name='single-customer'),
 
+# Branch Document
     path('create-branchdoc/<int:branch_pk>', view=create_branchdoc, name='create-branchdoc'),
     path('edit-branchdoc/<int:branch_pk>/<int:branchdoc_pk>', view=edit_branchdoc, name='edit-branchdoc'),
     path('list-branchdoc/<int:branch_pk>', view=list_branchdoc, name='list-branchdoc'),
     path('single-branchdoc/<int:branch_pk>/<int:branchdoc_pk>', view=single_branchdoc, name='single-branchdoc'),
     path('delete-branchdoc/<int:branch_pk>/<int:branchdoc_pk>', view=delete_branchdoc, name='delete-branchdoc'),
 
+# Income Tax Document
     path('create-incometaxdoc/<int:pk>', view=create_incometaxdoc, name='create-incometaxdoc'),
     path('edit-incometaxdoc/<int:pk>/<int:income_pk>', view=edit_incometaxdoc, name='edit-incometaxdoc'),
     path('list-incometaxdoc/<int:pk>', view=list_incometaxdoc, name='list-incometaxdoc'),
     path('delete-incometaxdoc/<int:pk>/<int:income_pk>', view=delete_incometaxdoc, name='delete-incometaxdoc'),
 
+# PF
     path('create-pf/<int:pk>', view=create_pf, name='create-pf'),
     path('create-file/<int:pk>', PFExcelUploaadView.as_view(), name='create-pf'),
     path('edit-pf/<int:pk>/<int:pf_pk>', view=edit_pf, name='edit-pf'),
@@ -117,7 +125,7 @@ urlpatterns = [
     path('pf-summary/<int:pk>', views.pf_field_totals),
     path('get-pf-totals/<int:pk>', get_pf_totals, name='get_pf_totals'),
 
-
+# Tax Audit
     path('create-taxaudit/<int:pk>', view=create_taxaudit, name='create-taxaudit'),
     path('edit-taxaudit/<int:pk>/<int:taxaudit_pk>', view=edit_taxaudit, name='edit-taxaudit'),
     path('create-tdsfile/<int:pk>', ExcelImportViewtds.as_view(), name='create-tdspayment'),
@@ -125,24 +133,28 @@ urlpatterns = [
     path('single-taxaudit/<int:pk>/<int:taxaudit_pk>', view=single_taxaudit, name='single-taxaudit'),
     path('delete-taxaudit/<int:pk>/<int:taxaudit_pk>', view=delete_taxaudit, name='delete-taxaudit'),
 
+# AIR
     path('create-air/<int:pk>', view=create_air, name='create-air'),
     path('edit-air/<int:pk>/<int:air_pk>', view=edit_air, name='edit-air'),
     path('list-air/<int:pk>', view=list_air, name='list-air'),
     path('single-air/<int:pk>/<int:air_pk>', view=single_air, name='single-air'),
     path('delete-air/<int:pk>/<int:air_pk>', view=delete_air, name='delete-air'),
 
+# SFT
     path('create-sft/<int:pk>', view=create_sft, name='create-sft'),
     path('edit-sft/<int:pk>/<int:sft_pk>', view=edit_sft, name='edit-sft'),
     path('list-sft/<int:pk>', view=list_sft, name='list-sft'),
     path('single-sft/<int:pk>/<int:sft_pk>', view=single_sft, name='single-sft'),
     path('delete-sft/<int:pk>/<int:sft_pk>', view=delete_sft, name='delete-sft'),
 
+# Others
     path('create-others/<int:pk>', view=create_others, name='create-others'),
     path('edit-others/<int:pk>/<int:others_pk>', view=edit_others, name='edit-others'),
     path('list-others/<int:pk>', view=list_others, name='list-others'),
     path('single-others/<int:pk>/<int:others_pk>', view=single_others, name='single-others'),
     path('delete-others/<int:pk>/<int:others_pk>', view=delete_others, name='delete-others'),
 
+# TDS Payment
     path('create-tdspayment/<int:pk>', view=create_tdspayment, name='create-tdspayment'),
     path('edit-tdspayment/<int:pk>/<int:tdspayment_pk>',view=edit_tdspayment, name='edit-tdspayment'),
     path('list-tdspayment/<int:pk>',view=list_tdspayment, name='list-tdspayment'),
@@ -150,12 +162,14 @@ urlpatterns = [
     path('single-tdspayment/<int:pk>/<int:tdspayment_pk>', view=single_tdspayment, name='single-tdspayment'),
     path('delete-tdspayment/<int:pk>/<int:tdspayment_pk>', view=delete_tdspayment, name='delete-tdspayment'),
 
+# TDS Return
     path('create-tds/<int:pk>', view=create_tds, name='create-tdsreturn'),
     path('edit-tds/<int:pk>/<int:tds_pk>', view=edit_tds, name='edit-tdsreturn'),
     path('list-tds/<int:pk>', view=list_tds, name='list-tdsreturn'),
     path('single-tds/<int:pk>/<int:tds_pk>', view=single_tds, name='single-tdsreturn'),
     path('delete-tds/<int:pk>/<int:tds_pk>', view=delete_tds, name='delete-tdsreturn'),
 
+# TDS Section
     path('create-tdssection', view=create_tdssection, name='create-tdssection'),
     path('edit-tdssection/<int:tdssection_pk>', view=edit_tdssection, name='edit-tdssection'),
     path('create-tdssectionfile', ExcelImportViewtdssection.as_view(), name='create-tdssectionfile'),
@@ -172,6 +186,7 @@ urlpatterns = [
     # path('delete-tdssection/<int:pk>/<int:tdssection_pk>', view=delete_tdssection, name='delete-tdssection'),
     # path('get-tdssection/<int:pk>', view=get_create_tdssection, name='get-tdssection'),
 
+# sales
     path('get-sales/<int:pk>/', view=create_sales_get, name='get-sales'),  # Note the trailing slash
     path('create-sales/<int:pk>', view=create_sale, name='create-sales'),  # Note the trailing slash
     path('update-sales-post/<int:client_pk>/<int:invoice_pk>', view=update_sales_invoice, name='create-sales-post'),
@@ -290,5 +305,3 @@ urlpatterns = [
     path('download-return-file/<int:pk>/<int:ack_pk>', view=download_return_file, name='downlaod-return-file'),
     path('serve-computation-file/<int:file_id>/', views.serve_computation_file),
 ]
-
-7 

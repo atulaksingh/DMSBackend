@@ -18,7 +18,7 @@ def fill_pf_forms(driver):
 
 
     # Wait for branch table to load
-    WebDriverWait(driver, 10).until(
+    WebDriverWait(driver, 5).until(
         EC.presence_of_element_located((By.XPATH, "//table"))
     )
 
@@ -65,7 +65,7 @@ def fill_pf_forms(driver):
                 file_input.send_keys(row["File1"])
                 file_input.send_keys(row["File2"])
 
-                button = WebDriverWait(driver, 10).until(
+                button = WebDriverWait(driver, 5).until(
                     EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Confirm']]"))
                 )
                 button.click()
@@ -81,7 +81,7 @@ def fill_pf_forms(driver):
         # Navigate back to the branch list before going to the next branch
         print(f"Exiting Branch {i + 1}...")
 
-        # client_details_link = WebDriverWait(driver, 10).until(
+        # client_details_link = WebDriverWait(driver, 5).until(
         # EC.element_to_be_clickable((By.XPATH, "//a[contains(@href, '/clientDetails/')]"))
         # )
         # client_details_link.click()
