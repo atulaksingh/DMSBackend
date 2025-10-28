@@ -19,6 +19,7 @@ def fill_sft_forms(driver):
 
     # Click on 'Documents' tab
     try:
+        time.sleep(10)
         tab = WebDriverWait(driver, 15).until(
             EC.presence_of_element_located((By.XPATH, "//*[text()='Documents']"))
         )
@@ -75,10 +76,15 @@ def fill_sft_forms(driver):
 
 
             # # Month
+            month_field = driver.find_element(By.NAME, "month")
+            month_field.clear()
+            month_field.send_keys(row["month"])
             # driver.find_element(By.NAME, "month").send_keys(row["month"])
+
 
             # Computation file upload handling
             file_input = driver.find_element(By.NAME, 'files')
+            file_input.clear()
             file_input.send_keys(row["file1"])
             file_input.send_keys(row["file2"])
 
@@ -89,12 +95,42 @@ def fill_sft_forms(driver):
             )
             driver.execute_script("arguments[0].click();", confirm_button)
 
+            try:
+                error_elem = WebDriverWait(driver, 3).until(
+                    EC.visibility_of_element_located((
+                        By.XPATH,
+                        "//*[contains(text(), 'required') or contains(text(), 'can only contain alphabets and spaces') or contains(text(), 'must be') or contains(text(), 'Invalid')]"
+                    ))
+                )
+                error_text = error_elem.text.strip()
+                print(f"Error for row {index}, client: {error_text}")               
+                # Always cancel modal
+                try:
+                    cancel_btn = WebDriverWait(driver, 3).until(
+                        EC.element_to_be_clickable((By.NAME, "sft_cancel"))
+                    )
+                    cancel_btn.click()
+                    time.sleep(1)
+                except TimeoutException:
+                    print("Cancel button not found after error!")
 
-
+            except TimeoutException:
+                # No error → assume success
+                print(f"Row {index} for client submitted successfully.")
 
         except Exception as e:
             print(f"Error filling form for row {index}: {e}")
-            continue
+            try:
+                cancel_btn = WebDriverWait(driver, 2).until(
+                    EC.element_to_be_clickable((By.NAME, "sft_cancel"))
+                )
+                cancel_btn.click()
+                print("Modal cancelled after exception during filling.")
+                time.sleep(1)
+            except TimeoutException:
+                # continue
+                print("Cancel button not found after exception during filling!")
+            # continue
 
         time.sleep(2)  # small pause before next user
 
@@ -112,10 +148,26 @@ if __name__ == "__main__":
     time.sleep(3)
 
     # Open menu
-    driver.find_element(By.ID, "long-button").click()
-    view_button = driver.find_element(By.CSS_SELECTOR, "li.MuiButtonBase-root.MuiMenuItem-root")
-    view_button.click()
-    time.sleep(2)
+    client_name = "Quamba"
+    print("AAAA",client_name)
+
+    
+
+    client_element = WebDriverWait(driver, 20).until(
+        EC.presence_of_element_located((By.XPATH, f"//*[contains(text(), '{client_name}')]"))
+    )
+
+    row_element = client_element.find_element(By.XPATH, "./ancestor::tr")
+
+    # Open menu for this row
+    menu_button = row_element.find_element(By.ID, "long-button")
+    driver.execute_script("arguments[0].click();", menu_button)
+
+    # Click View
+    view_button = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.XPATH, "//li[contains(text(), 'View')]"))
+    )
+    driver.execute_script("arguments[0].click();", view_button)
 
     fill_sft_forms(driver)
 

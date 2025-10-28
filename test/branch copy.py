@@ -112,7 +112,7 @@ if __name__ == "__main__":
     driver.find_element(By.NAME, "username").send_keys("vaishnavitalari.v@gmail.com")
     driver.find_element(By.NAME, "password").send_keys("vaishnavi")
     driver.find_element(By.NAME, "login").click()
-    time.sleep(5)
+    time.sleep(3)
 
     driver.find_element(By.ID, "long-button").click()
     view_button = driver.find_element(By.CSS_SELECTOR, "li.MuiButtonBase-root.MuiMenuItem-root")
@@ -121,7 +121,7 @@ if __name__ == "__main__":
 
     # Fill Branch Forms
     fill_branch_forms(driver)
-    time.sleep(5)
+    time.sleep(3)
 
     driver.quit()
     print("Branch form submission done.")

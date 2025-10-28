@@ -19,7 +19,7 @@ import companydoc
 import taxaudit
 import air
 import sft
-import tdspayment
+import tdspayment 
 import tdsreturn
 import others
 import customer
@@ -44,6 +44,7 @@ time.sleep(5)
 
 # Read data from Excel file
 df = pd.read_excel(r"client10.xlsx")  
+df = df.iloc[1:] 
 
 # Convert date_of_incorporation to MM-DD-YYYY format
 df["date_of_incorporation"] = pd.to_datetime(df["date_of_incorporation"]).dt.strftime("%m-%d-%Y")

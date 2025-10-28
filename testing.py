@@ -34,7 +34,7 @@ print(f"Dropdown now shows: {selected_text}")
 
 # date_input = driver.find_element(By.NAME, "date_of_incorporation")
 # # Enter the desired date in the format YYYY-MM-DD
-# desired_date = "2025-01-15"  # Example date
+# desired_date = "202-01-15"  # Example date
 # date_input.send_keys(desired_date)
 # selected_date = date_input.get_attribute("value")
 # print(f"Selected date: {selected_date}")

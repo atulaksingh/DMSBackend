@@ -784,17 +784,17 @@ def create_common_superuser(request):
         )
 
         # ✅ Email activation token
-        email_subject = "Activate Your Account"
-        message = render_to_string("superuseractivate.html", {
-            'user': superuser,
-            # 'domain': '127.0.0.1:8000',
-            'domain': 'admin.dms.zacoinfotech.com',
-            'uid': urlsafe_base64_encode(force_bytes(superuser.pk)),
-            'token': generate_token.make_token(superuser),
-        })
+        # email_subject = "Activate Your Account"
+        # message = render_to_string("superuseractivate.html", {
+        #     'user': superuser,
+        #     # 'domain': '127.0.0.1:8000',
+        #     'domain': 'admin.dms.zacoinfotech.com',
+        #     'uid': urlsafe_base64_encode(force_bytes(superuser.pk)),
+        #     'token': generate_token.make_token(superuser),
+        # })
 
-        email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [email])
-        email_message.send()
+        # email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [email])
+        # email_message.send()
 
         serializer = SuperuserSerializerWithToken(superuser, many=False)
         return Response({'message': 'User Registered. Kindly activate your account.', 'data': serializer.data})
@@ -926,20 +926,20 @@ def create_common_clientuser(request, pk):
         )
 
         # ✅ Email activation token
-        email_subject = "Your Account is Registered"
-        message = render_to_string("activate.html", {
-            'user': clientuser,
-            # 'domain': '127.0.0.1:8000',
-            'password': password,
-            'domain': 'admin.dms.zacoinfotech.com',
-            'uid': urlsafe_base64_encode(force_bytes(clientuser.pk)),
-            'token': generate_token.make_token(clientuser),
-        })
+        # email_subject = "Your Account is Registered"
+        # message = render_to_string("activate.html", {
+        #     'user': clientuser,
+        #     # 'domain': '127.0.0.1:8000',
+        #     'password': password,
+        #     'domain': 'admin.dms.zacoinfotech.com',
+        #     'uid': urlsafe_base64_encode(force_bytes(clientuser.pk)),
+        #     'token': generate_token.make_token(clientuser),
+        # })
 
-        email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [email])
-        email_message.send()
+        # email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [email])
+        # email_message.send()
 
-        print("usernames",clientuser.username)
+        # print("usernames",clientuser.username)
 
         serializer = ClientuserSerializerWithToken(clientuser, many=False)
         return Response({'message': 'User Registered. Kindly activate your account.', 'data': serializer.data})
@@ -1159,20 +1159,20 @@ def create_common_customeruser(request, pk):
         )
 
         # ✅ Email activation token
-        email_subject = "Your Account is Registered"
-        message = render_to_string("activate.html", {
-            'user': customeruser,
-            # 'domain': '127.0.0.1:8000',
-            'password': password,
-            'domain': 'admin.dms.zacoinfotech.com',
-            'uid': urlsafe_base64_encode(force_bytes(customeruser.pk)),
-            'token': generate_token.make_token(customeruser),
-        })
+        # email_subject = "Your Account is Registered"
+        # message = render_to_string("activate.html", {
+        #     'user': customeruser,
+        #     # 'domain': '127.0.0.1:8000',
+        #     'password': password,
+        #     'domain': 'admin.dms.zacoinfotech.com',
+        #     'uid': urlsafe_base64_encode(force_bytes(customeruser.pk)),
+        #     'token': generate_token.make_token(customeruser),
+        # })
 
-        email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [email])
-        email_message.send()
+        # email_message = EmailMessage(email_subject, message, settings.EMAIL_HOST_USER, [email])
+        # email_message.send()
 
-        print("usernames",customeruser.username)
+        # print("usernames",customeruser.username)
         serializer = CustomeruserSerializerWithToken(customeruser, many=False)
         return Response({'message': 'User Registered. Kindly Check your mail for password.', 'data': serializer.data})
     
@@ -3728,7 +3728,7 @@ def delete_sales_invoice(request, client_pk, pk):
         return Response({"error_message":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET', 'PATCH'])
-@permission_classes([IsSuperUserOrClientUserOrCustomerUser])
+# @permission_classes([IsSuperUserOrClientUserOrCustomerUser])
 def sales_invoice_detail_view(request, client_pk, invoice_pk):
     try:
         # Fetch the sales invoice object
@@ -9906,211 +9906,418 @@ def serve_computation_file(request, file_id):
 import logging
 logger = logging.getLogger(__name__)
 
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated, IsSuperAdminOrOwnClient])
+# def detail_client(request, pk):
+#     client = Client.objects.get(id=pk)
+#     view_bank = Bank.objects.filter(client=client)
+#     view_owner = Owner.objects.filter(client=client)
+#     view_clientuser = CommonUser.objects.filter(client=client, role='clientuser')
+#     view_customeruser = CommonUser.objects.filter(client=client, role='customeruser')
+#     view_companydoc = FileInfo.objects.filter(client=client)
+#     view_branch = Branch.objects.filter(client=client)
+#     view_customer = Customer.objects.filter(client=client)
+#     view_income = IncomeTaxDocument.objects.filter(client=client)
+#     view_pf = PF.objects.filter(client=client)
+#     view_taxaudit = TaxAudit.objects.filter(client=client)
+#     view_air = AIR.objects.filter(client=client)
+#     view_sft = SFT.objects.filter(client=client)
+#     view_others = Others.objects.filter(client=client)
+#     view_tdspayment = TDSPayment.objects.filter(client=client)
+#     view_tds = TDSReturn.objects.filter(client=client)
+#     view_tdssection = TDSSection.objects.filter()
+#     view_sales = SalesInvoice.objects.filter(client=client)
+#     view_purchase = PurchaseInvoice.objects.filter(client=client)
+#     view_income = Income.objects.filter(client=client)
+#     view_expenses = Expenses.objects.filter(client=client)
+#     view_zipupload  = ZipUpload.objects.filter(client=client)
+#     view_acknowledgement = Acknowledgement.objects.filter(client=client)
+#     view_ack = Acknowledgement.objects.filter(client=client)
+    
+#     # Try-except blocks for each serializer
+#     try:
+#         client_serializer = ClientSerializer(client)
+#     except Exception as e:
+#         logger.error(f"Error serializing Client: {e}")
+#         raise
+
+#     try:
+#         bank_serializer = BankSerializer(view_bank, many=True)
+#     except Exception as e:
+#         logger.error(f"Error serializing Bank: {e}")
+#         raise
+
+#     try:
+#         owner_serializer = OwnerSerializer(view_owner, many=True)
+#     except Exception as e:
+#         print(Owner.objects.all().query)
+
+#         logger.error(f"Error serializing Owner: {e}")
+#         raise
+
+#     try:
+#         clientuser = ClientuserSerializerWithToken(view_clientuser, many=True)
+#     except Exception as e:
+#         logger.error(f"Error serializing ClientUser: {e}")
+#         raise
+#     try:
+#         customeruser = CustomeruserSerializerWithToken(view_customeruser, many=True)
+#     except Exception as e:
+#         logger.error(f"Error serializing ClientUser: {e}")
+#         raise
+
+#     try:
+#         companydoc = FileInfoSerializer(view_companydoc, many=True)
+#     except Exception as e:
+#         logger.error(f"Error serializing Company_Document: {e}")
+#         raise
+
+#     try:
+#         branch_serializer = BranchSerailizer(view_branch, many=True)
+#     except Exception as e:
+#         logger.error(f"Error serializing Branch: {e}")
+#         raise
+
+#     try:
+#         customer_serializer = CustomerVendorSerializer(view_customer, many=True)
+#     except Exception as e:
+#         logger.error(f"Error serializing Customer_or_Vendor: {e}")
+#         raise
+
+#     try:
+#         income_serializer = IncomeTaxDocumentSerializer(view_income, many=True)
+#     except Exception as e:
+#         logger.error(f"Error serializing Income_Tax_Document: {e}")
+#         raise
+
+#     try:
+#         pf_serializer = PfSerializer(view_pf, many=True)
+#     except Exception as e:
+#         logger.error(f"Error serializing PF: {e}")
+#         raise
+
+#     try:
+#         taxaudit_serializer = TaxAuditSerializer(view_taxaudit, many=True)
+#     except Exception as e:
+#         logger.error(f"Error serializing Tax_Audit: {e}")
+#         raise
+
+#     try:
+#         air_serializer = AIRSerializer(view_air, many=True)
+#     except Exception as e:
+#         logger.error(f"Error serializing AIR: {e}")
+#         raise
+
+#     try:
+#         sft_serializer = SFTSerializer(view_sft, many=True)
+#     except Exception as e:
+#         logger.error(f"Error serializing SFT: {e}")
+#         raise
+
+#     try:
+#         others_serializer = OthersSerializer(view_others, many=True)
+#     except Exception as e:
+#         logger.error(f"Error serializing Others: {e}")
+#         raise
+
+#     try:
+#         tdspayment_serializer = TDSPaymentSerializer(view_tdspayment, many=True)
+#     except Exception as e:
+#         logger.error(f"Error serializing TDS_Payment: {e}")
+#         raise
+
+#     try:
+#         tdssection_serializer = TDSSectionSerializer(view_tdssection, many=True)
+#     except Exception as e:
+#         logger.error(f"Error serializing TDS_Section: {e}")
+#         raise
+
+#     try:
+#         tds_serializer = TDSReturnSerializer(view_tds, many=True)
+#     except Exception as e:
+#         logger.error(f"Error serializing TDS_Return: {e}")
+#         raise
+
+#     try:
+#         sales_serializer = SalesSerializerList(view_sales, many=True)
+#         print('ggggggggg')
+#     except Exception as e:
+#         print('sales',sales_serializer.error)
+#         logger.error(f"Error serializing Sales: {e}")
+#         raise
+
+#     try:
+#         purchase_serializer = PurchaseSerializerList(view_purchase, many=True)
+#     except Exception as e:
+#         logger.error(f"Error serializing Purchase: {e}")
+#         raise
+
+#     try:
+#         income_serializer = IncomeSerializerList(view_income, many=True)
+#     except Exception as e:
+#         logger.error(f"Error serializing Income: {e}")
+#         raise
+
+#     try:
+#         expenses_serializer = ExpensesSerializerList(view_expenses, many=True)
+#     except Exception as e:
+#         logger.error(f"Error serializing Expenses: {e}")
+#         raise
+
+#     try:
+#         zipupload_serializer = ZipUploadSerializer(view_zipupload, many=True)
+#     except Exception as e:
+#         logger.error(f"Error serializing ZipUpload: {e}")
+#         raise
+    
+#     try:
+#         acknowledgement_serializer = AcknowledgementSerializer(view_acknowledgement, many=True)
+#     except Exception as e:
+#         logger.error(f"Error serializing Acknowledgement: {e}")
+#         raise
+
+#     try:
+#         ack_serializer = AcknowledgementSerializer(view_ack, many=True)
+#     except Exception as e:
+#         logger.error(f"Error serializing Acknowledgement: {e}")
+#         raise
+
+#     # Building the final response data
+#     data = {
+#         'Client': client_serializer.data,
+#         'Bank': bank_serializer.data,
+#         'Owner': owner_serializer.data,
+#         'ClientUser': clientuser.data,
+#         'CustomerUser' : customeruser.data,
+#         'Company_Document': companydoc.data,
+#         'Branch': branch_serializer.data,
+#         'Customer_or_Vendor': customer_serializer.data,
+#         'Income_Tax_Document': income_serializer.data,
+#         'PF': pf_serializer.data,
+#         'Tax_Audit': taxaudit_serializer.data,
+#         'AIR': air_serializer.data,
+#         'SFT': sft_serializer.data,
+#         'Others': others_serializer.data,
+#         'TDS_Payment': tdspayment_serializer.data,
+#         'TDS_Return': tds_serializer.data,
+#         'TDS_Section': tdssection_serializer.data,
+#         'sales_invoice': sales_serializer.data,
+#         'purchase_invoice': purchase_serializer.data,
+#         'income': income_serializer.data,
+#         'expenses': expenses_serializer.data,
+#         'zipupload': zipupload_serializer.data,
+#         'acknowledgement': acknowledgement_serializer.data,
+#         'ack': ack_serializer.data,
+#     }
+
+#     return Response(data)
+
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
+import logging
+
+logger = logging.getLogger(__name__)
+
+# current working code 
+# @api_view(['GET'])
+# # # @permission_classes([IsAuthenticated, IsSuperAdminOrOwnClient])
+# def detail_client(request, pk, section=None):
+#     client = get_object_or_404(Client, id=pk)
+
+#     # --- Initialize empty dict for all sections ---
+#     sections = {}
+
+#     try:
+#         sections['Client'] = ClientSerializer(client).data
+#     except Exception as e:
+#         sections['Client'] = {'error': str(e)}
+
+#     try:
+#         sections['Bank'] = BankSerializer(Bank.objects.filter(client=client), many=True).data
+#     except Exception as e:
+#         sections['Bank'] = {'error': str(e)}
+
+#     try:
+#         sections['Owner'] = OwnerSerializer(Owner.objects.filter(client=client), many=True).data
+#     except Exception as e:
+#         sections['Owner'] = {'error': str(e)}
+
+#     try:
+#         sections['ClientUser'] = ClientuserSerializerWithToken(CommonUser.objects.filter(client=client, role='clientuser'), many=True).data
+#     except Exception as e:
+#         sections['ClientUser'] = {'error': str(e)}
+
+#     try:
+#         sections['CustomerUser'] = CustomeruserSerializerWithToken(CommonUser.objects.filter(client=client, role='customeruser'), many=True).data
+#     except Exception as e:
+#         sections['CustomerUser'] = {'error': str(e)}
+
+#     try:
+#         sections['Company_Document'] = FileInfoSerializer(FileInfo.objects.filter(client=client), many=True).data
+#     except Exception as e:
+#         sections['Company_Document'] = {'error': str(e)}
+
+#     try:
+#         sections['Branch'] = BranchSerailizer(Branch.objects.filter(client=client), many=True).data
+#     except Exception as e:
+#         sections['Branch'] = {'error': str(e)}
+
+#     try:
+#         sections['Customer_or_Vendor'] = CustomerVendorSerializer(Customer.objects.filter(client=client), many=True).data
+#     except Exception as e:
+#         sections['Customer_or_Vendor'] = {'error': str(e)}
+
+#     try:
+#         sections['Income_Tax_Document'] = IncomeTaxDocumentSerializer(IncomeTaxDocument.objects.filter(client=client), many=True).data
+#     except Exception as e:
+#         sections['Income_Tax_Document'] = {'error': str(e)}
+
+#     try:
+#         sections['PF'] = PfSerializer(PF.objects.filter(client=client), many=True).data
+#     except Exception as e:
+#         sections['PF'] = {'error': str(e)}
+
+#     try:
+#         sections['Tax_Audit'] = TaxAuditSerializer(TaxAudit.objects.filter(client=client), many=True).data
+#     except Exception as e:
+#         sections['Tax_Audit'] = {'error': str(e)}
+
+#     try:
+#         sections['AIR'] = AIRSerializer(AIR.objects.filter(client=client), many=True).data
+#     except Exception as e:
+#         sections['AIR'] = {'error': str(e)}
+
+#     try:
+#         sections['SFT'] = SFTSerializer(SFT.objects.filter(client=client), many=True).data
+#     except Exception as e:
+#         sections['SFT'] = {'error': str(e)}
+
+#     try:
+#         sections['Others'] = OthersSerializer(Others.objects.filter(client=client), many=True).data
+#     except Exception as e:
+#         sections['Others'] = {'error': str(e)}
+
+#     try:
+#         sections['TDS_Payment'] = TDSPaymentSerializer(TDSPayment.objects.filter(client=client), many=True).data
+#     except Exception as e:
+#         sections['TDS_Payment'] = {'error': str(e)}
+
+#     try:
+#         sections['TDS_Return'] = TDSReturnSerializer(TDSReturn.objects.filter(client=client), many=True).data
+#     except Exception as e:
+#         sections['TDS_Return'] = {'error': str(e)}
+
+#     try:
+#         sections['TDS_Section'] = TDSSectionSerializer(TDSSection.objects.filter(), many=True).data
+#     except Exception as e:
+#         sections['TDS_Section'] = {'error': str(e)}
+
+#     try:
+#         sections['sales_invoice'] = SalesSerializerList(SalesInvoice.objects.filter(client=client), many=True).data
+#     except Exception as e:
+#         sections['sales_invoice'] = {'error': str(e)}
+
+#     try:
+#         sections['purchase_invoice'] = PurchaseSerializerList(PurchaseInvoice.objects.filter(client=client), many=True).data
+#     except Exception as e:
+#         sections['purchase_invoice'] = {'error': str(e)}
+
+#     try:
+#         sections['income'] = IncomeSerializerList(Income.objects.filter(client=client), many=True).data
+#     except Exception as e:
+#         sections['income'] = {'error': str(e)}
+
+#     try:
+#         sections['expenses'] = ExpensesSerializerList(Expenses.objects.filter(client=client), many=True).data
+#     except Exception as e:
+#         sections['expenses'] = {'error': str(e)}
+
+#     try:
+#         sections['zipupload'] = ZipUploadSerializer(ZipUpload.objects.filter(client=client), many=True).data
+#     except Exception as e:
+#         sections['zipupload'] = {'error': str(e)}
+
+#     try:
+#         sections['acknowledgement'] = AcknowledgementSerializer(Acknowledgement.objects.filter(client=client), many=True).data
+#     except Exception as e:
+#         sections['acknowledgement'] = {'error': str(e)}
+
+#     try:
+#         sections['ack'] = AcknowledgementSerializer(Acknowledgement.objects.filter(client=client), many=True).data
+#     except Exception as e:
+#         sections['ack'] = {'error': str(e)}
+
+#     # --- If only one section is requested ---
+#     if section:
+#         section_key = section.replace('-', '_')  # supports URLs like /purchase-invoice
+#         if section_key in sections:
+#             return Response({section_key: sections[section_key]})
+#         else:
+#             return Response({'error': f'Invalid section name "{section}"'}, status=400)
+
+#     # --- Otherwise return all sections ---
+#     return Response(sections)
+
+
 @api_view(['GET'])
-@permission_classes([IsAuthenticated, IsSuperAdminOrOwnClient])
-def detail_client(request, pk):
-    client = Client.objects.get(id=pk)
-    view_bank = Bank.objects.filter(client=client)
-    view_owner = Owner.objects.filter(client=client)
-    view_clientuser = CommonUser.objects.filter(client=client, role='clientuser')
-    view_customeruser = CommonUser.objects.filter(client=client, role='customeruser')
-    view_companydoc = FileInfo.objects.filter(client=client)
-    view_branch = Branch.objects.filter(client=client)
-    view_customer = Customer.objects.filter(client=client)
-    view_income = IncomeTaxDocument.objects.filter(client=client)
-    view_pf = PF.objects.filter(client=client)
-    view_taxaudit = TaxAudit.objects.filter(client=client)
-    view_air = AIR.objects.filter(client=client)
-    view_sft = SFT.objects.filter(client=client)
-    view_others = Others.objects.filter(client=client)
-    view_tdspayment = TDSPayment.objects.filter(client=client)
-    view_tds = TDSReturn.objects.filter(client=client)
-    view_tdssection = TDSSection.objects.filter()
-    view_sales = SalesInvoice.objects.filter(client=client)
-    view_purchase = PurchaseInvoice.objects.filter(client=client)
-    view_income = Income.objects.filter(client=client)
-    view_expenses = Expenses.objects.filter(client=client)
-    view_zipupload  = ZipUpload.objects.filter(client=client)
-    view_acknowledgement = Acknowledgement.objects.filter(client=client)
-    view_ack = Acknowledgement.objects.filter(client=client)
-    
-    # Try-except blocks for each serializer
-    try:
-        client_serializer = ClientSerializer(client)
-    except Exception as e:
-        logger.error(f"Error serializing Client: {e}")
-        raise
+# @permission_classes([IsAuthenticated, IsSuperAdminOrOwnClient])
+def detail_client(request, pk, section=None):
+    client = get_object_or_404(Client, id=pk)
 
-    try:
-        bank_serializer = BankSerializer(view_bank, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing Bank: {e}")
-        raise
-
-    try:
-        owner_serializer = OwnerSerializer(view_owner, many=True)
-    except Exception as e:
-        print(Owner.objects.all().query)
-
-        logger.error(f"Error serializing Owner: {e}")
-        raise
-
-    try:
-        clientuser = ClientuserSerializerWithToken(view_clientuser, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing ClientUser: {e}")
-        raise
-    try:
-        customeruser = CustomeruserSerializerWithToken(view_customeruser, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing ClientUser: {e}")
-        raise
-
-    try:
-        companydoc = FileInfoSerializer(view_companydoc, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing Company_Document: {e}")
-        raise
-
-    try:
-        branch_serializer = BranchSerailizer(view_branch, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing Branch: {e}")
-        raise
-
-    try:
-        customer_serializer = CustomerVendorSerializer(view_customer, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing Customer_or_Vendor: {e}")
-        raise
-
-    try:
-        income_serializer = IncomeTaxDocumentSerializer(view_income, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing Income_Tax_Document: {e}")
-        raise
-
-    try:
-        pf_serializer = PfSerializer(view_pf, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing PF: {e}")
-        raise
-
-    try:
-        taxaudit_serializer = TaxAuditSerializer(view_taxaudit, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing Tax_Audit: {e}")
-        raise
-
-    try:
-        air_serializer = AIRSerializer(view_air, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing AIR: {e}")
-        raise
-
-    try:
-        sft_serializer = SFTSerializer(view_sft, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing SFT: {e}")
-        raise
-
-    try:
-        others_serializer = OthersSerializer(view_others, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing Others: {e}")
-        raise
-
-    try:
-        tdspayment_serializer = TDSPaymentSerializer(view_tdspayment, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing TDS_Payment: {e}")
-        raise
-
-    try:
-        tdssection_serializer = TDSSectionSerializer(view_tdssection, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing TDS_Section: {e}")
-        raise
-
-    try:
-        tds_serializer = TDSReturnSerializer(view_tds, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing TDS_Return: {e}")
-        raise
-
-    try:
-        sales_serializer = SalesSerializerList(view_sales, many=True)
-        print('ggggggggg')
-    except Exception as e:
-        print('sales',sales_serializer.error)
-        logger.error(f"Error serializing Sales: {e}")
-        raise
-
-    try:
-        purchase_serializer = PurchaseSerializerList(view_purchase, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing Purchase: {e}")
-        raise
-
-    try:
-        income_serializer = IncomeSerializerList(view_income, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing Income: {e}")
-        raise
-
-    try:
-        expenses_serializer = ExpensesSerializerList(view_expenses, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing Expenses: {e}")
-        raise
-
-    try:
-        zipupload_serializer = ZipUploadSerializer(view_zipupload, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing ZipUpload: {e}")
-        raise
-    
-    try:
-        acknowledgement_serializer = AcknowledgementSerializer(view_acknowledgement, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing Acknowledgement: {e}")
-        raise
-
-    try:
-        ack_serializer = AcknowledgementSerializer(view_ack, many=True)
-    except Exception as e:
-        logger.error(f"Error serializing Acknowledgement: {e}")
-        raise
-
-    # Building the final response data
-    data = {
-        'Client': client_serializer.data,
-        'Bank': bank_serializer.data,
-        'Owner': owner_serializer.data,
-        'ClientUser': clientuser.data,
-        'CustomerUser' : customeruser.data,
-        'Company_Document': companydoc.data,
-        'Branch': branch_serializer.data,
-        'Customer_or_Vendor': customer_serializer.data,
-        'Income_Tax_Document': income_serializer.data,
-        'PF': pf_serializer.data,
-        'Tax_Audit': taxaudit_serializer.data,
-        'AIR': air_serializer.data,
-        'SFT': sft_serializer.data,
-        'Others': others_serializer.data,
-        'TDS_Payment': tdspayment_serializer.data,
-        'TDS_Return': tds_serializer.data,
-        'TDS_Section': tdssection_serializer.data,
-        'sales_invoice': sales_serializer.data,
-        'purchase_invoice': purchase_serializer.data,
-        'income': income_serializer.data,
-        'expenses': expenses_serializer.data,
-        'zipupload': zipupload_serializer.data,
-        'acknowledgement': acknowledgement_serializer.data,
-        'ack': ack_serializer.data,
+    # Map of section name to query+serializer
+    section_map = {
+        'client': lambda: ClientSerializer(client).data,
+        'bank': lambda: BankSerializer(Bank.objects.filter(client=client), many=True).data,
+        'owner': lambda: OwnerSerializer(Owner.objects.filter(client=client), many=True).data,
+        'clientuser': lambda: ClientuserSerializerWithToken(CommonUser.objects.filter(client=client, role='clientuser'), many=True).data,
+        'customeruser': lambda: CustomeruserSerializerWithToken(CommonUser.objects.filter(client=client, role='customeruser'), many=True).data,
+        'companydocuments': lambda: FileInfoSerializer(FileInfo.objects.filter(client=client), many=True).data,
+        'branch': lambda: BranchSerailizer(Branch.objects.filter(client=client), many=True).data,
+        'cv': lambda: CustomerVendorSerializer(Customer.objects.filter(client=client), many=True).data,
+        'income_tax_document': lambda: IncomeTaxDocumentSerializer(IncomeTaxDocument.objects.filter(client=client), many=True).data,
+        'pf': lambda: PfSerializer(PF.objects.filter(client=client), many=True).data,
+        'tax_audit': lambda: TaxAuditSerializer(TaxAudit.objects.filter(client=client), many=True).data,
+        'air': lambda: AIRSerializer(AIR.objects.filter(client=client), many=True).data,
+        'sft': lambda: SFTSerializer(SFT.objects.filter(client=client), many=True).data,
+        'others': lambda: OthersSerializer(Others.objects.filter(client=client), many=True).data,
+        'tds_payment': lambda: TDSPaymentSerializer(TDSPayment.objects.filter(client=client), many=True).data,
+        'tds_return': lambda: TDSReturnSerializer(TDSReturn.objects.filter(client=client), many=True).data,
+        'tds_section': lambda: TDSSectionSerializer(TDSSection.objects.all(), many=True).data,
+        'sales': lambda: SalesSerializerList(SalesInvoice.objects.filter(client=client), many=True).data,
+        'purchase': lambda: PurchaseSerializerList(PurchaseInvoice.objects.filter(client=client), many=True).data,
+        'income': lambda: IncomeSerializerList(Income.objects.filter(client=client), many=True).data,
+        'expenses': lambda: ExpensesSerializerList(Expenses.objects.filter(client=client), many=True).data,
+        'zipfile': lambda: ZipUploadSerializer(ZipUpload.objects.filter(client=client), many=True).data,
+        'acks': lambda: AcknowledgementSerializer(Acknowledgement.objects.filter(client=client), many=True).data,
+        'ack': lambda: AcknowledgementSerializer(Acknowledgement.objects.filter(client=client), many=True).data,
     }
 
-    return Response(data)
+    # If only one section requested
+    if section:
+        section_key = section.lower().replace('-', '_')
+        if section_key not in section_map:
+            return Response({'error': f'Invalid section name "{section}"'}, status=400)
+
+        try:
+            data = section_map[section_key]()
+            return Response({section_key: data})
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
+
+    # Otherwise return all (rare case)
+    sections = {}
+    for key, func in section_map.items():
+        try:
+            sections[key] = func()
+        except Exception as e:
+            sections[key] = {'error': str(e)}
+
+    return Response(sections)
+
+
+
 
 @api_view(['GET'])
 # @permission_classes([IsSuperUserOrClientUserOrCustomerUser])

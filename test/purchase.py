@@ -12,22 +12,29 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import StaleElementReferenceException, TimeoutException, NoSuchWindowException
 from selenium.webdriver.chrome.options import Options
 import datetime
+import sales
+import income
+import expenses
+import zip_upload
+import ack
+
 
 def fill_purchase_forms(driver):
     options = Options()
     options.add_experimental_option("detach", True)  
 
     df = pd.read_excel(r"purchase100.xlsx")  
-    print(df.columns)
+    # df = df.iloc[100:] 
     # button = driver.find_element(By.XPATH, "//button[contains(text(), 'Purchase')]")
     # button.click()
 
     try:
-        tab = WebDriverWait(driver, 5).until(
+        time.sleep(10)
+        tab = WebDriverWait(driver, 15).until(
             EC.presence_of_element_located((By.XPATH, "//*[text()='Purchase']"))
         )
         driver.execute_script("arguments[0].scrollIntoView(true);", tab)
-        WebDriverWait(driver, 5).until(EC.element_to_be_clickable(tab))
+        WebDriverWait(driver, 15).until(EC.element_to_be_clickable(tab))
         driver.execute_script("arguments[0].click();", tab)
     except TimeoutException:
         print("Purchase tab not found!")
@@ -39,344 +46,414 @@ def fill_purchase_forms(driver):
     df["invoice_date"] = pd.to_datetime(df["invoice_date"]).dt.strftime("%m-%d-%Y")
 
     for index, row in df.iterrows():
-        print(list(df.columns))  # Check exact column names
-
-        button = WebDriverWait(driver, 5).until(
-            EC.element_to_be_clickable((By.XPATH, "//*[contains(text(), 'Create')]"))
-        )
-        button.click()
-
-
-        # Fill Office Location
-        location = row["location"]
-        autocomplete_input = WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.ID, "location-select"))
-        )
-        autocomplete_input.clear()
-        autocomplete_input.send_keys(location[:10])  
-        time.sleep(1)
-
         try:
-            # Check if dropdown options appear
-            dropdown_options = WebDriverWait(driver, 3).until(
-                EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'MuiAutocomplete-option')]"))
+            print(list(df.columns))  # Check exact column names
+
+            button = WebDriverWait(driver, 5).until(
+                EC.element_to_be_clickable((By.XPATH, "//*[contains(text(), 'Create')]"))
             )
-            available_countries = [opt.text.strip() for opt in dropdown_options]
-            print("Dropdown options:", available_countries)
+            button.click()
 
-            for option in dropdown_options:
-                if option.text.strip().endswith(location):  # Match exact country
-                    ActionChains(driver).move_to_element(option).click().perform()
-                    time.sleep(1)
-                    break
+
+            # Fill Office Location
+            location = row["location"]
+            autocomplete_input = WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located((By.ID, "location-select"))
+            )
+            autocomplete_input.clear()
+            autocomplete_input.send_keys(location[:10])  
+            time.sleep(1)
+
+            try:
+                # Check if dropdown options appear
+                dropdown_options = WebDriverWait(driver, 3).until(
+                    EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'MuiAutocomplete-option')]"))
+                )
+                available_countries = [opt.text.strip() for opt in dropdown_options]
+                print("Dropdown options:", available_countries)
+
+                for option in dropdown_options:
+                    if option.text.strip().endswith(location):  # Match exact country
+                        ActionChains(driver).move_to_element(option).click().perform()
+                        time.sleep(1)
+                        break
+                    else:
+                        print(f"Country '{location}' not found in dropdown!")
+
+            except Exception:
+                print("No dropdown options available for location, proceeding with direct input.")
+                # driver.find_element(By.ID, "location-select").send_keys(row['location'])
+                # time.sleep(2)
+
+            # Fill other fields
+                contact_field = driver.find_element(By.XPATH, "//input[@name='contact' and @type='number']")
+                contact_field.clear()
+                contact_field.send_keys(row['contact'])
+                time.sleep(1)
+                
+                add_field = driver.find_element(By.NAME, "address")
+                add_field.clear()
+                add_field.send_keys(row['address'])
+                time.sleep(1)
+
+                city_field = driver.find_element(By.NAME, "city")
+                city_field.clear()
+                city_field.send_keys(row['city'])
+                time.sleep(1)
+
+                state_field = driver.find_element(By.NAME, "state")
+                state_field.clear()
+                state_field.send_keys(row['state'])
+                time.sleep(1)
+
+                country_field = driver.find_element(By.NAME, "country")
+                country_field.clear()
+                country_field.send_keys(row['country'])
+                time.sleep(1)
+
+                # Always use dropdown for Branch Selection
+                branch = row["branch"].strip()
+                autocomplete_input = WebDriverWait(driver, 5).until(
+                    EC.presence_of_element_located((By.ID, "branch-select"))
+                )
+                autocomplete_input.click()
+                time.sleep(1)
+
+                dropdown_options = WebDriverWait(driver, 5).until(
+                    EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'MuiAutocomplete-option')]"))
+                )
+
+                available_branch = [opt.text.strip() for opt in dropdown_options]
+                print("Dropdown options:", available_branch)
+                time.sleep(2)
+
+                for option in dropdown_options:
+                    if option.text.strip().endswith(branch):  # Match exact branch
+                        ActionChains(driver).move_to_element(option).click().perform()
+                        break
                 else:
-                    print(f"Country '{location}' not found in dropdown!")
+                    print(f"Branch '{branch}' not found in dropdown!")
+            
+            # Fill Invoice Details
+            invoce_no = driver.find_element(By.NAME, "invoice_no")
+            invoce_no.clear()
+            invoce_no.send_keys(row['invoice_no'])
+            time.sleep(1)
+            # driver.find_element(By.NAME, "invoice_no").send_keys(row['invoice_no'])
+            # time.sleep(1)
 
-        except Exception:
-            print("No dropdown options available for location, proceeding with direct input.")
-            # driver.find_element(By.ID, "location-select").send_keys(row['location'])
+            file_input = driver.find_element(By.NAME, 'attach_invoice')
+            file_input.clear()
+            file_input.send_keys(row["attach_invoice"])
+            time.sleep(1)
+
+            file_input = driver.find_element(By.NAME, 'attach_e_way_bill')
+            file_input.clear()
+            file_input.send_keys(row["eway_bill"])
+            time.sleep(1)
+
+            date_input = driver.find_element(By.NAME, "month")
+            date_input.click()
+            time.sleep(1)  # Allow calendar to open
+            date_input.send_keys(Keys.CONTROL + "a")  # Select existing date (if any)
+            date_input.send_keys(Keys.BACKSPACE)  # Clear existing date
+            date_input.send_keys(row["month"])  # Enter date in MM-DD-YYYY format
+            date_input.send_keys(Keys.ENTER)  # Confirm selection 
+            time.sleep(1)
+
+            date_input = driver.find_element(By.NAME, "invoice_date")
+            date_input.click()
+            time.sleep(1) 
+            date_input.send_keys(Keys.CONTROL + "a") 
+            date_input.send_keys(Keys.BACKSPACE)  
+            date_input.send_keys(row["invoice_date"])  
+            date_input.send_keys(Keys.ENTER) 
+            time.sleep(2)
+
+            # Fill Customer and Vendor Details
+            button = driver.find_element(By.XPATH, "//button[contains(text(), 'Customer And Vendor Details')]")
+            button.click()
+            time.sleep(1)
+            gst = row["gst_no"]     
+            autocomplete_input = WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located((By.ID, "gst-no-autocomplete"))
+            )
+            autocomplete_input.clear()
+            autocomplete_input.send_keys(gst[:20])
+            time.sleep(1)
+
+            try:
+                dropdown_options = WebDriverWait(driver, 3).until(
+                    EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'MuiAutocomplete-option')]")),
+                    print('f')
+                )
+                available_gst = [opt.text.strip() for opt in dropdown_options]
+                print("Dropdown options:", available_gst)
+                print('g')
+                time.sleep(1)
+
+                for option in dropdown_options:
+                    if option.text.strip().endswith(gst):
+                        ActionChains(driver).move_to_element(option).click().perform()
+                        time.sleep(1)
+                        break
+                    else:
+                        print(f"GST '{gst}' not found in dropdown!")
+            except Exception :
+                print("No dropdown options available for location, proceeding with direct input.")
+
+                name_field = driver.find_element(By.NAME, "name")
+                name_field.clear()
+                name_field.send_keys(row['name'])
+                # driver.find_ele/ment(By.NAME, "name").send_keys(row['name'])
+                time.sleep(1)
+
+                pan_field = driver.find_element(By.NAME, "pan")
+                pan_field.clear()
+                pan_field.send_keys(row['pan'])
+                # driver.find_element(By.NAME, "pan").send_keys(row['pan'])
+                time.sleep(1)
+
+                vendor_add_field = driver.find_element(By.NAME, "vendor_address")
+                vendor_add_field.clear()
+                vendor_add_field.send_keys(row['address'])
+                # driver.find_element(By.NAME, "vendor_address").send_keys(row['address'])
+                time.sleep(1)
+
+                email_field = driver.find_element(By.NAME, "email")
+                email_field.clear()
+                email_field.send_keys(row['email'])
+                # driver.find_element(By.NAME, "email").send_keys(row['email'])
+                time.sleep(1)
+
+                # driver.find_element(By.XPATH, "//input[@name='contact' and @type='text']").send_keys(row['contact_no'])        
+                # time.sleep(1)
+
+                contact_field = driver.find_element(By.XPATH, "//input[@name='contact' and @type='text']")
+                contact_field.clear()
+                contact_field.send_keys(row['contact_no'])        
+                time.sleep(1)
+                # driver.find_elements(By.XPATH, '//input[@placeholder="Contact No"]')[1].send_keys(row['contact_no'])
+                # time.sleep(1)
+
+                customer = row["customer"]
+                vendor = row["vendor"]
+
+                # Check if 'customer' is True, then click the checkbox
+                customer_checkbox = driver.find_element(By.NAME, "customer")
+                if customer:  # If customer is True
+                    if not customer_checkbox.is_selected():  # Check if it's not already selected
+                        customer_checkbox.click()
+                else:
+                    if customer_checkbox.is_selected():  # If it was selected, unselect it
+                        customer_checkbox.click()
+
+                # Check if 'vendor' is True, then click the checkbox
+                vendor_checkbox = driver.find_element(By.NAME, "vendor")
+                if vendor:  # If vendor is True
+                    if not vendor_checkbox.is_selected():
+                        vendor_checkbox.click()
+                else:
+                    if vendor_checkbox.is_selected():
+                        vendor_checkbox.click()
+
+                time.sleep(2)
+
+            # Fill Product Details
+            button = driver.find_element(By.XPATH, "//button[contains(text(), 'Product Details')]")
+            button.click()
+            time.sleep(2)
+
+            product = row["product"]
+            autocomplete_input = WebDriverWait(driver, 2).until(
+                EC.presence_of_element_located((By.ID, "product-autocomplete-0"))
+            )
+            autocomplete_input.clear()
+            autocomplete_input.send_keys(product[:3])
+            time.sleep(1)
+
+            try:
+                dropdown_options = WebDriverWait(driver, 2).until(
+                    EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'MuiAutocomplete-option')]"))
+                )
+                available_gst = [opt.text.strip() for opt in dropdown_options]
+                print("Dropdown options:", available_gst)
+
+                for option in dropdown_options:
+                    if option.text.strip().endswith(product):  # Match exact country
+                        ActionChains(driver).move_to_element(option).click().perform()
+                        time.sleep(1)
+                        driver.find_element(By.ID, "description-0").send_keys(row['description'])
+                        time.sleep(1)
+                        driver.find_element(By.ID, "unit-0").send_keys(row['unit'])
+                        time.sleep(1)
+                        driver.find_element(By.ID, "rate-0").send_keys(row['rate'])
+                        time.sleep(1)
+                        break
+                    else:
+                        print(f"Country '{product}' not found in dropdown!")
+                        
+            except Exception as e:
+                print("No dropdown options available or click failed:", str(e))
+                autocomplete_input.clear()
+                autocomplete_input.send_keys(product[3:])
+
+                driver.find_element(By.ID, "description-0").send_keys(row['description'])
+                time.sleep(1)
+                driver.find_element(By.ID, "hsn_code-0").send_keys(row['hsn_code'])
+                time.sleep(1)
+                driver.find_element(By.ID, "unit-0").send_keys(row['unit'])
+                time.sleep(1)
+                driver.find_element(By.ID, "rate-0").send_keys(row['rate'])
+                time.sleep(1)
+                driver.find_element(By.ID, "gst_rate-0").send_keys(row['gst_rate'])
+                time.sleep(1)
+            
+            # driver.find_element(By.NAME, "add-product").click()
+            button = driver.find_element(By.NAME, "add-product")
+            driver.execute_script("arguments[0].click();", button)
+
+            product = row["product2"]
+            autocomplete_input = WebDriverWait(driver, 2).until(
+                EC.presence_of_element_located((By.ID, "product-autocomplete-1"))
+            )
+            autocomplete_input.clear()
+            autocomplete_input.send_keys(product[:3])
+            time.sleep(1)
+
+            try:
+                dropdown_options = WebDriverWait(driver, 2).until(
+                    EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'MuiAutocomplete-option')]"))
+                )
+                available_gst = [opt.text.strip() for opt in dropdown_options]
+                print("Dropdown options:", available_gst)
+
+                for option in dropdown_options:
+                    if option.text.strip().endswith(product):  # Match exact country
+                        ActionChains(driver).move_to_element(option).click().perform()
+                        time.sleep(1)
+                        driver.find_element(By.ID, "description-1").send_keys(row['description2'])
+                        time.sleep(1)
+                        driver.find_element(By.ID, "unit-1").send_keys(row['unit2'])
+                        time.sleep(1)
+                        driver.find_element(By.ID, "rate-1").send_keys(row['rate2'])
+                        time.sleep(1)
+                        break
+                    else:
+                        print(f"Country '{product}' not found in dropdown!")
+
+            except Exception as e:
+                print("No dropdown options available or click failed:", str(e))
+                autocomplete_input.clear()
+                autocomplete_input.send_keys(product[3:])
+
+                driver.find_element(By.ID, "description-1").send_keys(row['description2'])
+                time.sleep(1)
+                driver.find_element(By.ID, "hsn_code-1").send_keys(row['hsn_code2'])
+                time.sleep(1)
+                driver.find_element(By.ID, "unit-1").send_keys(row['unit2'])
+                time.sleep(1)
+                driver.find_element(By.ID, "rate-1").send_keys(row['rate2'])
+                time.sleep(1)
+                driver.find_element(By.ID, "gst_rate-1").send_keys(row['gst_rate2'])
+                time.sleep(1)
+
+            # Select Invoice Type
+            invoice_type = row["invoice_type"].strip()
+            # Wait for the select dropdown to be present
+            dropdown_element = WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located((By.NAME, "invoice_type"))
+            )
+            # Convert the element to a Select object
+            select = Select(dropdown_element)
+            # Get available options
+            dropdown_options = [opt.text.strip() for opt in select.options]
+            print("Dropdown options:", dropdown_options)
+            time.sleep(2)
+            # Select the matching option
+            if invoice_type in dropdown_options:
+                select.select_by_visible_text(invoice_type)
+                print(f"Selected Invoice Type: {invoice_type}")
+                time.sleep(2)
+            else:
+                print(f"Invoice Type '{invoice_type}' not found in dropdown!")
+            # Select TDS/ TCS Type
+            invoice_type = row["select_tds_tcs"].strip()
+            # Wait for the select dropdown to be present
+            dropdown_element = WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located((By.ID, "option"))
+            )
+            # Convert the element to a Select object
+            select = Select(dropdown_element)
+            # Get available options
+            dropdown_options = [opt.text.strip() for opt in select.options]
+            print("Dropdown options:", dropdown_options)
+            time.sleep(2)
+            # Select the matching option
+            if invoice_type in dropdown_options:
+                select.select_by_visible_text(invoice_type)
+                print(f"Selected Invoice Type: {invoice_type}")
+                time.sleep(1)
+            else:
+                print(f"Invoice Type '{invoice_type}' not found in dropdown!")
+
+            tds_rate_field = driver.find_element(By.NAME, "tds_tcs_rate")
+            tds_rate_field.clear()
+            tds_rate_field.send_keys(row['enter'])
+            time.sleep(2)
+            # driver.find_element(By.NAME, "tds_tcs_rate").send_keys(row['enter'])
             # time.sleep(2)
 
-        # Fill other fields
-            contact_field = driver.find_element(By.XPATH, "//input[@name='contact' and @type='number']")
-            contact_field.clear()
-            contact_field.send_keys(row['contact'])
-            time.sleep(1)
-            
-            add_field = driver.find_element(By.NAME, "address")
-            add_field.clear()
-            add_field.send_keys(row['address'])
-            time.sleep(1)
-
-            city_field = driver.find_element(By.NAME, "city")
-            city_field.clear()
-            city_field.send_keys(row['city'])
-            time.sleep(1)
-
-            state_field = driver.find_element(By.NAME, "state")
-            state_field.clear()
-            state_field.send_keys(row['state'])
-            time.sleep(1)
-
-            country_field = driver.find_element(By.NAME, "country")
-            country_field.clear()
-            country_field.send_keys(row['country'])
-            time.sleep(1)
-
-            # Always use dropdown for Branch Selection
-            branch = row["branch"].strip()
-            autocomplete_input = WebDriverWait(driver, 5).until(
-                EC.presence_of_element_located((By.ID, "branch-select"))
+            button = WebDriverWait(driver, 5).until(
+                EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Confirm']]"))
             )
-            autocomplete_input.click()
-            time.sleep(1)
-
-            dropdown_options = WebDriverWait(driver, 5).until(
-                EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'MuiAutocomplete-option')]"))
-            )
-
-            available_branch = [opt.text.strip() for opt in dropdown_options]
-            print("Dropdown options:", available_branch)
+            button.click()
             time.sleep(2)
 
-            for option in dropdown_options:
-                if option.text.strip().endswith(branch):  # Match exact branch
-                    ActionChains(driver).move_to_element(option).click().perform()
-                    break
-            else:
-                print(f"Branch '{branch}' not found in dropdown!")
+            try:
+                error_elem = WebDriverWait(driver, 3).until(
+                    EC.visibility_of_element_located((
+                        By.XPATH,
+                        "//*[contains(text(), 'required') or contains(text(), 'Select at least Customer or Vendor') or contains(text(), 'must be') or contains(text(), 'Invalid')]"
+                    ))
+                )
+                error_text = error_elem.text.strip()
+                print(f"Error for row {index}, client: {error_text}")               
+                # Always cancel modal
+                try:
+                    cancel_btn = WebDriverWait(driver, 3).until(
+                        EC.element_to_be_clickable((By.NAME, "purchase_cancel"))
+                    )
+                    cancel_btn.click()
+                    time.sleep(1)
+                except TimeoutException:
+                    print("Cancel button not found after error!")
+
+            except TimeoutException:
+                # No error → assume success
+                print(f"Row {index} for client submitted successfully.")
         
-        # Fill Invoice Details
-        driver.find_element(By.NAME, "invoice_no").send_keys(row['invoice_no'])
-        time.sleep(1)
-
-        file_input = driver.find_element(By.NAME, 'attach_invoice')
-        file_input.send_keys(row["attach_invoice"])
-        time.sleep(1)
-
-        file_input = driver.find_element(By.NAME, 'attach_e_way_bill')
-        file_input.send_keys(row["eway_bill"])
-        time.sleep(1)
-
-        date_input = driver.find_element(By.NAME, "month")
-        date_input.click()
-        time.sleep(1)  # Allow calendar to open
-        date_input.send_keys(Keys.CONTROL + "a")  # Select existing date (if any)
-        date_input.send_keys(Keys.BACKSPACE)  # Clear existing date
-        date_input.send_keys(row["month"])  # Enter date in MM-DD-YYYY format
-        date_input.send_keys(Keys.ENTER)  # Confirm selection 
-        time.sleep(1)
-
-        date_input = driver.find_element(By.NAME, "invoice_date")
-        date_input.click()
-        time.sleep(1) 
-        date_input.send_keys(Keys.CONTROL + "a") 
-        date_input.send_keys(Keys.BACKSPACE)  
-        date_input.send_keys(row["invoice_date"])  
-        date_input.send_keys(Keys.ENTER) 
-        time.sleep(2)
-
-        # Fill Customer and Vendor Details
-        button = driver.find_element(By.XPATH, "//button[contains(text(), 'Customer And Vendor Details')]")
-        button.click()
-        time.sleep(1)
-        gst = row["gst_no"]     
-        autocomplete_input = WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.ID, "gst-no-autocomplete"))
-        )
-        autocomplete_input.clear()
-        autocomplete_input.send_keys(gst[:20])
-        time.sleep(1)
-
-        try:
-            dropdown_options = WebDriverWait(driver, 3).until(
-                EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'MuiAutocomplete-option')]")),
-                print('f')
-            )
-            available_gst = [opt.text.strip() for opt in dropdown_options]
-            print("Dropdown options:", available_gst)
-            print('g')
-            time.sleep(1)
-
-            for option in dropdown_options:
-                if option.text.strip().endswith(gst):
-                    ActionChains(driver).move_to_element(option).click().perform()
-                    time.sleep(1)
-                    break
-                else:
-                    print(f"GST '{gst}' not found in dropdown!")
-        except Exception :
-            print("No dropdown options available for location, proceeding with direct input.")
-
-            driver.find_element(By.NAME, "name").send_keys(row['name'])
-            time.sleep(1)
-
-            # driver.find_element(By.NAME, "gst_no").send_keys(row['gst_no'])
-            # time.sleep(1)
-
-            driver.find_element(By.NAME, "pan").send_keys(row['pan'])
-            time.sleep(1)
-
-            driver.find_element(By.NAME, "vendor_address").send_keys(row['address'])
-            time.sleep(1)
-
-            driver.find_element(By.NAME, "email").send_keys(row['email'])
-            time.sleep(1)
-
-            # driver.find_element(By.XPATH, "//input[@name='contact' and @type='text']").send_keys(row['contact_no'])        
-            # time.sleep(1)
-            driver.find_elements(By.XPATH, '//input[@placeholder="Contact No"]')[1].send_keys(row['contact_no'])
-            time.sleep(1)
-
-            customer = row["customer"]
-            vendor = row["vendor"]
-
-            # Check if 'customer' is True, then click the checkbox
-            customer_checkbox = driver.find_element(By.NAME, "customer")
-            if customer:  # If customer is True
-                if not customer_checkbox.is_selected():  # Check if it's not already selected
-                    customer_checkbox.click()
-            else:
-                if customer_checkbox.is_selected():  # If it was selected, unselect it
-                    customer_checkbox.click()
-
-            # Check if 'vendor' is True, then click the checkbox
-            vendor_checkbox = driver.find_element(By.NAME, "vendor")
-            if vendor:  # If vendor is True
-                if not vendor_checkbox.is_selected():
-                    vendor_checkbox.click()
-            else:
-                if vendor_checkbox.is_selected():
-                    vendor_checkbox.click()
-
-            time.sleep(2)
-
-        # Fill Product Details
-        button = driver.find_element(By.XPATH, "//button[contains(text(), 'Product Details')]")
-        button.click()
-        time.sleep(2)
-
-        product = row["product"]
-        autocomplete_input = WebDriverWait(driver, 2).until(
-            EC.presence_of_element_located((By.ID, "product-autocomplete-0"))
-        )
-        autocomplete_input.clear()
-        autocomplete_input.send_keys(product[:3])
-        time.sleep(1)
-
-        try:
-            dropdown_options = WebDriverWait(driver, 2).until(
-                EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'MuiAutocomplete-option')]"))
-            )
-            available_gst = [opt.text.strip() for opt in dropdown_options]
-            print("Dropdown options:", available_gst)
-
-            for option in dropdown_options:
-                if option.text.strip().endswith(product):  # Match exact country
-                    ActionChains(driver).move_to_element(option).click().perform()
-                    time.sleep(1)
-                    driver.find_element(By.ID, "description-0").send_keys(row['description'])
-                    time.sleep(1)
-                    driver.find_element(By.ID, "unit-0").send_keys(row['unit'])
-                    time.sleep(1)
-                    driver.find_element(By.ID, "rate-0").send_keys(row['rate'])
-                    time.sleep(1)
-                    break
-                else:
-                    print(f"Country '{product}' not found in dropdown!")
-                    
         except Exception as e:
-            print("No dropdown options available or click failed:", str(e))
-            autocomplete_input.clear()
-            autocomplete_input.send_keys(product[3:])
+            print(f"Error filling form for row {index}: {e}")
+            # continue
+            try:
+                cancel_btn = WebDriverWait(driver, 2).until(
+                    EC.element_to_be_clickable((By.NAME, "purchase_cancel"))
+                )
+                cancel_btn.click()
+                print("Modal cancelled after exception during filling.")
+                time.sleep(1)
+            except TimeoutException:
+                # continue
+                print("Cancel button not found after exception during filling!")
+            # continue
 
-            driver.find_element(By.ID, "description-0").send_keys(row['description'])
-            time.sleep(1)
-            driver.find_element(By.ID, "hsn_code-0").send_keys(row['hsn_code'])
-            time.sleep(1)
-            driver.find_element(By.ID, "unit-0").send_keys(row['unit'])
-            time.sleep(1)
-            driver.find_element(By.ID, "rate-0").send_keys(row['rate'])
-            time.sleep(1)
-            driver.find_element(By.ID, "gst_rate-0").send_keys(row['gst_rate'])
-            time.sleep(1)
-        
-        # driver.find_element(By.NAME, "add-product").click()
-        button = driver.find_element(By.NAME, "add-product")
-        driver.execute_script("arguments[0].click();", button)
-
-        product = row["product2"]
-        autocomplete_input = WebDriverWait(driver, 2).until(
-            EC.presence_of_element_located((By.ID, "product-autocomplete-1"))
-        )
-        autocomplete_input.clear()
-        autocomplete_input.send_keys(product[:3])
-        time.sleep(1)
-
-        try:
-            dropdown_options = WebDriverWait(driver, 2).until(
-                EC.presence_of_all_elements_located((By.XPATH, "//li[contains(@class, 'MuiAutocomplete-option')]"))
-            )
-            available_gst = [opt.text.strip() for opt in dropdown_options]
-            print("Dropdown options:", available_gst)
-
-            for option in dropdown_options:
-                if option.text.strip().endswith(product):  # Match exact country
-                    ActionChains(driver).move_to_element(option).click().perform()
-                    time.sleep(1)
-                    driver.find_element(By.ID, "description-1").send_keys(row['description2'])
-                    time.sleep(1)
-                    driver.find_element(By.ID, "unit-1").send_keys(row['unit2'])
-                    time.sleep(1)
-                    driver.find_element(By.ID, "rate-1").send_keys(row['rate2'])
-                    time.sleep(1)
-                    break
-                else:
-                    print(f"Country '{product}' not found in dropdown!")
-
-        except Exception as e:
-            print("No dropdown options available or click failed:", str(e))
-            autocomplete_input.clear()
-            autocomplete_input.send_keys(product[3:])
-
-            driver.find_element(By.ID, "description-1").send_keys(row['description2'])
-            time.sleep(1)
-            driver.find_element(By.ID, "hsn_code-1").send_keys(row['hsn_code2'])
-            time.sleep(1)
-            driver.find_element(By.ID, "unit-1").send_keys(row['unit2'])
-            time.sleep(1)
-            driver.find_element(By.ID, "rate-1").send_keys(row['rate2'])
-            time.sleep(1)
-            driver.find_element(By.ID, "gst_rate-1").send_keys(row['gst_rate2'])
-            time.sleep(1)
-
-        # Select Invoice Type
-        invoice_type = row["invoice_type"].strip()
-        # Wait for the select dropdown to be present
-        dropdown_element = WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.NAME, "invoice_type"))
-        )
-        # Convert the element to a Select object
-        select = Select(dropdown_element)
-        # Get available options
-        dropdown_options = [opt.text.strip() for opt in select.options]
-        print("Dropdown options:", dropdown_options)
-        time.sleep(2)
-        # Select the matching option
-        if invoice_type in dropdown_options:
-            select.select_by_visible_text(invoice_type)
-            print(f"Selected Invoice Type: {invoice_type}")
-            time.sleep(2)
-        else:
-            print(f"Invoice Type '{invoice_type}' not found in dropdown!")
-        # Select TDS/ TCS Type
-        invoice_type = row["select_tds_tcs"].strip()
-        # Wait for the select dropdown to be present
-        dropdown_element = WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.ID, "option"))
-        )
-        # Convert the element to a Select object
-        select = Select(dropdown_element)
-        # Get available options
-        dropdown_options = [opt.text.strip() for opt in select.options]
-        print("Dropdown options:", dropdown_options)
-        time.sleep(2)
-        # Select the matching option
-        if invoice_type in dropdown_options:
-            select.select_by_visible_text(invoice_type)
-            print(f"Selected Invoice Type: {invoice_type}")
-            time.sleep(1)
-        else:
-            print(f"Invoice Type '{invoice_type}' not found in dropdown!")
-
-        driver.find_element(By.NAME, "tds_tcs_rate").send_keys(row['enter'])
-        time.sleep(2)
-
-        button = WebDriverWait(driver, 5).until(
-            EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Confirm']]"))
-        )
-        button.click()
-        time.sleep(2)
+    # purchase.fill_purchase_forms(driver)
+    # sales.fill_sales_forms(driver)
+    # income.fill_income_forms(driver)
+    # expenses.fill_expenses_forms(driver)
+    # zip_upload.fill_zip_upload_forms(driver)
+    # ack.fill_ack_forms(driver)
 
 if __name__ == "__main__":
 
@@ -387,12 +464,28 @@ if __name__ == "__main__":
     driver.find_element(By.NAME, "username").send_keys("vaishnavitalari.v@gmail.com")
     driver.find_element(By.NAME, "password").send_keys("vaishnavi")
     driver.find_element(By.NAME, "login").click()
-    time.sleep(5)
+    time.sleep(3)
 
-    driver.find_element(By.ID, "long-button").click()
-    view_button = driver.find_element(By.CSS_SELECTOR, "li.MuiButtonBase-root.MuiMenuItem-root")
-    view_button.click()
-    time.sleep(2)
+    client_name = "Quamba"
+    print("AAAA",client_name)
+
+    
+
+    client_element = WebDriverWait(driver, 20).until(
+        EC.presence_of_element_located((By.XPATH, f"//*[contains(text(), '{client_name}')]"))
+    )
+
+    row_element = client_element.find_element(By.XPATH, "./ancestor::tr")
+
+    # Open menu for this row
+    menu_button = row_element.find_element(By.ID, "long-button")
+    driver.execute_script("arguments[0].click();", menu_button)
+
+    # Click View
+    view_button = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.XPATH, "//li[contains(text(), 'View')]"))
+    )
+    driver.execute_script("arguments[0].click();", view_button)
 
     fill_purchase_forms(driver)
     time.sleep(15)

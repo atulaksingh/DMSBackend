@@ -60,7 +60,7 @@ def fill_branchdoc_forms(driver):
             # except Exception as e:
             #     print(f"Error clicking Create button: {e}")
             #     continue
-            # time.sleep(5)
+            # time.sleep(3)
 
             try:
 
@@ -145,7 +145,7 @@ def fill_branchdoc_forms(driver):
                 print(f"Error filling form for row {index}: {e}")
                 continue
 
-            time.sleep(5)
+            time.sleep(3)
 
         # Navigate back to the branch list before going to the next branch
         print(f"Exiting Branch {i + 1}...")

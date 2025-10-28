@@ -10,133 +10,15 @@ import officelocation
 from selenium.common.exceptions import TimeoutException
 
 
-# def fill_branchdoc_forms(driver):
-#     # Load the Excel data
-#     df = pd.read_excel(r"doc.xlsx")
-
-
-#     try:
-#         tab = WebDriverWait(driver, 5).until(
-#             EC.presence_of_element_located((By.XPATH, "//*[text()='Branch Details']"))
-#         )
-#         driver.execute_script("arguments[0].scrollIntoView(true);", tab)
-#         WebDriverWait(driver, 5).until(EC.element_to_be_clickable(tab))
-#         driver.execute_script("arguments[0].click();", tab)
-#     except TimeoutException:
-#         print("Branch Details tab not found!")
-
-
-#     # Wait for branch table to load
-#     WebDriverWait(driver, 5).until(
-#         EC.presence_of_element_located((By.XPATH, "//table"))
-#     )
-
-#     # Get all branch rows
-#     branch_rows = driver.find_elements(By.XPATH, "//tr[contains(@class, 'MuiTableRow-root MuiTableRow-hover')]")
-
-#     print(f"Total Branches Found: {len(branch_rows)}")
-
-#     for i in range(len(branch_rows)):
-#         # Re-fetch the list of branches to avoid stale elements
-#         branch_rows = driver.find_elements(By.XPATH, "//tr[contains(@class, 'MuiTableRow-root MuiTableRow-hover')]")
-
-#         if i >= len(branch_rows):
-#             print(f"Branch index {i} out of range, stopping loop.")
-#             break
-
-#         try:
-#             view_button = branch_rows[i].find_element(By.XPATH, ".//button[@id='long-button']")
-#             driver.execute_script("arguments[0].scrollIntoView();", view_button)  # Scroll if not visible
-#             time.sleep(1)
-#             view_button.click()
-#             time.sleep(2)
-
-#             # Click the dropdown option (assuming it's the first option)
-#             dropdown_option = WebDriverWait(driver, 5).until(
-#                 EC.presence_of_element_located((By.CSS_SELECTOR, "li.MuiButtonBase-root.MuiMenuItem-root"))
-#             )
-#             dropdown_option.click()
-#             time.sleep(3)
-
-#             print(f"Opened Branch {i + 1}")
-
-#         except Exception as e:
-#             print(f"Error clicking View button for Branch {i + 1}: {e}")
-#             continue
-
-#         # Add 10 branch document records for this branch
-#         for index, row in df.iterrows():
-#             try:
-#                 button = driver.find_element(By.XPATH, "//button[contains(text(), 'Create')]")
-#                 button.click()
-#             except Exception as e:
-#                 print(f"Error clicking Create button: {e}")
-#                 continue
-#             time.sleep(5)
-
-#             try:
-
-#                 dropdown = driver.find_element(By.NAME, "document_type")
-#                 dropdown.click()
-
-#                 document_type =  row["Document Type"]
-#                 document_type = document_type.upper()
-
-#                 option_xpath = f"//li[text()='{document_type}']"
-#                 option = driver.find_element(By.XPATH, option_xpath)
-#                 option.click()
-#                 time.sleep(2)
-#                 driver.find_element(By.NAME, "login").send_keys(row["Login"])
-#                 driver.find_element(By.NAME, "password").send_keys(row["Password"])
-#                 driver.find_element(By.NAME, "remark").send_keys(row["Remark"])
-
-#                 file_input = driver.find_element(By.NAME, 'files')
-#                 file_input.send_keys(row["File1"])
-#                 file_input.send_keys(row["File2"])
-
-#                 button = WebDriverWait(driver, 5).until(
-#                     EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Confirm']]"))
-#                 )
-#                 button.click()
-
-#                 # officelocation.fill_officeloc_forms(driver)
-
-#             except Exception as e:
-#                 print(f"Error filling form for row {index}: {e}")
-#                 continue
-
-            
-#             time.sleep(5)
-        
-#         officelocation.fill_officeloc_forms(driver)
-
-
-#         # Navigate back to the branch list before going to the next branch
-#         print(f"Exiting Branch {i + 1}...")
-
-
-
-#         button = driver.find_element(By.CSS_SELECTOR, "a[href*='/clientDetails']")
-#         button.click()
-#         time.sleep(2)
-#         try:
-#             tab = WebDriverWait(driver, 5).until(
-#                 EC.presence_of_element_located((By.XPATH, "//*[text()='Branch Details']"))
-#             )
-#             driver.execute_script("arguments[0].scrollIntoView(true);", tab)
-#             WebDriverWait(driver, 5).until(EC.element_to_be_clickable(tab))
-#             driver.execute_script("arguments[0].click();", tab)
-#         except TimeoutException:
-#             print("Branch Details tab not found!")
-
-
 def fill_branchdoc_forms(driver):
     # Load the Excel data
     
     df = pd.read_excel(r"branchdoc500.xlsx")
+    df = df.iloc[500:] 
 
     for index, row in df.iterrows():
         try:
+            time.sleep(10)
             tab = WebDriverWait(driver, 5).until(
                 EC.presence_of_element_located((By.XPATH, "//*[text()='Branch Details']"))
             )
@@ -178,6 +60,7 @@ def fill_branchdoc_forms(driver):
         
         time.sleep(3)
         try:
+            print('AAAAAAAA')
             create_btn = WebDriverWait(driver, 5).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Create')]"))
             )
@@ -186,6 +69,7 @@ def fill_branchdoc_forms(driver):
 
             # Fill dropdown
             dropdown = driver.find_element(By.NAME, "document_type")
+            # dropdown.clear()
             dropdown.click()
             document_type = row["Document Type"].strip()
             option_xpath = f"//li[normalize-space(text())='{document_type}']"
@@ -193,41 +77,95 @@ def fill_branchdoc_forms(driver):
                 EC.element_to_be_clickable((By.XPATH, option_xpath))
             )
             option.click()
+            print('BBBB')
 
             # Fill inputs
-            driver.find_element(By.NAME, "login").send_keys(row["Login"])
-            driver.find_element(By.NAME, "password").send_keys(row["Password"])
-            driver.find_element(By.NAME, "remark").send_keys(row["Remark"])
+            # driver.find_element(By.NAME, "login").send_keys(row["Login"])
+            # driver.find_element(By.NAME, "password").send_keys(row["Password"])
+            # driver.find_element(By.NAME, "remark").send_keys(row["Remark"])
+
+            fields = {
+                "login": row["Login"],
+                "password": row["Password"],
+                "remark": row["Remark"]
+            }   
+            for field_name, value in fields.items():
+                elem = driver.find_element(By.NAME, field_name)
+                elem.clear()              # clear any existing data
+                elem.send_keys(str(value))  # fill fresh data
 
             # Upload files
             file_input = driver.find_element(By.NAME, 'files')
+            file_input.clear()
             if pd.notna(row["File1"]):
                 file_input.send_keys(row["File1"])
             if pd.notna(row["File2"]):
                 file_input.send_keys(row["File2"])
 
             # Confirm
+            # confirm_btn = webdriver (driver, 5).until(confirm_btn = we)
             confirm_btn = WebDriverWait(driver, 5).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Confirm']]"))
             )
             confirm_btn.click()
+
+            try:
+                error_elem = WebDriverWait(driver, 3).until(
+                    EC.visibility_of_element_located((
+                        By.XPATH,
+                        "//*[contains(text(), 'required') or contains(text(), 'one file is required') or contains(text(), 'must be') or contains(text(), 'Invalid')]"
+                    ))
+                )
+                error_text = error_elem.text.strip()
+                print(f"Error for row {index}, client: {error_text}")               
+                # Always cancel modal
+                try:
+                    cancel_btn = WebDriverWait(driver, 3).until(
+                        EC.element_to_be_clickable((By.NAME, "branchdoc_cancel"))
+                    )
+                    cancel_btn.click()
+                    time.sleep(1)
+                except TimeoutException:
+                    print("Cancel button not found after error!")
+
+            except TimeoutException:
+                # No error → assume success
+                print(f"Row {index} for client submitted successfully.")
+
+
             element = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, "//a[text()='ClientDetails']"))
             )
             element.click()
-            time.sleep(3)
+            time.sleep(2)
 
 
             print(f"✅ Added BranchDoc row {index+1} for {branch_name}")
 
         except Exception as e:
             print(f"❌ Error filling doc row {index+1}: {e}")
-            continue
+            try:
+                cancel_btn = WebDriverWait(driver, 2).until(
+                    EC.element_to_be_clickable((By.NAME, "branchdoc_cancel"))
+                )
+                cancel_btn.click()
+                element = WebDriverWait(driver, 10).until(
+                    EC.element_to_be_clickable((By.XPATH, "//a[text()='ClientDetails']"))
+                )
+                element.click()
+                time.sleep(2)
 
-        time.sleep(3)
+                print("Modal cancelled after exception during filling.")
+                time.sleep(1)
+            except TimeoutException:
+                # continue
+                print("Cancel button not found after exception during filling!")
+            # continue
+
+        time.sleep(2)
 
     # Call office location fill if needed
-    # officelocation.fill_officeloc_forms(driver)
+    officelocation.fill_officeloc_forms(driver)
 
     # Return back to Branch Details list
     try:
@@ -253,15 +191,31 @@ if __name__ == "__main__":
     driver.find_element(By.NAME, "username").send_keys("vaishnavitalari.v@gmail.com")
     driver.find_element(By.NAME, "password").send_keys("vaishnavi")
     driver.find_element(By.NAME, "login").click()
-    time.sleep(5)
+    time.sleep(3)
 
-    driver.find_element(By.ID, "long-button").click()
-    view_button = driver.find_element(By.CSS_SELECTOR, "li.MuiButtonBase-root.MuiMenuItem-root")
-    view_button.click()
-    time.sleep(2)
+    client_name = "Quamba"
+    print("AAAA",client_name)
+
+    
+
+    client_element = WebDriverWait(driver, 20).until(
+        EC.presence_of_element_located((By.XPATH, f"//*[contains(text(), '{client_name}')]"))
+    )
+
+    row_element = client_element.find_element(By.XPATH, "./ancestor::tr")
+
+    # Open menu for this row
+    menu_button = row_element.find_element(By.ID, "long-button")
+    driver.execute_script("arguments[0].click();", menu_button)
+
+    # Click View
+    view_button = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.XPATH, "//li[contains(text(), 'View')]"))
+    )
+    driver.execute_script("arguments[0].click();", view_button)
 
     fill_branchdoc_forms(driver)
-    time.sleep(5)
+    time.sleep(3)
     driver.quit()
     print("Purchase form submission done.")
 

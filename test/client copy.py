@@ -36,7 +36,7 @@ time.sleep(2)
 driver.find_element(By.NAME, "username").send_keys("vaishnavitalari.v@gmail.com")
 driver.find_element(By.NAME, "password").send_keys("vaishnavi")
 driver.find_element(By.NAME, "login").click()
-time.sleep(5)
+time.sleep(3)
 
 # Read data from Excel file
 df = pd.read_excel(r"client.xlsx")  # Modify path as needed
@@ -147,7 +147,7 @@ driver.find_element(By.ID, "long-button").click()
 # view_button = driver.find_element(By.CSS_SELECTOR, "li.MuiButtonBase-root.MuiMenuItem-root")
 view_button = driver.find_element(By.NAME, "clientview-btn")
 view_button.click()
-time.sleep(5)
+time.sleep(3)
 if not view_button:
     print("view_buton not found")
 
@@ -182,6 +182,6 @@ ack.fill_ack_forms(driver)
                                  
 
 # Wait before closing
-time.sleep(5)
+time.sleep(3)
 driver.quit()
 print("form submitted successfully")

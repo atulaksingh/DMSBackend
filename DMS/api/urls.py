@@ -5,6 +5,7 @@ from api import views
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
+    TokenVerifyView,
 )
 # from api.views import ExcelImportView
 # from .views import ExcelImportView
@@ -15,12 +16,15 @@ from rest_framework_simplejwt.views import (
 
 urlpatterns = [
 
+    path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+
 # Client
     path('create-client', create_client, name='clients-create'),
     path('edit-client/<int:pk>',view=edit_client, name='edit-client'),
     path('delete-client/<int:pk>',view=delete_client, name='delete-client'),
     path('list-client',view=list_client, name='list-client'),
     path('detail-client/<int:pk>', view=detail_client, name='detail-client'),
+    path('detail-client/<int:pk>/<str:section>', views.detail_client, name='detail-client-section'),
     path('single-fileinfo/<int:pk>/<int:fileinfo_pk>', view=single_fileinfo, name='single-fileinfo'),
     path('delete-fileinfo/<int:pk>/<int:fileinfo_pk>', view=delete_fileinfo, name='delete-fileinfo'),
 

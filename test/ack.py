@@ -17,6 +17,7 @@ def fill_ack_forms(driver):
     df = pd.read_excel(r"ack200.xlsx") 
 
     try:
+        time.sleep(10)
         tab = WebDriverWait(driver, 5).until(
             EC.presence_of_element_located((By.XPATH, "//*[text()='Acknowledgement']"))
         )
@@ -27,87 +28,135 @@ def fill_ack_forms(driver):
         print("Acknowledgement tab not found!")
 
     # Convert date_of_incorporation to MM-DD-YYYY format
-    df["from_date"] = pd.to_datetime(df["from_date"]).dt.strftime("%m-%d-%Y")
-    df["to_date"] = pd.to_datetime(df["to_date"]).dt.strftime("%m-%d-%Y")
+    # df["from_date"] = pd.to_datetime(df["from_date"]).dt.strftime("%m-%d-%Y")
+    # df["to_date"] = pd.to_datetime(df["to_date"]).dt.strftime("%m-%d-%Y")
+    df["from_date"] = pd.to_datetime(df["from_date"], dayfirst=True, errors='coerce').dt.strftime("%d-%m-%Y")
+    df["to_date"] = pd.to_datetime(df["to_date"], dayfirst=True, errors='coerce').dt.strftime("%d-%m-%Y")
+
 
     for index, row in df.iterrows():
 
-        print(list(df.columns))  # Check exact column names
+        try:
+            print(list(df.columns))  # Check exact column names
 
-        # Create button
-        button = WebDriverWait(driver, 5).until(
-            EC.element_to_be_clickable((By.XPATH, "//button[normalize-space()='Create']"))
-        )
-        button.click()
+            # Create button
+            button = WebDriverWait(driver, 5).until(
+                EC.element_to_be_clickable((By.XPATH, "//button[normalize-space()='Create']"))
+            )
+            button.click()
+            
+            # Return number
+            dropdown = driver.find_element(By.NAME, "return_type")
+            dropdown.click()
+            return_type =  row["Return Type"]
+            option_xpath = f"//li[text()='{return_type}']"
+            option = driver.find_element(By.XPATH, option_xpath)
+            option.click()
+            time.sleep(2)
+
+            # Frequency
+            dropdown = driver.find_element(By.NAME, "frequency")
+            dropdown.click()
+            frequency =  row["Frequency"]
+            option_xpath = f"//li[text()='{frequency}']"
+            option = WebDriverWait(driver, 5).until(
+                EC.visibility_of_element_located((By.XPATH, option_xpath))
+            )
+            option.click()
+            time.sleep(2)
+
+
+            # From Date (Handling MM-DD-YYYY format)
+            date_input = driver.find_element(By.NAME, "from_date")
+            date_input.click()
+            time.sleep(1)  # Allow calendar to open
+            date_input.send_keys(Keys.CONTROL + "a")  # Select existing date (if any)
+            date_input.send_keys(Keys.BACKSPACE)  # Clear existing date
+            date_input.send_keys(row["from_date"])  # Enter date in MM-DD-YYYY format
+            date_input.send_keys(Keys.ENTER)  # Confirm selection
+
+            # To Date (Handling MM-DD-YYYY format)
+            date_input = driver.find_element(By.NAME, "to_date")
+            date_input.click()
+            time.sleep(1)  # Allow calendar to open
+            date_input.send_keys(Keys.CONTROL + "a")  # Select existing date (if any)
+            date_input.send_keys(Keys.BACKSPACE)  # Clear existing date
+            date_input.send_keys(row["to_date"])  # Enter date in MM-DD-YYYY format
+            date_input.send_keys(Keys.ENTER)  # Confirm selection
+
+            # Month
+            month = driver.find_element(By.NAME, "month")
+            month.clear()
+            month.send_keys(row["month"])
+
+            # Client Review
+            dropdown = driver.find_element(By.NAME, "client_review")
+            dropdown.click()
+            client_review =  row["Client Review"]
+            option_xpath = f"//li[text()='{client_review}']"
+            option = WebDriverWait(driver, 2).until(
+                EC.visibility_of_element_located((By.XPATH, option_xpath))
+            )
+            option.click()
+            time.sleep(2)
+
+
+            # Computation file upload handling
+            file_input = driver.find_element(By.NAME, 'computation_file')
+            file_input.clear()
+            file_input.send_keys(row["file1"])
+
+            # Return file upload handling
+            file_input = driver.find_element(By.NAME, 'return_file')
+            file_input.clear()
+            file_input.send_keys(row["file2"])
+
+            # Submit button
+            button = WebDriverWait(driver, 2).until(
+                EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Confirm']]"))
+            )
+            button.click()
+            time.sleep(2)
+
+            try:
+                error_elem = WebDriverWait(driver, 3).until(
+                    EC.visibility_of_element_located((
+                        By.XPATH,
+                        "//*[contains(text(), 'required') or contains(text(), 'Remarks cannot exceed 200 characters') or contains(text(), 'must be') or contains(text(), 'Invalid')]"
+                    ))
+                )
+                error_text = error_elem.text.strip()
+                print(f"Error for row {index}, client: {error_text}")               
+                # Always cancel modal
+                try:
+                    cancel_btn = WebDriverWait(driver, 3).until(
+                        EC.element_to_be_clickable((By.NAME, "ack_cancel"))
+                    )
+                    cancel_btn.click()
+                    time.sleep(1)
+                except TimeoutException:
+                    print("Cancel button not found after error!")
+
+            except TimeoutException:
+                # No error → assume success
+                print(f"Row {index} for client submitted successfully.")
         
-        # Return number
-        dropdown = driver.find_element(By.NAME, "return_type")
-        dropdown.click()
-        return_type =  row["Return Type"]
-        option_xpath = f"//li[text()='{return_type}']"
-        option = driver.find_element(By.XPATH, option_xpath)
-        option.click()
-        time.sleep(2)
+        except Exception as e:
+            print(f"Error filling form for row {index}: {e}")
+            # continue
+            try:
+                cancel_btn = WebDriverWait(driver, 2).until(
+                    EC.element_to_be_clickable((By.NAME, "ack_cancel"))
+                )
+                cancel_btn.click()
+                print("Modal cancelled after exception during filling.")
+                time.sleep(1)
+            except TimeoutException:
+                # continue
+                print("Cancel button not found after exception during filling!")
+            # continue
 
-        # Frequency
-        dropdown = driver.find_element(By.NAME, "frequency")
-        dropdown.click()
-        frequency =  row["Frequency"]
-        option_xpath = f"//li[text()='{frequency}']"
-        option = WebDriverWait(driver, 5).until(
-            EC.visibility_of_element_located((By.XPATH, option_xpath))
-        )
-        option.click()
-        time.sleep(2)
-
-
-        # From Date (Handling MM-DD-YYYY format)
-        date_input = driver.find_element(By.NAME, "from_date")
-        date_input.click()
-        time.sleep(1)  # Allow calendar to open
-        date_input.send_keys(Keys.CONTROL + "a")  # Select existing date (if any)
-        date_input.send_keys(Keys.BACKSPACE)  # Clear existing date
-        date_input.send_keys(row["from_date"])  # Enter date in MM-DD-YYYY format
-        date_input.send_keys(Keys.ENTER)  # Confirm selection
-
-        # To Date (Handling MM-DD-YYYY format)
-        date_input = driver.find_element(By.NAME, "to_date")
-        date_input.click()
-        time.sleep(1)  # Allow calendar to open
-        date_input.send_keys(Keys.CONTROL + "a")  # Select existing date (if any)
-        date_input.send_keys(Keys.BACKSPACE)  # Clear existing date
-        date_input.send_keys(row["to_date"])  # Enter date in MM-DD-YYYY format
-        date_input.send_keys(Keys.ENTER)  # Confirm selection
-
-        # Month
-        driver.find_element(By.NAME, "month").send_keys(row["month"])
-
-        # Client Review
-        dropdown = driver.find_element(By.NAME, "client_review")
-        dropdown.click()
-        client_review =  row["Client Review"]
-        option_xpath = f"//li[text()='{client_review}']"
-        option = WebDriverWait(driver, 2).until(
-            EC.visibility_of_element_located((By.XPATH, option_xpath))
-        )
-        option.click()
-        time.sleep(2)
-
-
-        # Computation file upload handling
-        file_input = driver.find_element(By.NAME, 'computation_file')
-        file_input.send_keys(row["file1"])
-
-        # Return file upload handling
-        file_input = driver.find_element(By.NAME, 'return_file')
-        file_input.send_keys(row["file2"])
-
-        # Submit button
-        button = WebDriverWait(driver, 2).until(
-            EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Confirm']]"))
-        )
-        button.click()
-        time.sleep(2)
+        
 
 if __name__ == "__main__":
     # This block allows you to run owner.py standalone for testing.
@@ -118,14 +167,35 @@ if __name__ == "__main__":
     driver.find_element(By.NAME, "username").send_keys("vaishnavitalari.v@gmail.com")
     driver.find_element(By.NAME, "password").send_keys("vaishnavi")
     driver.find_element(By.NAME, "login").click()
-    time.sleep(5)
+    time.sleep(3)
 
-    driver.find_element(By.ID, "long-button").click()
-    view_button = driver.find_element(By.CSS_SELECTOR, "li.MuiButtonBase-root.MuiMenuItem-root")
-    view_button.click()
-    time.sleep(2)
+    # driver.find_element(By.ID, "long-button").click()
+    # view_button = driver.find_element(By.CSS_SELECTOR, "li.MuiButtonBase-root.MuiMenuItem-root")
+    # view_button.click()
+    # time.sleep(2)
+
+    client_name = "Quamba"
+    print("AAAA",client_name)
+
+    
+
+    client_element = WebDriverWait(driver, 20).until(
+        EC.presence_of_element_located((By.XPATH, f"//*[contains(text(), '{client_name}')]"))
+    )
+
+    row_element = client_element.find_element(By.XPATH, "./ancestor::tr")
+
+    # Open menu for this row
+    menu_button = row_element.find_element(By.ID, "long-button")
+    driver.execute_script("arguments[0].click();", menu_button)
+
+    # Click View
+    view_button = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.XPATH, "//li[contains(text(), 'View')]"))
+    )
+    driver.execute_script("arguments[0].click();", view_button)
 
     fill_ack_forms(driver)
-    time.sleep(5)
+    time.sleep(3)
     driver.quit()
     print("Acknowledgment form submission done.")

@@ -109,7 +109,7 @@ from selenium.common.exceptions import TimeoutException, ElementClickIntercepted
 #         except Exception as e:
 #             print(f"Error filling owner form for row {index}: {e}")
 #             continue
-#     time.sleep(5)
+#     time.sleep(3)
 
 
 # def fill_owner_forms(driver):
@@ -213,7 +213,7 @@ from selenium.common.exceptions import TimeoutException, ElementClickIntercepted
 #             print(f"Error filling owner form for client {client_id}, row {index}: {e}")
 #             continue
 
-#     time.sleep(5)
+#     time.sleep(3)
 
 
 def fill_owner_forms(driver):
@@ -337,10 +337,26 @@ if __name__ == "__main__":
     driver.find_element(By.NAME, "login").click()
     time.sleep(2)
 
-    driver.find_element(By.ID, "long-button").click()
-    view_button = driver.find_element(By.CSS_SELECTOR, "li.MuiButtonBase-root.MuiMenuItem-root")
-    view_button.click()
-    time.sleep(2)
+    client_name = "Quamba"
+    print("AAAA",client_name)
+
+    
+
+    client_element = WebDriverWait(driver, 20).until(
+        EC.presence_of_element_located((By.XPATH, f"//*[contains(text(), '{client_name}')]"))
+    )
+
+    row_element = client_element.find_element(By.XPATH, "./ancestor::tr")
+
+    # Open menu for this row
+    menu_button = row_element.find_element(By.ID, "long-button")
+    driver.execute_script("arguments[0].click();", menu_button)
+
+    # Click View
+    view_button = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.XPATH, "//li[contains(text(), 'View')]"))
+    )
+    driver.execute_script("arguments[0].click();", view_button)
 
     fill_owner_forms(driver)
     time.sleep(2)
