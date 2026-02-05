@@ -255,7 +255,14 @@ AUTH_USER_MODEL = 'api.CommonUser'
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://app.taxporium.com"
+    "https://api.taxporium.com",
+    "https://app.taxporium.com",
 ]
 
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+CORS_ALLOWED_ORIGINS = [
+    "https://app.taxporium.com",
+]
+CORS_ALLOW_CREDENTIALS = True
 
