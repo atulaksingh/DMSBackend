@@ -252,3 +252,10 @@ CORS_ALLOW_ALL_ORIGIN = True
 
 # AUTH_USER_MODEL = 'api.CustomUser'
 AUTH_USER_MODEL = 'api.CommonUser'
+
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://app.taxporium.com"
+]
+
+
