@@ -1078,7 +1078,8 @@ def forget_password(request):
         # http://localhost:5173/reset-password/MzM/cu85ad-af76c1ed92e7af05f1df7d9f508c1b9d/
         # http://127.0.0.1:8000/reset-password/MzM/cu85en-236a306cd2999dd9db4ec85c0d0cf2c1/
         # 'domain': 'localhost:5173',
-        'domain': 'dms-frontend-new.vercel.app',
+        # 'domain': 'dms-frontend-new.vercel.app',
+        'domain': 'app.taxporium.com',
         'uid': uid,
         'token': token,
     })
