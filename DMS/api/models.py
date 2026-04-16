@@ -4,7 +4,12 @@ import os
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
+from django.core.validators import RegexValidator
 
+contact_validator = RegexValidator(
+    regex=r'^\d{10}$',
+    message="Contact number must be exactly 10 digits."
+)
 # Create your models here.
 class File(models.Model):
     files = models.FileField(upload_to='files', null=True, blank=True)
@@ -49,8 +54,8 @@ class Client(models.Model):
     date_of_incorporation = models.DateField(null=True, blank=True)
     contact_person = models.CharField(max_length=100, null=True, blank=True)
     designation = models.CharField(max_length=100, null=True, blank=True)
-    contact_no_1 = models.IntegerField(null=True, blank=True)
-    contact_no_2 = models.IntegerField(null=True, blank=True)
+    contact_no_1 = models.CharField(max_length=10, validators=[contact_validator],null=True, blank=True, ) #############D
+    contact_no_2 = models.CharField(max_length=10, validators=[contact_validator], null=True, blank=True) ############D
     email = models.EmailField(null=True, blank=True)
     business_detail = models.TextField(null=True, blank=True)
     status = models.CharField(max_length=40,choices=status_choices ,null=True, blank=True)
@@ -62,7 +67,7 @@ class Client(models.Model):
 class Bank(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
     bank_name = models.CharField(max_length=100, null=True, blank=True)
-    account_no = models.IntegerField(null=True, blank=True)
+    account_no = models.CharField(max_length=20, null=True, blank=True) ###########D
     ifsc = models.CharField(max_length=50, null=True, blank=True)
     account_type = models.CharField(max_length=50, null=True, blank=True)
     branch = models.CharField(max_length=100, null=True, blank=True)
@@ -80,7 +85,7 @@ class Customer(models.Model):
    customer = models.BooleanField(null=True, blank=True)
    vendor = models.BooleanField(null=True, blank=True)
    email = models.EmailField(null=True, blank=True)
-   contact = models.IntegerField(null=True, blank=True)
+   contact = models.CharField(max_length=10, validators=[contact_validator], null=True, blank=True) #############D
 
    def __str__(self):
        return self.name if self.name else "No Name"
@@ -111,7 +116,7 @@ class Owner(models.Model):
     share = models.IntegerField()
     pan = models.CharField(max_length=10, null=True, blank=True)
     aadhar = models.CharField(max_length=12, null=True, blank=True)
-    mobile = models.IntegerField(null=True, blank=True)
+    mobile = models.CharField(max_length=10, validators=[contact_validator], null=True, blank=True) #############D
     email = models.EmailField(null=True, blank=True)
     it_password = models.CharField(max_length=50, null=True, blank=True)
     isadmin = models.BooleanField(default=False, null=True, blank=True)
@@ -154,7 +159,7 @@ class CompanyDocument(models.Model):
 class Branch(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
     branch_name = models.CharField(max_length=100, null=True, blank=True)
-    contact = models.IntegerField(null=True, blank=True)
+    contact = models.CharField(max_length=10, validators=[contact_validator], null=True, blank=True) #############D
     address = models.TextField(null=True, blank=True)
     state = models.CharField(max_length=100, null=True, blank=True)
     city = models.CharField(max_length=100, null=True, blank=True)
@@ -169,7 +174,7 @@ class Branch(models.Model):
 class OfficeLocation(models.Model):
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True, blank=True)
     location = models.CharField(max_length=100, null=True, blank=True)
-    contact = models.IntegerField(null=True, blank=True)
+    contact = models.CharField(max_length=10, validators=[contact_validator], null=True, blank=True) #############D
     address = models.TextField(null=True, blank=True)
     city = models.CharField(max_length=100, null=True, blank=True)
     state = models.CharField(max_length=100, null=True, blank=True)

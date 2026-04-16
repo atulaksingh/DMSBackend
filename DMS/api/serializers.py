@@ -1780,7 +1780,7 @@ class ZipUploadSerializer2(serializers.ModelSerializer):
 #************************************************************Excel File
 
 class ExcelFileSerializer(serializers.ModelSerializer):
-    class Meta:
+    class Meta: 
         model = ExcelFile
         fields = '__all__'
 

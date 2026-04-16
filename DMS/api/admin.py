@@ -208,6 +208,7 @@ class ProductSummaryIncomeInline(admin.TabularInline): ##############
     prod_description_display.short_description = "Product Description"
 
 @admin.register(Income) ################
+                             
 class IncomeAdmin(admin.ModelAdmin):
     list_display = ['id', 'customer_name', 'invoice_no', 'invoice_date']
 
